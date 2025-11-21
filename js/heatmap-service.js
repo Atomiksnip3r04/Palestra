@@ -65,6 +65,69 @@ export class HeatmapService {
         const container = document.getElementById(containerId);
         if (!container) return;
 
+        // Add global tooltip if not exists
+        let tooltip = document.getElementById('heatmap-tooltip');
+        if (!tooltip) {
+            tooltip = document.createElement('div');
+            tooltip.id = 'heatmap-tooltip';
+            tooltip.className = 'heatmap-tooltip';
+            document.body.appendChild(tooltip);
+            
+            // Global styles for tooltip
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .heatmap-tooltip {
+                    position: fixed;
+                    background: rgba(0, 0, 0, 0.9);
+                    color: #fff;
+                    padding: 0.5rem 1rem;
+                    border-radius: 8px;
+                    font-size: 0.8rem;
+                    pointer-events: none;
+                    z-index: 9999;
+                    opacity: 0;
+                    transition: opacity 0.2s;
+                    border: 1px solid var(--color-primary);
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                    transform: translate(-50%, -120%);
+                }
+                .muscle-path {
+                    cursor: pointer;
+                    transition: opacity 0.2s;
+                }
+                .muscle-path:hover {
+                    filter: brightness(1.3);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Event delegation for tooltips
+        const handleInteraction = (e) => {
+            const target = e.target.closest('.muscle-path');
+            if (target) {
+                const label = target.querySelector('title')?.textContent || '';
+                if (label) {
+                    tooltip.textContent = label;
+                    tooltip.style.opacity = '1';
+                    tooltip.style.left = e.clientX + 'px';
+                    tooltip.style.top = e.clientY + 'px';
+                }
+            } else {
+                tooltip.style.opacity = '0';
+            }
+        };
+
+        // Attach listeners to document or specific container if possible, 
+        // but since SVG is injected, we can attach to container after injection
+        // or use a persistent listener. Let's attach to container.
+        
+        // Clean up old listeners if re-rendering? 
+        // For simplicity in this architecture, we'll assume container is stable or just add listener.
+        // Better: add inline onmousemove to the SVG wrapper.
+
         const getColor = (muscle) => {
             const fatigue = this.muscleFatigue[muscle] || 0;
             if (fatigue <= 0) return "rgba(255,255,255,0.06)"; // Idle
@@ -133,7 +196,7 @@ export class HeatmapService {
                 <div class="heatmap-figure" style="flex:1; min-width:160px; display:flex; flex-direction:column; align-items:center; gap:0.4rem;">
                     <h4 style="text-transform:uppercase; letter-spacing:1px; font-size:0.78rem; color:var(--color-text-muted);">Heatmap Muscolare - ${title}</h4>
                     <div style="width:190px; aspect-ratio:9/16; padding:0.8rem; border-radius:28px; background:linear-gradient(180deg, rgba(0,243,255,0.08) 0%, rgba(0,243,255,0.02) 100%); box-shadow:inset 0 0 30px rgba(0,243,255,0.08), 0 10px 25px rgba(0,0,0,0.35);">
-                        <svg viewBox="${DEFAULT_VIEWBOX}" role="img" aria-label="Heatmap muscolare ${title.toLowerCase()}" style="width:100%; height:100%; overflow:visible;">
+                        <svg viewBox="${DEFAULT_VIEWBOX}" role="img" aria-label="Heatmap muscolare ${title.toLowerCase()}" style="width:100%; height:100%; overflow:visible;" onmousemove="window.heatmapTooltipMove(event)" onmouseleave="window.heatmapTooltipHide()" onclick="window.heatmapTooltipMove(event)">
                             ${defs}
                             ${renderSilhouette(view)}
                             ${renderGuides(view)}
@@ -143,6 +206,30 @@ export class HeatmapService {
                 </div>
             `;
         };
+
+        // Add global handlers to window if not present
+        if (!window.heatmapTooltipMove) {
+            window.heatmapTooltipMove = (e) => {
+                const target = e.target.closest('.muscle-path');
+                const tooltip = document.getElementById('heatmap-tooltip');
+                if (target && tooltip) {
+                    const label = target.querySelector('title')?.textContent || '';
+                    if (label) {
+                        tooltip.textContent = label;
+                        tooltip.style.opacity = '1';
+                        tooltip.style.left = e.clientX + 'px';
+                        tooltip.style.top = e.clientY + 'px';
+                        return;
+                    }
+                }
+                if (tooltip) tooltip.style.opacity = '0';
+            };
+            
+            window.heatmapTooltipHide = () => {
+                const tooltip = document.getElementById('heatmap-tooltip');
+                if (tooltip) tooltip.style.opacity = '0';
+            };
+        }
 
         const figures = `
             <div class="heatmap-canvas" style="display:flex; flex-wrap:wrap; justify-content:center; gap:1.5rem;">
