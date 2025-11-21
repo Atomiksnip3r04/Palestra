@@ -156,6 +156,42 @@ Se mancano dati critici (es. peso corporeo), fallo notare come primo punto per m
             return { success: false, message: "Errore AI: " + error.message };
         }
     }
+
+    // NEW: AI Session Predictor
+    async predictNextSession(data) {
+        if (!this.apiKey) return { success: false, message: "API Key mancante." };
+        try {
+            const genAI = new GoogleGenerativeAI(this.apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" }); 
+
+            const toonLogs = this.encodeToTOON(data.recentLogs.slice(0, 5), 'lastWorkouts'); // Only last 5 needed
+
+            const prompt = `
+Come Personal Trainer esperto, analizza gli ultimi allenamenti di questo atleta e suggerisci l'allenamento per OGGI.
+Obiettivo: Bilanciamento muscolare e recupero.
+
+**Ultimi Allenamenti:**
+${toonLogs}
+
+Rispondi in formato JSON (senza markdown, solo JSON puro):
+{
+    "suggestion": "Titolo Allenamento (es. Push Day)",
+    "focus": "Breve spiegazione del perché (es. Hai fatto gambe ieri, oggi tocca spinta)",
+    "warmup": ["Esercizio 1", "Esercizio 2"],
+    "main_lifts": ["Esercizio Key 1", "Esercizio Key 2"]
+}
+`;
+            const result = await model.generateContent(prompt);
+            let text = result.response.text();
+            // Clean markdown if present
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            
+            return { success: true, data: JSON.parse(text) };
+        } catch (error) {
+            console.error("AI Prediction Error:", error);
+            return { success: false, message: error.message };
+        }
+    }
 }
 
 export const aiService = new AIService();

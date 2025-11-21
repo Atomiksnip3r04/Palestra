@@ -180,6 +180,15 @@
                 </div>
             </div>
 
+            <!-- MUSCLE HEATMAP -->
+            <div class="card" style="margin-bottom: var(--spacing-md);">
+                <h3 style="margin-bottom: 1rem;">Mappa Termica Muscolare (7 Giorni)</h3>
+                <div id="muscleHeatmapContainer" style="padding: 1rem;">
+                    <!-- Heatmap SVG rendered here -->
+                    <p style="text-align: center; color: var(--color-text-muted);">Caricamento modello...</p>
+                </div>
+            </div>
+
             <!-- PR Table -->
             <div class="card">
                 <h3 style="margin-bottom: 1rem;">Record Personali (Stima 1RM)</h3>
@@ -207,9 +216,18 @@
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
         import { aiService } from './js/ai-service.js';
+        import { heatmapService } from './js/heatmap-service.js';
+
         // Mark services as available globally for mixed context if needed, though module scope is safer
     
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ... existing listeners ...
+
+            // HEATMAP INITIALIZATION
+            const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+            heatmapService.calculateFatigue(logs, 7); // 7 days lookback
+            heatmapService.renderSVG('muscleHeatmapContainer');
+            
             const askCoachBtn = document.getElementById('askCoachBtn');
             const aiModal = document.getElementById('aiModal');
             const closeAiModal = document.getElementById('closeAiModal');

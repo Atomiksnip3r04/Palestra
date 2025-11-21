@@ -247,6 +247,17 @@
 
                     <!-- Saved Workouts -->
                     <div>
+                        <!-- AI PREDICTOR WIDGET -->
+                        <div class="card" style="margin-bottom: 2rem; border-color: var(--color-primary-dim); background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0,0,0,0) 100%);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                                <h3 style="font-size: 1.2rem; margin: 0;">⚡ Prossima Sessione</h3>
+                                <button id="refreshAiPredictor" class="btn btn-outline" style="padding: 0.3rem 0.6rem; font-size: 0.8rem;">🤖 Genera</button>
+                            </div>
+                            <div id="aiPredictorContent">
+                                <p style="color: var(--color-text-muted); font-size: 0.9rem;">Chiedi all'IA cosa allenare oggi in base al tuo storico.</p>
+                            </div>
+                        </div>
+
                         <h3 style="margin-bottom: 1rem;">Le tue Schede</h3>
                         <div id="savedWorkoutsList">
                             <!-- Dynamic List -->
@@ -316,6 +327,40 @@
             </div>
         </div>
     </section>
+
+    <!-- Focus Mode Overlay -->
+    <div id="focusModeOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; flex-direction: column; padding: 2rem;">
+        <!-- Top Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+            <div style="font-family: var(--font-display); font-size: 1.5rem; color: var(--color-primary);">FOCUS FLOW</div>
+            <button id="exitFocusMode" style="background: none; border: none; color: #666; font-size: 1.5rem;">✕</button>
+        </div>
+
+        <!-- Main Content -->
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+            <h2 id="focusExerciseName" style="font-size: 2.5rem; margin-bottom: 0.5rem;">Panca Piana</h2>
+            <p id="focusSetInfo" style="font-size: 1.2rem; color: var(--color-text-muted); margin-bottom: 3rem;">Set 1 / 3 • 100kg x 8</p>
+
+            <!-- Timer (Large) -->
+            <div id="focusTimer" style="font-family: monospace; font-size: 5rem; color: white; margin-bottom: 3rem; display: none;">00:00</div>
+
+            <!-- Action Button -->
+            <button id="focusActionBtn" class="btn btn-primary" style="width: 100%; max-width: 300px; height: 80px; font-size: 1.5rem; border-radius: 50px; box-shadow: 0 0 30px var(--color-primary-dim);">
+                INIZIA SET
+            </button>
+        </div>
+
+        <!-- Progress -->
+        <div style="margin-top: auto; width: 100%;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.8rem; color: #666;">
+                <span>Progresso Sessione</span>
+                <span id="focusProgressText">0%</span>
+            </div>
+            <div style="height: 4px; background: #222; border-radius: 2px; overflow: hidden;">
+                <div id="focusProgressBar" style="height: 100%; width: 0%; background: var(--color-primary); transition: width 0.3s ease;"></div>
+            </div>
+        </div>
+    </div>
 
     <script src="js/main.js"></script>
     
@@ -499,7 +544,168 @@
                 setTimeout(() => syncStatus.textContent = '', 2000);
             });
 
-            // --- AI Key Logic ---
+            // --- AI Predictor Logic ---
+            const refreshAiPredictor = document.getElementById('refreshAiPredictor');
+            const aiPredictorContent = document.getElementById('aiPredictorContent');
+
+            refreshAiPredictor.addEventListener('click', async () => {
+                if (!aiService.hasKey()) {
+                    aiPredictorContent.innerHTML = '<p style="color: #ff4444;">Imposta prima la tua API Key.</p>';
+                    return;
+                }
+
+                aiPredictorContent.innerHTML = '<p style="color: var(--color-text-muted);">Generazione allenamento in corso...</p>';
+                
+                const data = await firestoreService.gatherDataForAI();
+                const result = await aiService.predictNextSession(data);
+
+                if (result.success) {
+                    const plan = result.data;
+                    aiPredictorContent.innerHTML = `
+                        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-top: 0.5rem;">
+                            <h4 style="color: var(--color-primary); margin-bottom: 0.5rem;">${plan.suggestion}</h4>
+                            <p style="font-size: 0.9rem; margin-bottom: 1rem;">${plan.focus}</p>
+                            
+                            <div style="font-size: 0.8rem; color: #ccc; margin-bottom: 0.5rem;"><strong>Warmup:</strong> ${plan.warmup.join(', ')}</div>
+                            <div style="font-size: 0.8rem; color: #ccc;"><strong>Focus:</strong> ${plan.main_lifts.join(', ')}</div>
+                        </div>
+                    `;
+                } else {
+                    aiPredictorContent.innerHTML = `<p style="color: #ff4444;">Errore: ${result.message}</p>`;
+                }
+            });
+
+            // --- FOCUS MODE LOGIC ---
+            const focusOverlay = document.getElementById('focusModeOverlay');
+            const exitFocusModeBtn = document.getElementById('exitFocusMode');
+            const focusActionBtn = document.getElementById('focusActionBtn');
+            const focusTimer = document.getElementById('focusTimer');
+            
+            let currentWorkout = null;
+            let currentExerciseIndex = 0;
+            let currentSetIndex = 0;
+            let isResting = false;
+            let timerInterval = null;
+
+            window.initFocusMode = (workout) => {
+                currentWorkout = workout;
+                currentExerciseIndex = 0;
+                currentSetIndex = 0;
+                isResting = false;
+                focusOverlay.style.display = 'flex';
+                updateFocusUI();
+            };
+
+            exitFocusModeBtn.addEventListener('click', () => {
+                if (confirm('Uscire dal Focus Mode?')) {
+                    stopTimer();
+                    focusOverlay.style.display = 'none';
+                }
+            });
+
+            focusActionBtn.addEventListener('click', () => {
+                if (isResting) {
+                    // Skip Rest
+                    stopTimer();
+                    nextSet();
+                } else {
+                    // Finish Set -> Start Rest
+                    startRest();
+                }
+            });
+
+            function updateFocusUI() {
+                if (currentExerciseIndex >= currentWorkout.exercises.length) {
+                    // Workout Complete
+                    document.getElementById('focusExerciseName').textContent = "Workout Completato!";
+                    document.getElementById('focusSetInfo').textContent = "Ottimo lavoro.";
+                    focusActionBtn.textContent = "Chiudi";
+                    focusActionBtn.onclick = () => {
+                         focusOverlay.style.display = 'none';
+                         window.location.reload(); // Refresh
+                    };
+                    return;
+                }
+
+                const ex = currentWorkout.exercises[currentExerciseIndex];
+                const set = ex.sets[currentSetIndex];
+
+                document.getElementById('focusExerciseName').textContent = ex.name;
+                document.getElementById('focusSetInfo').textContent = `Set ${currentSetIndex + 1} / ${ex.sets.length} • ${set.weight}kg x ${set.reps}`;
+                
+                // Update Progress
+                const totalSets = currentWorkout.exercises.reduce((acc, e) => acc + e.sets.length, 0);
+                const completedSets = currentWorkout.exercises.slice(0, currentExerciseIndex).reduce((acc, e) => acc + e.sets.length, 0) + currentSetIndex;
+                const percent = Math.round((completedSets / totalSets) * 100);
+                
+                document.getElementById('focusProgressBar').style.width = percent + '%';
+                document.getElementById('focusProgressText').textContent = percent + '%';
+
+                focusActionBtn.textContent = "FATTO";
+                focusActionBtn.classList.add('btn-primary');
+                focusActionBtn.classList.remove('btn-outline');
+                focusTimer.style.display = 'none';
+                isResting = false;
+            }
+
+            function startRest() {
+                isResting = true;
+                let restTime = 90; // Default 90s
+                
+                // Simple heuristic: Heavy compounds = 180s, Isolation = 60s
+                const exName = currentWorkout.exercises[currentExerciseIndex].name.toLowerCase();
+                if (exName.includes('squat') || exName.includes('stacco') || exName.includes('panca')) restTime = 180;
+                else if (exName.includes('curl') || exName.includes('alzate')) restTime = 60;
+
+                focusActionBtn.textContent = "SALTA REST";
+                focusActionBtn.classList.remove('btn-primary');
+                focusActionBtn.classList.add('btn-outline');
+                focusTimer.style.display = 'block';
+                
+                let remaining = restTime;
+                updateTimerDisplay(remaining);
+                
+                timerInterval = setInterval(() => {
+                    remaining--;
+                    updateTimerDisplay(remaining);
+                    if (remaining <= 0) {
+                        stopTimer();
+                        playBeep();
+                        nextSet();
+                    }
+                }, 1000);
+            }
+
+            function updateTimerDisplay(seconds) {
+                const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const s = (seconds % 60).toString().padStart(2, '0');
+                focusTimer.textContent = `${m}:${s}`;
+            }
+
+            function stopTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = null;
+            }
+
+            function nextSet() {
+                const ex = currentWorkout.exercises[currentExerciseIndex];
+                if (currentSetIndex < ex.sets.length - 1) {
+                    currentSetIndex++;
+                } else {
+                    currentSetIndex = 0;
+                    currentExerciseIndex++;
+                }
+                updateFocusUI();
+            }
+
+            function playBeep() {
+                // Simple Audio Beep
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.2);
+            }
             const aiKeyInput = document.getElementById('aiKeyInput');
             const saveAiKeyBtn = document.getElementById('saveAiKeyBtn');
             const aiKeyStatus = document.getElementById('aiKeyStatus');
