@@ -55,39 +55,96 @@ export class AIService {
 
         try {
             const genAI = new GoogleGenerativeAI(this.apiKey);
-            // Using the latest requested model
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); 
-            // Note: "gemini-3-pro-preview" might not be publicly available via API yet, 
-            // falling back to 2.0 Flash (fastest/newest public) or 1.5 Pro if needed. 
-            // I'll try 1.5 Pro as safe bet for complex reasoning or 2.0 Flash for speed.
-            // Let's stick to 1.5 Pro for reliable instruction following on TOON for now, 
-            // or try the requested string if the SDK supports it.
+            
+            // Configuration for high-quality output
+            const generationConfig = {
+                temperature: 0.7, // Creative but grounded
+                topP: 0.95,
+                topK: 40,
+                maxOutputTokens: 2000,
+            };
+
+            // Use the most advanced model available
+            // Fallback chain: 1.5 Pro (Stable High Intelligence) -> 2.0 Flash (Fast)
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-1.5-pro", 
+                generationConfig 
+            }); 
 
             // Convert data to TOON to save tokens
             const toonLogs = this.encodeToTOON(data.recentLogs, 'workoutLogs');
             const toonPrs = this.encodeToTOON(Object.entries(data.prs).map(([k,v]) => ({lift: k, weight: v})), 'personalRecords');
 
             const prompt = `
-Sei un coach esperto di Strength & Conditioning.
-Analizza i dati dell'atleta forniti in formato TOON (Token-Oriented Object Notation).
+Sei un **Elite Strength & Conditioning Coach** con un PhD in Biomeccanica e Fisiologia dell'Esercizio. La tua specializzazione è l'analisi dei dati per ottimizzare l'ipertrofia e la forza massima.
+Il tuo compito è analizzare i dati di allenamento di un atleta forniti in formato **TOON** (Token-Oriented Object Notation) e fornire un feedback tecnico, critico e attuabile.
 
-DATI ATLETA (TOON):
+---
+
+### 📊 DATI ATLETA (TOON Format)
+
+**Profilo:**
+- Nome: ${data.profile.name || 'Atleta'}
+- Peso Corporeo Attuale: ${data.bodyStats.length > 0 ? data.bodyStats[0].weight + ' kg' : 'N/D'}
+- Sessioni (Ultimi 30gg): ${data.recentWorkoutCount}
+
+**Massimali Stimati (1RM):**
 ${toonPrs}
 
+**Log Allenamenti Recenti:**
 ${toonLogs}
 
-INFO GENERALI:
-- Nome: ${data.profile.name || 'Atleta'}
-- Peso Corporeo: ${data.bodyStats.length > 0 ? data.bodyStats[0].weight : 'N/D'} kg
-- Totale Sessioni: ${data.recentWorkoutCount}
+---
 
-RICHIESTA:
-1. Analizza volume e frequenza basandoti sui log TOON.
-2. Identifica carenze dai massimali (personalRecords).
-3. Fornisci 3 consigli pratici.
-4. Rispondi in Markdown, tono da Coach esperto.
+### 🧠 ANALISI RICHIESTA
+
+Analizza i dati sopra e genera un report strutturato seguendo rigorosamente questi passaggi logici:
+
+**1. ANALISI DEL CARICO & FREQUENZA**
+- Valuta la consistenza dell'atleta (frequenza settimanale).
+- Analizza il trend del volume (sta aumentando, stallando o diminuendo?).
+- Identifica se c'è un sovraccarico progressivo evidente nei log.
+
+**2. ANALISI STRUTTURALE & BILANCIAMENTO**
+- Osserva i \`mainExercises\` e i \`personalRecords\`.
+- C'è equilibrio tra catena cinetica anteriore (es. Squat, Bench) e posteriore (es. Deadlift, Row)?
+- I massimali sono proporzionati? (Es. Una panca forte ma uno squat debole indica uno squilibrio).
+
+**3. DIAGNOSI CRITICA**
+- Qual è il collo di bottiglia attuale? (Es. Volume spazzatura, frequenza incostante, selezione esercizi povera).
+- Stima il livello dell'atleta (Principiante, Intermedio, Avanzato) basandoti sui carichi relativi al peso corporeo (se disponibile) o ai numeri assoluti.
+
+**4. PIANO D'AZIONE (PROSSIME 4 SETTIMANE)**
+- Fornisci 3 direttive tecniche specifiche. Non dire "allenati di più", di "Aumenta il volume settimanale sui pettorali del 10% aggiungendo 2 set di croci ai cavi".
+- Suggerisci una variazione di intensità o volume basata sui dati.
+
+---
+
+### 📝 FORMATO RISPOSTA
+
+Rispondi in **Markdown** pulito.
+Usa un tono **Professionale, Tecnico ma Motivante**.
+Non inventare dati non presenti nel TOON.
+Se mancano dati critici (es. peso corporeo), fallo notare come primo punto per migliorare l'analisi futura.
+
+**Struttura Output:**
+### 🛡️ Coach Insight per ${data.profile.name || 'Atleta'}
+> *Breve frase riassuntiva sullo stato attuale (es. "Sei in una fase di accumulo produttiva, ma attenzione al recupero").*
+
+#### 📉 Analisi Tecnica
+*   **Volume & Frequenza**: ...
+*   **Equilibrio Strutturale**: ...
+*   **Punti di Forza**: ...
+
+#### 🎯 Focus Settimana
+1.  **[Azione 1]**: ...
+2.  **[Azione 2]**: ...
+3.  **[Azione 3]**: ...
+
+#### 💡 Tip Avanzato
+...
 `;
-            console.log("Sending TOON Prompt size:", prompt.length);
+            console.log("Sending Advanced TOON Prompt size:", prompt.length);
 
             const result = await model.generateContent(prompt);
             const response = await result.response;
