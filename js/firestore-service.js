@@ -56,8 +56,8 @@ export class FirestoreService {
                 console.warn("Could not fetch global config, using fallback if available.");
             }
 
-            // FALLBACK DI SICUREZZA: Se il DB fallisce, usa questa key (ma non verrà esposta su GitHub se non committi questo file specifico con la key dentro)
-            if (!defaultKey) defaultKey = 'AIzaSyA_B9OuOFL17UgQDr6lEVqjq4oGKNSqsoY';
+            // Hardcoded fallback removed for security
+            if (!defaultKey) defaultKey = '';
 
             const initialData = {
                 profile: {
