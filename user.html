@@ -355,11 +355,11 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                     <div style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">KG</label>
-                        <input type="number" id="focusWeightInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="0">
+                        <input type="number" id="focusWeightInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
                     </div>
                     <div style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">REPS</label>
-                        <input type="number" id="focusRepsInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="0">
+                        <input type="text" id="focusRepsInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
                     </div>
                 </div>
             </div>
@@ -689,19 +689,56 @@
                 return getStoredWorkouts().find(w => String(w.id) === String(id));
             };
 
+            const parseTargetInfo = (value) => {
+                if (value === undefined || value === null) return { label: '', numeric: '' };
+                if (typeof value === 'number' && !Number.isNaN(value)) {
+                    return { label: `${value}`, numeric: value };
+                }
+                if (typeof value === 'string') {
+                    const trimmed = value.trim();
+                    if (!trimmed) return { label: '', numeric: '' };
+                    const numeric = parseFloat(trimmed.replace(',', '.'));
+                    return {
+                        label: trimmed,
+                        numeric: Number.isNaN(numeric) ? '' : numeric
+                    };
+                }
+                return { label: '', numeric: '' };
+            };
+
+            const buildSetsFromPlan = (exercise) => {
+                const rawCount = exercise.sets ?? exercise.series ?? exercise.setCount ?? exercise.seriesCount;
+                const parsed = parseInt(rawCount, 10);
+                const setCount = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+                const target = parseTargetInfo(exercise.reps);
+                const baseWeight = Number(exercise.weight || exercise.defaultWeight || 0) || 0;
+
+                return Array.from({ length: setCount }, () => ({
+                    weight: baseWeight,
+                    reps: target.numeric,
+                    target: target.label
+                }));
+            };
+
             function cloneWorkout(workout) {
                 if (!workout) return null;
                 const clone = JSON.parse(JSON.stringify(workout));
                 if (!Array.isArray(clone.exercises)) clone.exercises = [];
                 clone.exercises = clone.exercises.map(ex => {
-                    const safeSets = Array.isArray(ex.sets) && ex.sets.length ? ex.sets : [{ weight: 0, reps: 0 }];
+                    const safeSets = Array.isArray(ex.sets) && ex.sets.length
+                        ? ex.sets.map(set => {
+                            const targetInfo = parseTargetInfo(set.target || set.reps || ex.reps);
+                            return {
+                                weight: Number(set.weight ?? ex.weight ?? 0) || 0,
+                                reps: set.reps !== undefined && set.reps !== null && set.reps !== '' ? set.reps : targetInfo.numeric,
+                                target: set.target || targetInfo.label
+                            };
+                        })
+                        : buildSetsFromPlan(ex);
                     return {
                         ...ex,
                         name: ex.name || 'Esercizio',
-                        sets: safeSets.map(set => ({
-                            weight: Number(set.weight) || 0,
-                            reps: Number(set.reps) || 0
-                        }))
+                        sets: safeSets
                     };
                 });
                 return clone;
@@ -776,11 +813,24 @@
                 if (isResting) {
                     window.skipRest();
                 } else {
-                    const w = parseFloat(focusWeightInput.value) || 0;
-                    const r = parseFloat(focusRepsInput.value) || 0;
+                    const activeExercise = currentWorkout?.exercises?.[currentExerciseIndex];
+                    const activeSet = activeExercise?.sets?.[currentSetIndex];
+
+                    const weightInputRaw = focusWeightInput.value.trim();
+                    const repsInputRaw = focusRepsInput.value.trim();
+
+                    const loggedWeight = weightInputRaw === '' ? 0 : parseFloat(weightInputRaw) || 0;
+                    const loggedReps = repsInputRaw || activeSet?.target || activeSet?.reps || '';
+
+                    if (activeSet) {
+                        activeSet.weight = loggedWeight;
+                        if (repsInputRaw) activeSet.reps = repsInputRaw;
+                    }
                     
                     const historyItem = document.createElement('div');
-                    historyItem.innerHTML = `✅ Set ${currentSetIndex + 1}: ${w}kg x ${r}`;
+                    const repsDisplay = loggedReps || '—';
+                    const weightDisplay = loggedWeight ? loggedWeight : '—';
+                    historyItem.innerHTML = `✅ Set ${currentSetIndex + 1}: ${weightDisplay}kg x ${repsDisplay}`;
                     focusHistoryList.prepend(historyItem);
 
                     startRest();
@@ -811,11 +861,25 @@
                 const set = ex.sets[currentSetIndex];
 
                 focusExerciseName.textContent = ex.name;
-                focusSetCounter.textContent = `Set ${currentSetIndex + 1} / ${ex.sets.length}`;
+                const targetLabel = set?.target || ex.reps || '';
+                const baseCounter = `Set ${currentSetIndex + 1} / ${ex.sets.length}`;
+                focusSetCounter.textContent = targetLabel ? `${baseCounter} • Target ${targetLabel}` : baseCounter;
                 
                 // Pre-fill inputs
-                focusWeightInput.value = set.weight;
-                focusRepsInput.value = set.reps;
+                if (set.weight && set.weight > 0) {
+                    focusWeightInput.value = set.weight;
+                    focusWeightInput.placeholder = `${set.weight} kg`;
+                } else {
+                    focusWeightInput.value = '';
+                    focusWeightInput.placeholder = 'Kg';
+                }
+
+                if (set.reps !== undefined && set.reps !== null && set.reps !== '') {
+                    focusRepsInput.value = set.reps;
+                } else {
+                    focusRepsInput.value = '';
+                }
+                focusRepsInput.placeholder = targetLabel || 'Reps';
 
                 // Reset UI State
                 focusActiveArea.style.display = 'block';
@@ -888,7 +952,20 @@
             function nextSet() {
                 const ex = currentWorkout.exercises[currentExerciseIndex];
                 if (currentSetIndex < ex.sets.length - 1) {
+                    const previousSet = ex.sets[currentSetIndex];
                     currentSetIndex++;
+                    const upcomingSet = ex.sets[currentSetIndex];
+                    if (previousSet && upcomingSet) {
+                        if ((!upcomingSet.weight || upcomingSet.weight === 0) && previousSet.weight) {
+                            upcomingSet.weight = previousSet.weight;
+                        }
+                        if ((upcomingSet.reps === '' || upcomingSet.reps === undefined || upcomingSet.reps === null) && previousSet.reps) {
+                            upcomingSet.reps = previousSet.reps;
+                        }
+                        if (!upcomingSet.target && previousSet.target) {
+                            upcomingSet.target = previousSet.target;
+                        }
+                    }
                 } else {
                     currentSetIndex = 0;
                     currentExerciseIndex++;
