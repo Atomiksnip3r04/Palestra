@@ -1,4 +1,4 @@
-import { db, doc, setDoc, getDoc, updateDoc, arrayUnion } from './firebase-config.js'; // Added arrayUnion
+import { db, doc, setDoc, getDoc, updateDoc, arrayUnion } from './firebase-config.js';
 import { auth } from './firebase-config.js';
 
 export class FirestoreService {
@@ -23,8 +23,8 @@ export class FirestoreService {
         });
     }
 
-    // Helper: Resize Image (to avoid hitting Firestore 1MB limit)
-    resizeImage(base64Str, maxWidth = 300) {
+    // Helper: Resize Image (Optimized for Mobile/Storage)
+    resizeImage(base64Str, maxWidth = 600, quality = 0.6) {
         return new Promise((resolve) => {
             const img = new Image();
             img.src = base64Str;
@@ -42,27 +42,28 @@ export class FirestoreService {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to JPEG 70%
+                resolve(canvas.toDataURL('image/jpeg', quality)); 
             };
         });
     }
 
-    // Save all local data to Firestore (workouts, logs, profile settings)
+    // Save all local data to Firestore
     async syncToCloud() {
         try {
             const uid = this.getUid();
-            
-            // Gather data from LocalStorage
             const localWorkouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
             const localLogs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
             const localProfile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
             const localBodyStats = JSON.parse(localStorage.getItem('ironflow_body_stats') || '[]');
+            // Sync Photos too (only metadata/Base64 if small enough, typically stored in separate collection or array)
+            const localPhotos = JSON.parse(localStorage.getItem('ironflow_photos') || '[]');
             
             const data = {
                 workouts: localWorkouts,
                 logs: localLogs,
                 profile: localProfile,
                 bodyStats: localBodyStats,
+                photos: localPhotos, // Added photos sync
                 lastUpdated: new Date().toISOString()
             };
 
@@ -75,7 +76,6 @@ export class FirestoreService {
         }
     }
 
-    // Load data from Firestore and update LocalStorage
     async loadFromCloud() {
         try {
             const uid = this.getUid();
@@ -84,17 +84,14 @@ export class FirestoreService {
 
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                
-                // Update LocalStorage
                 if (data.workouts) localStorage.setItem('ironflow_workouts', JSON.stringify(data.workouts));
                 if (data.logs) localStorage.setItem('ironflow_logs', JSON.stringify(data.logs));
                 if (data.profile) localStorage.setItem('ironflow_profile', JSON.stringify(data.profile));
                 if (data.bodyStats) localStorage.setItem('ironflow_body_stats', JSON.stringify(data.bodyStats));
+                if (data.photos) localStorage.setItem('ironflow_photos', JSON.stringify(data.photos)); // Load photos
                 
-                console.log("Data loaded from Firestore");
                 return { success: true, data };
             } else {
-                console.log("No document found for this user (first login?)");
                 return { success: true, data: null, isNew: true };
             }
         } catch (error) {
@@ -103,49 +100,51 @@ export class FirestoreService {
         }
     }
 
-    // Upload profile picture (Base64 to Firestore)
+    // Upload Photo (Generic) - Returns Base64 string
+    async processPhotoForUpload(file, maxWidth = 600) {
+        try {
+            let base64 = await this.fileToBase64(file);
+            base64 = await this.resizeImage(base64, maxWidth, 0.6);
+            return { success: true, base64 };
+        } catch (error) {
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Upload profile picture specifically (updates profile field)
     async uploadProfilePhoto(file) {
         try {
             const uid = this.getUid();
-            
-            // 1. Convert to Base64
-            let base64 = await this.fileToBase64(file);
-            
-            // 2. Resize/Compress to ensure it fits in Firestore doc (max 1MB total doc size)
-            base64 = await this.resizeImage(base64, 300); // Resize to 300px width
+            const result = await this.processPhotoForUpload(file, 200); // Smaller for avatar
+            if (!result.success) throw new Error(result.message);
 
-            // 3. Update Firestore
             await updateDoc(doc(db, this.collectionName, uid), {
-                "profile.photoUrl": base64
+                "profile.photoUrl": result.base64
             });
 
-            // 4. Update LocalStorage
             const localProfile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
-            localProfile.photoUrl = base64;
+            localProfile.photoUrl = result.base64;
             localStorage.setItem('ironflow_profile', JSON.stringify(localProfile));
 
-            return { success: true, url: base64 };
+            return { success: true, url: result.base64 };
         } catch (error) {
             console.error("Error uploading photo:", error);
             return { success: false, message: error.message };
         }
     }
 
-    // Save single profile field (e.g. name)
+    // ... existing methods ...
+    // Save single profile field
     async updateProfileField(field, value) {
         try {
             const uid = this.getUid();
-            
-            // Update Firestore
             await setDoc(doc(db, this.collectionName, uid), {
                 profile: { [field]: value }
             }, { merge: true });
 
-            // Update LocalStorage
             const localProfile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
             localProfile[field] = value;
             localStorage.setItem('ironflow_profile', JSON.stringify(localProfile));
-            
             return { success: true };
         } catch (error) {
             console.error("Error updating profile:", error);

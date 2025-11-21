@@ -441,9 +441,10 @@
                 </div>
             </div>
 
-            <script src="js/api.js"></script>
-            <script src="js/main.js"></script>
-            <script>
+            <script type="module">
+                import { firestoreService } from './js/firestore-service.js';
+                import { authService } from './js/auth-service.js';
+
                 document.addEventListener('DOMContentLoaded', () => {
                     // --- Elements ---
                     const statsDisplay = document.getElementById('statsDisplay');
@@ -457,25 +458,250 @@
                     const confirmUploadBtn = document.getElementById('confirmUploadBtn');
                     const cancelUploadBtn = document.getElementById('cancelUploadBtn');
                     const photoGallery = document.getElementById('photoGallery');
-                    const apiKeySection = document.getElementById('apiKeySection');
-                    const imgbbApiKeyInput = document.getElementById('imgbbApiKey');
-                    const saveApiKeyBtn = document.getElementById('saveApiKeyBtn');
                     const uploadStatus = document.getElementById('uploadStatus');
 
                     // --- State ---
                     let bodyStats = JSON.parse(localStorage.getItem('ironflow_body_stats') || '[]');
                     let photos = JSON.parse(localStorage.getItem('ironflow_photos') || '[]');
-                    let imgbbKey = localStorage.getItem('ironflow_imgbb_key');
 
-                    // Initialize Services
-                    let storageService;
+                    // Initialize Services (UnitService is global, Firestore is module)
                     let unitService;
                     try {
-                        storageService = window.storageService || new StorageService();
                         unitService = window.unitService || new UnitService();
                     } catch (e) {
-                        console.error('Services not available:', e);
+                        console.error('UnitService not available:', e);
                     }
+                    
+                    // Load Data from Cloud on Init
+                    async function loadData() {
+                         const result = await firestoreService.loadFromCloud();
+                         if (result.success && result.data) {
+                             if (result.data.bodyStats) bodyStats = result.data.bodyStats;
+                             if (result.data.photos) photos = result.data.photos;
+                             renderStats();
+                             initChart();
+                             renderPhotos();
+                         }
+                    }
+                    
+                    // Auth Listener to trigger load
+                    authService.subscribe(user => {
+                        if(user) loadData();
+                    });
+
+
+                    // ... (Chart and Stats logic remains the same) ...
+                    // --- Chart.js Setup ---
+                    const ctx = document.getElementById('progressChart').getContext('2d');
+                    let chart;
+
+                    function initChart() {
+                        // Sort stats by date
+                        bodyStats.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                        const labels = bodyStats.map(s => new Date(s.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' }));
+
+                        // Convert data for chart
+                        const weightData = bodyStats.map(s => unitService ? unitService.convertWeight(s.weight) : s.weight);
+                        const fatData = bodyStats.map(s => s.fat);
+
+                        if (chart) chart.destroy();
+
+                        chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: `Peso (${weightUnit})`,
+                                        data: weightData,
+                                        borderColor: '#e0ff00',
+                                        backgroundColor: 'rgba(224, 255, 0, 0.1)',
+                                        tension: 0.4,
+                                        yAxisID: 'y'
+                                    },
+                                    {
+                                        label: 'Grasso (%)',
+                                        data: fatData,
+                                        borderColor: '#ffffff',
+                                        borderDash: [5, 5],
+                                        tension: 0.4,
+                                        yAxisID: 'y1'
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                interaction: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                plugins: {
+                                    legend: { labels: { color: '#aaa' } },
+                                    tooltip: {
+                                        callbacks: {
+                                            afterBody: function (context) {
+                                                const index = context[0].dataIndex;
+                                                const stat = bodyStats[index];
+
+                                                let chest = stat.chest, arm = stat.arm, waist = stat.waist, legs = stat.legs;
+
+                                                if (unitService) {
+                                                    chest = unitService.convertLength(chest);
+                                                    arm = unitService.convertLength(arm);
+                                                    waist = unitService.convertLength(waist);
+                                                    legs = unitService.convertLength(legs);
+                                                }
+
+                                                return `Torace: ${chest || '-'} ${lengthUnit}\nBraccio: ${arm || '-'} ${lengthUnit}\nVita: ${waist || '-'} ${lengthUnit}\nGambe: ${legs || '-'} ${lengthUnit}`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
+                                    y: {
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'left',
+                                        ticks: { color: '#aaa' },
+                                        grid: { color: '#333' }
+                                    },
+                                    y1: {
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'right',
+                                        grid: { drawOnChartArea: false },
+                                        ticks: { color: '#aaa' }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    // --- Render Stats ---
+                    function renderStats() {
+                        const latest = bodyStats.length > 0 ? bodyStats[bodyStats.length - 1] : {};
+
+                        let w = latest.weight, c = latest.chest, a = latest.arm, wa = latest.waist, l = latest.legs;
+
+                        if (unitService) {
+                            w = unitService.convertWeight(w);
+                            c = unitService.convertLength(c);
+                            a = unitService.convertLength(a);
+                            wa = unitService.convertLength(wa);
+                            l = unitService.convertLength(l);
+                        }
+
+                        const items = [
+                            { label: 'Peso Corporeo', val: w, unit: weightUnit },
+                            { label: '% Grasso', val: latest.fat, unit: '%' },
+                            { label: 'Torace', val: c, unit: lengthUnit },
+                            { label: 'Braccio', val: a, unit: lengthUnit },
+                            { label: 'Vita', val: wa, unit: lengthUnit },
+                            { label: 'Gambe', val: l, unit: lengthUnit }
+                        ];
+
+                        statsDisplay.innerHTML = items.map(item => `
+                    <div class="measure-card">
+                        <span>${item.label}</span>
+                        <span class="measure-val">${item.val || '-'} <span style="font-size: 0.8rem; color: var(--color-text-muted);">${item.unit}</span></span>
+                    </div>
+                `).join('');
+                    }
+
+                    // --- Render Photos ---
+                    function renderPhotos() {
+                        photoGallery.innerHTML = photos.map(p => `
+                    <div class="photo-card">
+                        <a href="${p.url}" target="_blank">
+                            <img src="${p.thumb || p.url}" alt="Progress Photo">
+                        </a>
+                        <div class="photo-info">
+                            <div>${new Date(p.date).toLocaleDateString()}</div>
+                            <div>${p.note || ''}</div>
+                        </div>
+                    </div>
+                `).join('');
+                    }
+
+                    // --- Stats Logic ---
+                    editStatsBtn.addEventListener('click', () => {
+                        statsModal.style.display = 'flex';
+                        document.getElementById('statsDate').valueAsDate = new Date();
+
+                        // Pre-fill with latest (converted to display unit)
+                        if (bodyStats.length > 0) {
+                            const latest = bodyStats[bodyStats.length - 1];
+
+                            let w = latest.weight, c = latest.chest, a = latest.arm, wa = latest.waist, l = latest.legs;
+                            if (unitService) {
+                                w = unitService.convertWeight(w);
+                                c = unitService.convertLength(c);
+                                a = unitService.convertLength(a);
+                                wa = unitService.convertLength(wa);
+                                l = unitService.convertLength(l);
+                            }
+
+                            document.getElementById('inputWeight').value = w || '';
+                            document.getElementById('inputFat').value = latest.fat || '';
+                            document.getElementById('inputChest').value = c || '';
+                            document.getElementById('inputArm').value = a || '';
+                            document.getElementById('inputWaist').value = wa || '';
+                            document.getElementById('inputLegs').value = l || '';
+                        }
+                    });
+
+                    saveStatsBtn.addEventListener('click', async () => {
+                        const date = document.getElementById('statsDate').value;
+                        let weight = parseFloat(document.getElementById('inputWeight').value);
+                        const fat = parseFloat(document.getElementById('inputFat').value);
+                        let chest = parseFloat(document.getElementById('inputChest').value);
+                        let arm = parseFloat(document.getElementById('inputArm').value);
+                        let waist = parseFloat(document.getElementById('inputWaist').value);
+                        let legs = parseFloat(document.getElementById('inputLegs').value);
+
+                        if (!date) {
+                            alert('Inserisci una data.');
+                            return;
+                        }
+
+                        // Convert back to Metric for storage
+                        if (unitService) {
+                            if (weight) weight = unitService.toMetricWeight(weight);
+                            if (chest) chest = unitService.toMetricLength(chest);
+                            if (arm) arm = unitService.toMetricLength(arm);
+                            if (waist) waist = unitService.toMetricLength(waist);
+                            if (legs) legs = unitService.toMetricLength(legs);
+                        }
+
+                        const newStat = {
+                            id: Date.now(),
+                            date,
+                            weight: weight || null,
+                            fat: fat || null,
+                            chest: chest || null,
+                            arm: arm || null,
+                            waist: waist || null,
+                            legs: legs || null
+                        };
+
+                        bodyStats.push(newStat);
+                        localStorage.setItem('ironflow_body_stats', JSON.stringify(bodyStats));
+
+                        statsModal.style.display = 'none';
+                        renderStats();
+                        initChart();
+
+                        if (window.firestoreService) {
+                            await window.firestoreService.syncToCloud();
+                        }
+                    });
+
+                    cancelStatsBtn.addEventListener('click', () => statsModal.style.display = 'none');
+
+
 
                     // Update Labels based on Unit System
                     const weightUnit = unitService && unitService.getSystem() === 'imperial' ? 'lbs' : 'kg';
@@ -691,22 +917,12 @@
                         renderStats();
                         initChart();
 
-                        if (storageService && storageService.hasCredentials()) {
-                            await storageService.syncData();
+                        if (window.firestoreService) {
+                            await window.firestoreService.syncToCloud();
                         }
                     });
 
                     cancelStatsBtn.addEventListener('click', () => statsModal.style.display = 'none');
-
-                    saveApiKeyBtn.addEventListener('click', () => {
-                        const key = imgbbApiKeyInput.value.trim();
-                        if (key) {
-                            localStorage.setItem('ironflow_imgbb_key', key);
-                            imgbbKey = key;
-                            apiKeySection.style.display = 'none';
-                            uploadPhotoBtn.style.display = 'block';
-                        }
-                    });
 
                     uploadPhotoBtn.addEventListener('click', () => {
                         photoModal.style.display = 'flex';
@@ -727,42 +943,35 @@
                         }
 
                         const file = fileInput.files[0];
-                        const formData = new FormData();
-                        formData.append('image', file);
-
-                        uploadStatus.textContent = 'Caricamento in corso...';
+                        uploadStatus.textContent = 'Caricamento e compressione...';
                         confirmUploadBtn.disabled = true;
 
                         try {
-                            const response = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, {
-                                method: 'POST',
-                                body: formData
-                            });
-
-                            const result = await response.json();
+                            // Use Firestore Service to process (resize) image to Base64
+                            const result = await firestoreService.processPhotoForUpload(file, 600); // Max width 600px
 
                             if (result.success) {
                                 const newPhoto = {
                                     id: Date.now(),
-                                    url: result.data.url,
-                                    thumb: result.data.thumb.url,
-                                    delete_url: result.data.delete_url,
+                                    url: result.base64, // Store Base64 directly
                                     date: new Date().toISOString(),
                                     note: note
                                 };
 
                                 photos.unshift(newPhoto);
+                                // Limit photos to avoid hitting document size limits (e.g. keep last 10 locally/doc)
+                                // For a real app, we'd use a subcollection, but for this single-doc architecture:
+                                if (photos.length > 10) photos = photos.slice(0, 10);
+
                                 localStorage.setItem('ironflow_photos', JSON.stringify(photos));
 
                                 renderPhotos();
                                 photoModal.style.display = 'none';
 
-                                // Sync
-                                if (storageService && storageService.hasCredentials()) {
-                                    await storageService.syncData();
-                                }
+                                // Sync to Firestore
+                                await firestoreService.syncToCloud();
                             } else {
-                                throw new Error(result.error.message);
+                                throw new Error(result.message);
                             }
                         } catch (error) {
                             console.error('Upload failed:', error);
@@ -771,7 +980,7 @@
                             confirmUploadBtn.disabled = false;
                         }
                     });
-
+                    
                     // --- Init ---
                     renderStats();
                     initChart();
