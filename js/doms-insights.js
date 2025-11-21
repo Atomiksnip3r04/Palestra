@@ -48,9 +48,11 @@ export const computeDomsInsights = (logs = []) => {
         for (let i = trainingLookup.length - 1; i >= 0; i--) {
             const entry = trainingLookup[i];
             const entryTime = safeDate(entry.date);
+            // Ignore entries in the future relative to the report
             if (entryTime === null || entryTime >= beforeTimestamp) continue;
+            
             if (entry.muscles.has(muscle)) {
-                return entry.date;
+                return entryTime; // Return timestamp instead of date string
             }
         }
         return null;
@@ -81,17 +83,21 @@ export const computeDomsInsights = (logs = []) => {
 
         muscles.forEach(muscle => {
             const label = MUSCLE_GROUPS[muscle]?.label || muscle;
-            const stimulusDate = findLastStimulusBefore(muscle, recordedTs);
-            const stimulusTime = safeDate(stimulusDate);
-            const gapDays = stimulusTime !== null
-                ? Math.max(0, Math.round((recordedTs - stimulusTime) / DAY_MS))
-                : null;
+            const stimulusTs = findLastStimulusBefore(muscle, recordedTs);
+            
+            let gapDays = null;
+            if (stimulusTs !== null) {
+                const diff = recordedTs - stimulusTs;
+                // Ensure non-negative gap. Cap at 30 days to avoid outliers (like 20000 days)
+                gapDays = Math.max(0, Math.round(diff / DAY_MS));
+                if (gapDays > 60) gapDays = null; // Discard realistic outliers (e.g. > 2 months or bad dates)
+            }
 
             entryDetail.muscles.push({
                 id: muscle,
                 label,
                 daysSinceStimulus: gapDays,
-                lastStimulusDate: stimulusDate || null
+                lastStimulusDate: stimulusTs ? new Date(stimulusTs).toISOString() : null
             });
 
             if (!stats[muscle]) {
