@@ -529,6 +529,7 @@
                     if (loadResult.success) {
                         syncStatus.textContent = 'Sincronizzato';
                         renderWorkouts(); // Update list
+                        syncFocusOverlayWithLatestPlan();
                         
                         // Update avatar if cloud had newer one
                         const updatedProfile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
@@ -640,6 +641,9 @@
             const focusHistoryList = document.getElementById('focusHistoryList');
             const focusExerciseName = document.getElementById('focusExerciseName');
             const focusSetCounter = document.getElementById('focusSetCounter');
+            const focusWorkoutTitle = document.getElementById('focusWorkoutTitle');
+            const focusProgressBar = document.getElementById('focusProgressBar');
+            const focusProgressText = document.getElementById('focusProgressText');
             
             let currentWorkout = null;
             let currentExerciseIndex = 0;
@@ -647,6 +651,8 @@
             let isResting = false;
             let timerInterval = null;
             let remainingTime = 0;
+            let currentWorkoutId = null;
+            let sessionCompleted = false;
 
             // Global Helpers for HTML attributes
             window.adjustTimer = (seconds) => {
@@ -661,14 +667,96 @@
                 nextSet();
             };
 
-            window.initFocusMode = (workout) => {
-                currentWorkout = JSON.parse(JSON.stringify(workout)); // Deep copy to avoid mutating list directly
+            const generateWorkoutId = () => {
+                if (window.crypto?.randomUUID) {
+                    return 'wf_' + crypto.randomUUID();
+                }
+                return 'wf_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+            };
+
+            function getStoredWorkouts() {
+                try {
+                    const raw = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
+                    return Array.isArray(raw) ? raw : [];
+                } catch (error) {
+                    console.error('Errore lettura schede', error);
+                    return [];
+                }
+            }
+
+            const findWorkoutById = (id) => {
+                if (!id) return null;
+                return getStoredWorkouts().find(w => String(w.id) === String(id));
+            };
+
+            function cloneWorkout(workout) {
+                if (!workout) return null;
+                const clone = JSON.parse(JSON.stringify(workout));
+                if (!Array.isArray(clone.exercises)) clone.exercises = [];
+                clone.exercises = clone.exercises.map(ex => {
+                    const safeSets = Array.isArray(ex.sets) && ex.sets.length ? ex.sets : [{ weight: 0, reps: 0 }];
+                    return {
+                        ...ex,
+                        name: ex.name || 'Esercizio',
+                        sets: safeSets.map(set => ({
+                            weight: Number(set.weight) || 0,
+                            reps: Number(set.reps) || 0
+                        }))
+                    };
+                });
+                return clone;
+            }
+
+            function hydrateFocusWorkout(workout, { showNotice = false, skipClone = false } = {}) {
+                const readyWorkout = skipClone ? workout : cloneWorkout(workout);
+                if (!readyWorkout || !Array.isArray(readyWorkout.exercises) || readyWorkout.exercises.length === 0) {
+                    return null;
+                }
+                currentWorkout = readyWorkout;
                 currentExerciseIndex = 0;
                 currentSetIndex = 0;
+                sessionCompleted = false;
                 isResting = false;
-                focusHistoryList.innerHTML = ''; // Clear history
-                focusOverlay.style.display = 'flex';
+                focusHistoryList.innerHTML = '';
+                if (showNotice) {
+                    const notice = document.createElement('div');
+                    notice.style.color = 'var(--color-primary)';
+                    notice.style.fontSize = '0.8rem';
+                    notice.textContent = 'Scheda aggiornata. Sessione riallineata.';
+                    focusHistoryList.appendChild(notice);
+                }
+                focusWorkoutTitle.textContent = readyWorkout.name || 'Workout Personalizzato';
                 updateFocusUI();
+                return readyWorkout;
+            }
+
+            function syncFocusOverlayWithLatestPlan() {
+                if (focusOverlay.style.display !== 'flex' || !currentWorkoutId) return;
+                const updated = findWorkoutById(currentWorkoutId);
+                if (!updated) {
+                    finishWorkout(true);
+                    return;
+                }
+                const refreshed = hydrateFocusWorkout(updated, { showNotice: true });
+                if (!refreshed) {
+                    finishWorkout(true);
+                }
+            }
+
+            window.initFocusMode = (workout) => {
+                const source = typeof workout === 'string'
+                    ? findWorkoutById(workout)
+                    : (workout?.id ? (findWorkoutById(workout.id) || workout) : workout);
+
+                const hydrated = hydrateFocusWorkout(source || null);
+
+                if (!hydrated) {
+                    alert('Questa scheda non contiene esercizi validi. Aggiornala dal Creator prima di avviare la modalità Focus.');
+                    return;
+                }
+
+                currentWorkoutId = hydrated.id || source?.id || null;
+                focusOverlay.style.display = 'flex';
             };
 
             exitFocusModeBtn.addEventListener('click', () => {
@@ -679,24 +767,32 @@
             });
 
             focusActionBtn.addEventListener('click', () => {
+                if (sessionCompleted) {
+                    stopTimer();
+                    focusOverlay.style.display = 'none';
+                    return;
+                }
+
                 if (isResting) {
                     window.skipRest();
                 } else {
-                    // Complete Set
                     const w = parseFloat(focusWeightInput.value) || 0;
                     const r = parseFloat(focusRepsInput.value) || 0;
                     
-                    // Log visual feedback (optional)
                     const historyItem = document.createElement('div');
                     historyItem.innerHTML = `✅ Set ${currentSetIndex + 1}: ${w}kg x ${r}`;
                     focusHistoryList.prepend(historyItem);
 
-                    // Start Rest
                     startRest();
                 }
             });
 
             function updateFocusUI() {
+                if (!currentWorkout || !Array.isArray(currentWorkout.exercises) || currentWorkout.exercises.length === 0) {
+                    finishWorkout(true);
+                    return;
+                }
+                
                 if (currentExerciseIndex >= currentWorkout.exercises.length) {
                     finishWorkout();
                     return;
@@ -737,8 +833,8 @@
                 completed += currentSetIndex;
                 
                 const percent = Math.round((completed / totalSets) * 100);
-                document.getElementById('focusProgressBar').style.width = percent + '%';
-                document.getElementById('focusProgressText').textContent = percent + '%';
+                focusProgressBar.style.width = percent + '%';
+                focusProgressText.textContent = percent + '%';
             }
 
             function startRest() {
@@ -801,22 +897,28 @@
                 updateFocusUI();
             }
 
-            function finishWorkout() {
-                focusExerciseName.textContent = "Workout Completato!";
-                focusSetCounter.textContent = "Ottimo lavoro.";
+            function finishWorkout(empty = false) {
+                sessionCompleted = true;
                 focusActiveArea.style.display = 'none';
                 focusTimerArea.style.display = 'none';
                 focusActionBtn.textContent = "CHIUDI";
                 focusActionBtn.className = 'btn btn-primary';
                 focusActionBtn.style.background = 'var(--color-primary)';
+                focusActionBtn.style.border = 'none';
+                focusActionBtn.style.color = 'black';
+                focusHistoryList.innerHTML = '';
                 
-                document.getElementById('focusProgressBar').style.width = '100%';
-                document.getElementById('focusProgressText').textContent = '100%';
-
-                focusActionBtn.onclick = () => {
-                     focusOverlay.style.display = 'none';
-                     window.location.reload(); 
-                };
+                if (empty) {
+                    focusExerciseName.textContent = "Nessun esercizio disponibile";
+                    focusSetCounter.textContent = "Aggiorna la scheda per iniziare.";
+                    focusProgressBar.style.width = '0%';
+                    focusProgressText.textContent = '0%';
+                } else {
+                    focusExerciseName.textContent = "Workout Completato!";
+                    focusSetCounter.textContent = "Ottimo lavoro.";
+                    focusProgressBar.style.width = '100%';
+                    focusProgressText.textContent = '100%';
+                }
             }
 
             function playBeep() {
@@ -881,10 +983,25 @@
             }
 
 
+            window.addEventListener('storage', (event) => {
+                if (event.key === 'ironflow_workouts') {
+                    renderWorkouts();
+                    syncFocusOverlayWithLatestPlan();
+                }
+            });
+
+            window.addEventListener('focus', () => {
+                renderWorkouts();
+            });
+
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) renderWorkouts();
+            });
+
             // --- Existing Workout List Logic (Preserved) ---
             function renderWorkouts() {
                 const list = document.getElementById('savedWorkoutsList');
-                const workouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
+                const workouts = getStoredWorkouts();
                 if (!list) return;
 
                 list.innerHTML = '';
@@ -892,16 +1009,34 @@
                 if (workouts.length === 0) {
                     list.innerHTML = '<p style="color: var(--color-text-muted);">Nessuna scheda salvata.</p>';
                 } else {
+                    let normalized = false;
+                    workouts.forEach((w) => {
+                        if (!w.id) {
+                            w.id = generateWorkoutId();
+                            normalized = true;
+                        }
+                        if (!Array.isArray(w.exercises)) {
+                            w.exercises = [];
+                        }
+                    });
+
+                    if (normalized) {
+                        localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
+                    }
+
                     workouts.forEach((w, index) => {
                         const div = document.createElement('div');
                         div.className = 'workout-list-item';
+                        const workoutIdAttr = w.id ? `data-id="${w.id}"` : '';
+                        const workoutName = w.name || 'Workout senza nome';
+                        const exercisesCount = Array.isArray(w.exercises) ? w.exercises.length : 0;
                         div.innerHTML = `
                             <div style="flex: 1;">
-                                <strong>${w.name}</strong>
-                                <div style="font-size: 0.8rem; color: var(--color-text-muted);">${w.exercises.length} Esercizi</div>
+                                <strong>${workoutName}</strong>
+                                <div style="font-size: 0.8rem; color: var(--color-text-muted);">${exercisesCount} Esercizi</div>
                             </div>
                             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <button class="btn-icon start-workout" data-index="${index}" title="Avvia Focus Mode" style="background: var(--color-primary); color: black; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                                <button class="btn-icon start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode" style="background: var(--color-primary); color: black; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                                     ▶
                                 </button>
                                 <a href="creator.html?id=${w.id}" style="padding: 0.5rem; font-size: 0.9rem; color: var(--color-text); text-decoration: none; border: 1px solid var(--color-border); border-radius: 4px;">Modifica</a>
@@ -911,23 +1046,33 @@
                         list.appendChild(div);
                     });
 
-                    // Attach Listeners
-                    document.querySelectorAll('.start-workout').forEach(btn => {
+                    list.querySelectorAll('.start-workout').forEach(btn => {
                         btn.addEventListener('click', (e) => {
-                            const idx = e.currentTarget.dataset.index;
-                            const workouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
-                            window.initFocusMode(workouts[idx]);
+                            const idx = Number(e.currentTarget.dataset.index);
+                            const workoutId = e.currentTarget.dataset.id;
+                            const stored = getStoredWorkouts();
+                            let targetWorkout = workoutId ? stored.find(w => String(w.id) === String(workoutId)) : stored[idx];
+
+                            if (!targetWorkout) {
+                                alert('Scheda non trovata. Aggiorna la pagina per sincronizzare le modifiche.');
+                                renderWorkouts();
+                                return;
+                            }
+
+                            window.initFocusMode(targetWorkout);
                         });
                     });
 
-                    document.querySelectorAll('.delete-workout').forEach(btn => {
+                    list.querySelectorAll('.delete-workout').forEach(btn => {
                         btn.addEventListener('click', async (e) => {
                             if (confirm('Sei sicuro?')) {
-                                const idx = e.target.dataset.index;
-                                const workouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
+                                const idx = Number(e.target.dataset.index);
+                                if (Number.isNaN(idx)) return;
+                                const workouts = getStoredWorkouts();
                                 workouts.splice(idx, 1);
                                 localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
                                 renderWorkouts();
+                                syncFocusOverlayWithLatestPlan();
                                 // Auto sync deletion
                                 if (authService.getCurrentUser()) {
                                     await firestoreService.syncToCloud();

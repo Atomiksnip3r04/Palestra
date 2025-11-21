@@ -123,7 +123,9 @@
 
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
-    <script>
+    <script type="module">
+        import { firestoreService } from './js/firestore-service.js';
+
         document.addEventListener('DOMContentLoaded', () => {
             // Creator Logic with Edit Mode & Sync
             const exercisesList = document.getElementById('exercisesList');
@@ -255,6 +257,12 @@
 
                     if (storageService && storageService.hasCredentials()) {
                         await storageService.syncData();
+                    }
+
+                    try {
+                        await firestoreService.syncToCloud();
+                    } catch (err) {
+                        console.warn('Sync Firestore non riuscita (probabilmente utente non loggato):', err.message || err);
                     }
 
                     alert('Scheda salvata con successo!');
