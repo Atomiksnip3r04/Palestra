@@ -218,6 +218,19 @@
                             </select>
                         </div>
 
+                        <!-- AI CONFIG SECTION -->
+                        <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; width: 100%;">
+                                <span>Gemini AI Key</span>
+                                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key</a>
+                            </div>
+                            <div style="display: flex; width: 100%; gap: 0.5rem;">
+                                <input type="password" id="aiKeyInput" placeholder="Incolla qui la tua API Key" style="flex: 1; padding: 0.3rem; background: var(--color-bg); border: 1px solid var(--color-border); color: white;">
+                                <button id="saveAiKeyBtn" class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Salva</button>
+                            </div>
+                            <p id="aiKeyStatus" style="font-size: 0.7rem; color: var(--color-text-muted); width: 100%; text-align: right; margin: 0;"></p>
+                        </div>
+
                         <div class="setting-item">
                             <span>Sincronizzazione</span>
                             <button id="syncBtn" class="btn btn-outline" style="font-size: 0.8rem;">Sincronizza Ora</button>
@@ -246,6 +259,7 @@
     <script type="module">
         import { authService } from './js/auth-service.js';
         import { firestoreService } from './js/firestore-service.js';
+        import { aiService } from './js/ai-service.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             
@@ -413,6 +427,26 @@
                 await firestoreService.syncToCloud();
                 syncStatus.textContent = 'Sincronizzato ora.';
                 setTimeout(() => syncStatus.textContent = '', 2000);
+            });
+
+            // --- AI Key Logic ---
+            const aiKeyInput = document.getElementById('aiKeyInput');
+            const saveAiKeyBtn = document.getElementById('saveAiKeyBtn');
+            const aiKeyStatus = document.getElementById('aiKeyStatus');
+
+            // Load existing key (masked)
+            if (aiService.hasKey()) {
+                aiKeyInput.value = '****************';
+            }
+
+            saveAiKeyBtn.addEventListener('click', () => {
+                const key = aiKeyInput.value;
+                if (key && key !== '****************') {
+                    aiService.saveKey(key);
+                    aiKeyStatus.textContent = 'Key salvata!';
+                    aiKeyStatus.style.color = 'var(--color-primary)';
+                    setTimeout(() => aiKeyStatus.textContent = '', 2000);
+                }
             });
             
             // Export Data (Existing logic adapted)

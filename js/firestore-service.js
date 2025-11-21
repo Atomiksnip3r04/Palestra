@@ -152,6 +152,70 @@ export class FirestoreService {
             return { success: false, message: error.message };
         }
     }
+
+    // Helper: Gather data for AI Analysis
+    async gatherDataForAI() {
+        try {
+            // Fetch fresh data if possible, otherwise use local
+            const localLogs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+            const localBodyStats = JSON.parse(localStorage.getItem('ironflow_body_stats') || '[]');
+            const localProfile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
+
+            // Filter last 30 days logs
+            const now = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(now.getDate() - 30);
+
+            const recentLogs = localLogs.filter(log => new Date(log.date) >= thirtyDaysAgo);
+
+            // Calculate PRs locally to save tokens
+            const prs = {};
+            localLogs.forEach(log => {
+                if (!log.exercises) return;
+                log.exercises.forEach(ex => {
+                    const name = ex.name.toLowerCase();
+                    ex.sets.forEach(set => {
+                        const w = parseFloat(set.weight);
+                        const r = parseFloat(set.reps);
+                        if (w > 0 && r > 0) {
+                            const oneRM = w * (1 + r / 30);
+                            if (!prs[name] || oneRM > prs[name]) {
+                                prs[name] = Math.round(oneRM);
+                            }
+                        }
+                    });
+                });
+            });
+
+            // Sort PRs to keep only top 5-10 relevant ones
+            const topPrs = Object.entries(prs)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10)
+                .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
+
+            // Simplify Logs for Token Efficiency (Date + Volume + Main Lift if any)
+            const simplifiedLogs = recentLogs.map(log => {
+                const mainLifts = log.exercises.slice(0, 3).map(e => `${e.name} (${e.sets.length} sets)`);
+                return {
+                    date: log.date.split('T')[0],
+                    volume: log.totalVolume,
+                    mainExercises: mainLifts
+                };
+            });
+
+            return {
+                profile: localProfile,
+                bodyStats: localBodyStats.slice(0, 3), // Last 3 weigh-ins
+                recentLogs: simplifiedLogs,
+                recentWorkoutCount: recentLogs.length,
+                prs: topPrs
+            };
+
+        } catch (e) {
+            console.error("Error gathering data:", e);
+            return null;
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();

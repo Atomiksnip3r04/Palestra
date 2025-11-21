@@ -107,6 +107,22 @@
         <div class="container">
             <h1 style="margin-bottom: var(--spacing-md);">Analisi <span class="text-primary">Performance</span></h1>
 
+            <!-- AI Coach Button -->
+            <button id="askCoachBtn" class="btn btn-primary" style="width: 100%; margin-bottom: var(--spacing-md); display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(45deg, var(--color-primary), #ff8844);">
+                <span>✨</span> Chiedi al Coach AI
+            </button>
+
+            <!-- AI Response Modal -->
+            <div id="aiModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+                <div class="card" style="max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative;">
+                    <button id="closeAiModal" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    <h3 style="margin-bottom: 1rem;">Coach <span class="text-primary">Insight</span></h3>
+                    <div id="aiResponseContent" style="line-height: 1.6; color: var(--color-text-muted);">
+                        <!-- Content goes here -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Key Stats -->
             <div class="stat-grid" style="margin-bottom: var(--spacing-md);">
                 <div class="stat-card">
@@ -157,6 +173,78 @@
 
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
+    
+    <!-- AI Logic -->
+    <script type="module">
+        import { firestoreService } from './js/firestore-service.js';
+        import { aiService } from './js/ai-service.js';
+        // Mark services as available globally for mixed context if needed, though module scope is safer
+    
+        document.addEventListener('DOMContentLoaded', () => {
+            const askCoachBtn = document.getElementById('askCoachBtn');
+            const aiModal = document.getElementById('aiModal');
+            const closeAiModal = document.getElementById('closeAiModal');
+            const aiContent = document.getElementById('aiResponseContent');
+
+            // Close Modal Logic
+            const closeModal = () => {
+                aiModal.style.display = 'none';
+            };
+            closeAiModal.addEventListener('click', closeModal);
+            aiModal.addEventListener('click', (e) => {
+                if (e.target === aiModal) closeModal();
+            });
+
+            // Analyze Logic
+            askCoachBtn.addEventListener('click', async () => {
+                if (!aiService.hasKey()) {
+                    alert('Per usare il Coach AI, devi prima inserire la tua API Key nelle Impostazioni del Profilo.');
+                    window.location.href = 'user.html';
+                    return;
+                }
+
+                // Open Modal with loading state
+                aiModal.style.display = 'flex';
+                aiContent.innerHTML = `
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">🧠</div>
+                        <p>Sto analizzando i tuoi dati...</p>
+                        <p style="font-size: 0.8rem; color: var(--color-text-muted);">Lettura log • Calcolo 1RM • Identificazione pattern</p>
+                    </div>
+                `;
+
+                // 1. Gather Data
+                const data = await firestoreService.gatherDataForAI();
+                
+                if (!data) {
+                    aiContent.innerHTML = '<p style="color: #ff4444;">Errore nel recupero dei dati.</p>';
+                    return;
+                }
+
+                if (data.recentWorkoutCount === 0) {
+                    aiContent.innerHTML = '<p>Non ho trovato abbastanza dati recenti (ultimi 30 giorni) per farti un\'analisi accurata. Allenati ancora un po\'!</p>';
+                    return;
+                }
+
+                // 2. Call AI
+                const result = await aiService.analyzeProgress(data);
+
+                // 3. Show Result
+                if (result.success) {
+                    // Simple Markdown to HTML converter
+                    const html = result.text
+                        .replace(/\*\*(.*?)\*\*/g, '<strong style="color: white;">$1</strong>') // Bold
+                        .replace(/\* (.*?)\n/g, '<li>$1</li>') // List items
+                        .replace(/\n/g, '<br>'); // Newlines
+
+                    aiContent.innerHTML = html;
+                } else {
+                    aiContent.innerHTML = `<p style="color: #ff4444;">Errore AI: ${result.message}</p>`;
+                }
+            });
+        });
+    </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize Services
