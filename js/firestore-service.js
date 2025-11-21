@@ -1,4 +1,4 @@
-import { db, doc, setDoc, getDoc, updateDoc } from './firebase-config.js';
+import { db, doc, setDoc, getDoc, updateDoc, arrayUnion } from './firebase-config.js'; // Added arrayUnion
 import { auth } from './firebase-config.js';
 
 export class FirestoreService {
@@ -214,6 +214,44 @@ export class FirestoreService {
         } catch (e) {
             console.error("Error gathering data:", e);
             return null;
+        }
+    }
+
+    // Save AI Analysis to Firestore History
+    async saveAIAnalysis(text) {
+        try {
+            const uid = this.getUid();
+            const analysisEntry = {
+                date: new Date().toISOString(),
+                text: text,
+                summary: text.substring(0, 100) + '...' // Preview
+            };
+
+            // Use arrayUnion to add to an array "aiHistory" in the user doc
+            await updateDoc(doc(db, this.collectionName, uid), {
+                aiHistory: arrayUnion(analysisEntry)
+            });
+            
+            return { success: true };
+        } catch (error) {
+            console.error("Error saving AI analysis:", error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Load AI History
+    async getAIHistory() {
+        try {
+            const uid = this.getUid();
+            const docSnap = await getDoc(doc(db, this.collectionName, uid));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                return data.aiHistory || []; // Return empty array if no history
+            }
+            return [];
+        } catch (error) {
+            console.error("Error loading history:", error);
+            return [];
         }
     }
 }
