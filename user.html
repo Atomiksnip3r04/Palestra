@@ -153,15 +153,15 @@
                 <form id="authForm">
                     <div class="form-group" id="nameGroup" style="display: none;">
                         <label>Nome</label>
-                        <input type="text" id="nameInput" placeholder="Il tuo nome">
+                        <input type="text" id="nameInput" placeholder="Il tuo nome" autocomplete="name">
                     </div>
                     <div class="form-group">
                         <label>Email</label>
-                        <input type="email" id="emailInput" required placeholder="email@esempio.com">
+                        <input type="email" id="emailInput" required placeholder="email@esempio.com" autocomplete="email">
                     </div>
                     <div class="form-group">
                         <label>Password</label>
-                        <input type="password" id="passwordInput" required placeholder="******">
+                        <input type="password" id="passwordInput" required placeholder="******" autocomplete="current-password">
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Entra</button>
                 </form>
@@ -224,10 +224,11 @@
                                 <span>Gemini AI Key</span>
                                 <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key</a>
                             </div>
-                            <div style="display: flex; width: 100%; gap: 0.5rem;">
-                                <input type="password" id="aiKeyInput" placeholder="Incolla qui la tua API Key" style="flex: 1; padding: 0.3rem; background: var(--color-bg); border: 1px solid var(--color-border); color: white;">
-                                <button id="saveAiKeyBtn" class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Salva</button>
-                            </div>
+                            <!-- Wrap in form to silence DOM warnings about password field outside form -->
+                            <form style="display: flex; width: 100%; gap: 0.5rem; margin: 0;" onsubmit="return false;">
+                                <input type="password" id="aiKeyInput" placeholder="Incolla qui la tua API Key" autocomplete="off" style="flex: 1; padding: 0.3rem; background: var(--color-bg); border: 1px solid var(--color-border); color: white;">
+                                <button id="saveAiKeyBtn" type="button" class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Salva</button>
+                            </form>
                             <p id="aiKeyStatus" style="font-size: 0.7rem; color: var(--color-text-muted); width: 100%; text-align: right; margin: 0;"></p>
                         </div>
 
