@@ -2,10 +2,8 @@ import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 export class AIService {
     constructor() {
-        // Set default key provided by user if not present
-        if (!localStorage.getItem('ironflow_ai_key')) {
-            localStorage.setItem('ironflow_ai_key', 'AIzaSyC7WC1A7gcDKAb_o9LnZT7wMiE3BGhazFI');
-        }
+        // API Key is loaded from LocalStorage only. 
+        // NEVER hardcode keys in public repositories.
         this.apiKey = localStorage.getItem('ironflow_ai_key');
     }
 
