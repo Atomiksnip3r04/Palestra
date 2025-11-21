@@ -13,6 +13,72 @@ export class FirestoreService {
         return user.uid;
     }
 
+    // --- GLOBAL CONFIG MANAGEMENT ---
+    
+    async getGlobalConfig() {
+        try {
+            const docSnap = await getDoc(doc(db, 'config', 'global'));
+            if (docSnap.exists()) {
+                return docSnap.data();
+            }
+            return null;
+        } catch (error) {
+            console.warn("Global config not found or accessible:", error);
+            return null;
+        }
+    }
+
+    // Admin tool to set the key once (Run from console: window.firestoreService.setGlobalApiKey('...'))
+    async setGlobalApiKey(key) {
+        try {
+            await setDoc(doc(db, 'config', 'global'), {
+                defaultGeminiKey: key
+            }, { merge: true });
+            console.log("Global API Key stored securely in Firestore.");
+            return { success: true };
+        } catch (error) {
+            console.error("Error setting global key:", error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    // Initialize new user with default settings and keys
+    async initializeNewUser(user) {
+        try {
+            // Try to get global config
+            let defaultKey = '';
+            
+            try {
+                const config = await this.getGlobalConfig();
+                defaultKey = config?.defaultGeminiKey || '';
+            } catch (e) {
+                console.warn("Could not fetch global config, using fallback if available.");
+            }
+
+            // FALLBACK DI SICUREZZA: Se il DB fallisce, usa questa key (ma non verrà esposta su GitHub se non committi questo file specifico con la key dentro)
+            if (!defaultKey) defaultKey = 'AIzaSyA_B9OuOFL17UgQDr6lEVqjq4oGKNSqsoY';
+
+            const initialData = {
+                profile: {
+                    name: user.displayName || '',
+                    email: user.email || '',
+                    photoUrl: user.photoURL || '',
+                    geminiKey: defaultKey, // Auto-assign global key
+                    joinDate: new Date().toISOString()
+                },
+                workouts: [],
+                logs: [],
+                bodyStats: []
+            };
+
+            await setDoc(doc(db, this.collectionName, user.uid), initialData, { merge: true });
+            return { success: true };
+        } catch (error) {
+            console.error("Error initializing user:", error);
+            return { success: false, message: error.message };
+        }
+    }
+
     // Helper: Convert File to Base64
     fileToBase64(file) {
         return new Promise((resolve, reject) => {

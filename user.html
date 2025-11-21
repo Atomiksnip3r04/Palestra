@@ -59,12 +59,66 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 0;
+            padding: 1.2rem 0;
             border-bottom: 1px solid var(--color-border);
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .setting-item:last-child {
             border-bottom: none;
+        }
+        
+        .setting-label {
+            font-weight: 500;
+            color: var(--color-text-main);
+            flex-shrink: 0;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-grow: 1;
+            justify-content: flex-end;
+        }
+        
+        .input-compact {
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--color-border);
+            color: white;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+        }
+
+        .btn-compact {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            min-width: 80px;
+        }
+
+        /* Mobile specific adjustments for settings */
+        @media (max-width: 480px) {
+            .setting-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .setting-control {
+                width: 100%;
+                justify-content: stretch;
+            }
+            
+            .setting-control input, 
+            .setting-control select,
+            .setting-control button {
+                width: 100%;
+            }
+            
+            .setting-control form {
+                width: 100%;
+            }
         }
 
         .workout-list-item {
@@ -203,50 +257,59 @@
 
                     <!-- Settings -->
                     <div class="card">
-                        <h3 style="margin-bottom: 1rem;">Impostazioni</h3>
+                        <h3 style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">Impostazioni</h3>
 
                         <div class="setting-item">
-                            <span>Nome Visualizzato</span>
-                            <input type="text" id="profileNameInput" style="width: 120px; padding: 0.2rem; background: transparent; border: 1px solid var(--color-border); color: white;">
+                            <span class="setting-label">Nome Visualizzato</span>
+                            <div class="setting-control">
+                                <input type="text" id="profileNameInput" class="input-compact" style="width: 100%; max-width: 200px;">
+                            </div>
                         </div>
 
                         <div class="setting-item">
-                            <span>Unità di misura</span>
-                            <select style="width: auto; padding: 0.2rem;">
-                                <option>Metrico (kg/cm)</option>
-                                <option>Imperiale (lbs/in)</option>
-                            </select>
+                            <span class="setting-label">Unità di misura</span>
+                            <div class="setting-control">
+                                <select class="input-compact" style="width: 100%; max-width: 200px;">
+                                    <option>Metrico (kg/cm)</option>
+                                    <option>Imperiale (lbs/in)</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- AI CONFIG SECTION -->
-                        <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between; width: 100%;">
-                                <span>Gemini AI Key</span>
-                                <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key</a>
+                        <div class="setting-item">
+                            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span class="setting-label">Gemini AI Key</span>
+                                    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="font-size: 0.75rem; color: var(--color-primary); text-decoration: underline;">Ottieni Key</a>
+                                </div>
+                                <form style="display: flex; gap: 0.5rem; width: 100%;" onsubmit="return false;">
+                                    <input type="password" id="aiKeyInput" placeholder="Incolla qui la tua API Key" autocomplete="off" class="input-compact" style="flex: 1;">
+                                    <button id="saveAiKeyBtn" type="button" class="btn btn-outline btn-compact">Salva</button>
+                                </form>
+                                <p id="aiKeyStatus" style="font-size: 0.7rem; color: var(--color-text-muted); text-align: right; margin: 0; min-height: 1em;"></p>
                             </div>
-                            <!-- Wrap in form to silence DOM warnings about password field outside form -->
-                            <form style="display: flex; width: 100%; gap: 0.5rem; margin: 0;" onsubmit="return false;">
-                                <input type="password" id="aiKeyInput" placeholder="Incolla qui la tua API Key" autocomplete="off" style="flex: 1; padding: 0.3rem; background: var(--color-bg); border: 1px solid var(--color-border); color: white;">
-                                <button id="saveAiKeyBtn" type="button" class="btn btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Salva</button>
-                            </form>
-                            <p id="aiKeyStatus" style="font-size: 0.7rem; color: var(--color-text-muted); width: 100%; text-align: right; margin: 0;"></p>
                         </div>
 
                         <div class="setting-item">
-                            <span>Sincronizzazione</span>
-                            <button id="syncBtn" class="btn btn-outline" style="font-size: 0.8rem;">Sincronizza Ora</button>
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
+                                <span class="setting-label">Sincronizzazione</span>
+                                <div class="setting-control" style="width: auto; justify-content: flex-end;">
+                                     <button id="syncBtn" class="btn btn-outline btn-compact">Sincronizza Ora</button>
+                                </div>
+                            </div>
+                            <p id="syncStatus" style="font-size: 0.75rem; color: var(--color-text-muted); width: 100%; text-align: right; margin-top: 0.25rem;"></p>
                         </div>
-                        <p id="syncStatus" style="font-size: 0.8rem; color: var(--color-text-muted); text-align: right;"></p>
 
                         <div class="setting-item">
-                            <span>Esporta Dati (JSON)</span>
-                            <button id="exportBtn" class="btn btn-outline"
-                                style="padding: 0.2rem 0.5rem; font-size: 0.8rem;">Download</button>
+                            <span class="setting-label">Esporta Dati (JSON)</span>
+                            <div class="setting-control">
+                                <button id="exportBtn" class="btn btn-outline btn-compact">Download</button>
+                            </div>
                         </div>
 
-                        <div class="setting-item" style="margin-top: 1rem;">
-                            <button id="logoutBtn" class="btn btn-primary"
-                                style="width: 100%; background: #ff4444; border-color: #ff4444; color: white;">Esci</button>
+                        <div class="setting-item" style="border-bottom: none; margin-top: 1rem;">
+                            <button id="logoutBtn" class="btn btn-primary" style="width: 100%; background: #ff4444; border-color: #ff4444; color: white;">Esci</button>
                         </div>
                     </div>
                 </div>
@@ -377,6 +440,12 @@
                              profileAvatar.style.backgroundImage = `url('${updatedProfile.photoUrl}')`;
                              profileAvatar.textContent = '';
                         }
+                        // Sync API Key from Cloud Profile
+                        if (updatedProfile.geminiKey) {
+                            aiService.saveKey(updatedProfile.geminiKey);
+                            const aiKeyInput = document.getElementById('aiKeyInput');
+                            if (aiKeyInput) aiKeyInput.value = updatedProfile.geminiKey;
+                        }
                     }
                 } else {
                     // Logged Out
@@ -435,17 +504,26 @@
             const saveAiKeyBtn = document.getElementById('saveAiKeyBtn');
             const aiKeyStatus = document.getElementById('aiKeyStatus');
 
-            // Load existing key (masked)
+            // Load existing key
             if (aiService.hasKey()) {
-                aiKeyInput.value = '****************';
+                aiKeyInput.value = aiService.apiKey;
             }
 
-            saveAiKeyBtn.addEventListener('click', () => {
+            saveAiKeyBtn.addEventListener('click', async () => {
                 const key = aiKeyInput.value;
-                if (key && key !== '****************') {
+                if (key) {
                     aiService.saveKey(key);
-                    aiKeyStatus.textContent = 'Key salvata!';
-                    aiKeyStatus.style.color = 'var(--color-primary)';
+                    
+                    // Persist to Firestore (Profile)
+                    aiKeyStatus.textContent = 'Salvataggio...';
+                    const result = await firestoreService.updateProfileField('geminiKey', key);
+                    
+                    if (result.success) {
+                        aiKeyStatus.textContent = 'Key salvata e sincronizzata!';
+                        aiKeyStatus.style.color = 'var(--color-primary)';
+                    } else {
+                        aiKeyStatus.textContent = 'Salvata localmente. Errore Cloud.';
+                    }
                     setTimeout(() => aiKeyStatus.textContent = '', 2000);
                 }
             });

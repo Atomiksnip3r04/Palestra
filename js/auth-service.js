@@ -1,4 +1,5 @@
 import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from './firebase-config.js';
+import { firestoreService } from './firestore-service.js';
 
 export class AuthService {
     constructor() {
@@ -21,6 +22,9 @@ export class AuthService {
             if (name) {
                 await updateProfile(user, { displayName: name });
             }
+
+            // Initialize user data in Firestore (including default API key)
+            await firestoreService.initializeNewUser(user);
             
             return { success: true, user };
         } catch (error) {
