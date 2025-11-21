@@ -189,6 +189,17 @@
                 </div>
             </div>
 
+            <!-- Trend Monitor -->
+            <div class="card" id="trendMonitorCard" style="margin-bottom: var(--spacing-md);">
+                <div style="display:flex; justify-content: space-between; align-items:center; gap:1rem;">
+                    <h3 style="margin-bottom: 1rem;">Trend <span class="text-primary">Monitor</span></h3>
+                    <button id="trendSummaryHistoryBtn" class="btn btn-outline btn-compact" style="font-size: 0.75rem;">📊 Storico Resoconti</button>
+                </div>
+                <div id="trendMetricsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <!-- dynamic metrics -->
+                </div>
+            </div>
+
             <!-- PR Table -->
             <div class="card">
                 <h3 style="margin-bottom: 1rem;">Record Personali (Stima 1RM)</h3>
@@ -212,11 +223,42 @@
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
     
+    <!-- Summary Modals -->
+    <div id="trendSummaryToast" style="display:none; position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 1px solid var(--color-primary); border-radius: 10px; padding: 1rem; z-index: 3000; max-width: 320px;">
+        <div style="display:flex; gap:0.5rem;">
+            <div style="font-size:1.5rem;">🧠</div>
+            <div style="flex:1;">
+                <strong style="display:block; margin-bottom:0.25rem;">Nuovo resoconto AI</strong>
+                <p style="margin:0; font-size:0.85rem; color: var(--color-text-muted);">Clicca per leggere il riepilogo sull’andamento.</p>
+            </div>
+            <button id="closeTrendToast" style="background:none; border:none; color:#999; font-size:1rem;">×</button>
+        </div>
+        <button id="openLatestSummaryBtn" class="btn btn-primary" style="margin-top:0.75rem; width:100%;">Apri</button>
+    </div>
+
+    <div id="trendSummaryModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:2500; align-items:center; justify-content:center; padding:1rem;">
+        <div class="card" style="max-width: 600px; width:100%; max-height:80vh; overflow-y:auto; position: relative;">
+            <button id="closeTrendSummaryModal" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:white; font-size:1.5rem;">×</button>
+            <h3 style="margin-bottom:0.5rem;">Resoconto <span class="text-primary">AI</span></h3>
+            <small id="trendSummaryMeta" style="color: var(--color-text-muted);"></small>
+            <div id="trendSummaryContent" style="margin-top:1rem; line-height:1.6;"></div>
+        </div>
+    </div>
+
+    <div id="trendSummaryHistoryModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:2500; align-items:center; justify-content:center; padding:1rem;">
+        <div class="card" style="max-width: 500px; width:100%; max-height:80vh; overflow-y:auto; position: relative;">
+            <button id="closeTrendSummaryHistory" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:white; font-size:1.5rem;">×</button>
+            <h3 style="margin-bottom:1rem;">Storico Resoconti</h3>
+            <div id="trendSummaryHistoryList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+        </div>
+    </div>
+
     <!-- AI Logic -->
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
         import { aiService } from './js/ai-service.js';
         import { heatmapService } from './js/heatmap-service.js';
+        import { trendEngine } from './js/trend-engine.js';
 
         // Mark services as available globally for mixed context if needed, though module scope is safer
     
@@ -366,6 +408,170 @@
             }
 
             const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+            const bodyStats = JSON.parse(localStorage.getItem('ironflow_body_stats') || '[]');
+            const profile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
+            const unitServiceAvailable = !!unitService;
+
+            const trendResult = trendEngine.evaluate({
+                logs,
+                bodyStats,
+                profile,
+                unit: unitServiceAvailable && unitService.getSystem() === 'imperial' ? 'imperial' : 'metric'
+            });
+
+            const trendMetricsList = document.getElementById('trendMetricsList');
+            const trendSummaryToast = document.getElementById('trendSummaryToast');
+            const openLatestSummaryBtn = document.getElementById('openLatestSummaryBtn');
+            const closeTrendToast = document.getElementById('closeTrendToast');
+            const trendSummaryModal = document.getElementById('trendSummaryModal');
+            const trendSummaryContent = document.getElementById('trendSummaryContent');
+            const trendSummaryMeta = document.getElementById('trendSummaryMeta');
+            const closeTrendSummaryModal = document.getElementById('closeTrendSummaryModal');
+            const trendSummaryHistoryModal = document.getElementById('trendSummaryHistoryModal');
+            const trendSummaryHistoryList = document.getElementById('trendSummaryHistoryList');
+            const trendSummaryHistoryBtn = document.getElementById('trendSummaryHistoryBtn');
+            const closeTrendSummaryHistory = document.getElementById('closeTrendSummaryHistory');
+
+            const SUMMARY_HISTORY_KEY = 'ironflow_ai_summary_history';
+            const SUMMARY_LAST_SEEN_KEY = 'ironflow_ai_summary_last_seen';
+
+            const getSummaryHistory = () => JSON.parse(localStorage.getItem(SUMMARY_HISTORY_KEY) || '[]');
+            const saveSummaryHistory = (entry) => {
+                const history = getSummaryHistory();
+                history.unshift(entry);
+                localStorage.setItem(SUMMARY_HISTORY_KEY, JSON.stringify(history.slice(0, 12)));
+            };
+
+            const renderTrendMetrics = () => {
+                if (!trendMetricsList) return;
+                trendMetricsList.innerHTML = '';
+                trendResult.metrics.forEach(metric => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex; justify-content: space-between; align-items:center; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:0.75rem;';
+                    const statusColor = metric.status === 'improving' ? '#00ffb3'
+                        : metric.status === 'declining' ? '#ff6b6b'
+                        : '#ccc';
+                    row.innerHTML = `
+                        <div>
+                            <strong>${metric.label}</strong>
+                            <div style="font-size:0.8rem; color: var(--color-text-muted);">${metric.summary}</div>
+                        </div>
+                        <span style="color:${statusColor}; font-weight:600;">${metric.status === 'improving' ? '↑' : metric.status === 'declining' ? '↓' : '→'}</span>
+                    `;
+                    trendMetricsList.appendChild(row);
+                });
+            };
+            renderTrendMetrics();
+
+            const openSummaryModal = (entry) => {
+                trendSummaryContent.innerHTML = entry.text;
+                trendSummaryMeta.textContent = new Date(entry.date).toLocaleString('it-IT', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+                trendSummaryModal.style.display = 'flex';
+                localStorage.setItem(SUMMARY_LAST_SEEN_KEY, entry.id);
+            };
+
+            const renderSummaryHistoryList = () => {
+                const history = getSummaryHistory();
+                trendSummaryHistoryList.innerHTML = '';
+                if (!history.length) {
+                    trendSummaryHistoryList.innerHTML = '<p style="color: var(--color-text-muted); text-align:center;">Nessun resoconto disponibile.</p>';
+                    return;
+                }
+                history.forEach(entry => {
+                    const date = new Date(entry.date).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+                    const item = document.createElement('div');
+                    item.style.cssText = 'padding:0.75rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer;';
+                    item.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong>${entry.title || 'Resoconto AI'}</strong>
+                            <small style="color:var(--color-text-muted);">${entry.source === 'ai' ? 'AI' : 'Heuristic'}</small>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--color-text-muted);">${date}</div>
+                    `;
+                    item.addEventListener('click', () => {
+                        openSummaryModal(entry);
+                        trendSummaryHistoryModal.style.display = 'none';
+                    });
+                    trendSummaryHistoryList.appendChild(item);
+                });
+            };
+
+            const maybeGenerateSummary = async () => {
+                const history = getSummaryHistory();
+                const lastEntry = history[0];
+                const now = Date.now();
+                const shouldGenerate = !lastEntry || (now - new Date(lastEntry.date).getTime()) > (9 * DAY_MS);
+
+                if (!shouldGenerate || !trendResult.metrics.some(m => m.current)) return;
+
+                let summaryText = trendResult.digest;
+                let usedAI = false;
+
+                if (aiService.hasKey()) {
+                    const response = await aiService.generateTrendDigest({
+                        metrics: trendResult.metrics,
+                        profile,
+                        generatedAt: trendResult.generatedAt
+                    });
+                    if (response.success) {
+                        summaryText = response.text;
+                        usedAI = true;
+                    }
+                }
+
+                const entry = {
+                    id: crypto.randomUUID ? crypto.randomUUID() : `ai-summary-${Date.now()}`,
+                    date: new Date().toISOString(),
+                    text: summaryText,
+                    title: 'Resoconto andamento',
+                    source: usedAI ? 'ai' : 'heuristic'
+                };
+
+                saveSummaryHistory(entry);
+                showSummaryToast(entry);
+            };
+
+            const showSummaryToast = (entry) => {
+                if (!trendSummaryToast) return;
+                trendSummaryToast.style.display = 'block';
+                openLatestSummaryBtn.onclick = () => {
+                    trendSummaryToast.style.display = 'none';
+                    openSummaryModal(entry);
+                };
+                closeTrendToast.onclick = () => {
+                    trendSummaryToast.style.display = 'none';
+                    localStorage.setItem(SUMMARY_LAST_SEEN_KEY, entry.id);
+                };
+
+                const lastSeen = localStorage.getItem(SUMMARY_LAST_SEEN_KEY);
+                if (lastSeen === entry.id) {
+                    trendSummaryToast.style.display = 'none';
+                }
+            };
+
+            maybeGenerateSummary();
+
+            trendSummaryHistoryBtn.addEventListener('click', () => {
+                renderSummaryHistoryList();
+                trendSummaryHistoryModal.style.display = 'flex';
+            });
+
+            closeTrendSummaryHistory.addEventListener('click', () => {
+                trendSummaryHistoryModal.style.display = 'none';
+            });
+
+            closeTrendSummaryModal.addEventListener('click', () => {
+                trendSummaryModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', (e) => {
+                if (e.target === trendSummaryModal) {
+                    trendSummaryModal.style.display = 'none';
+                }
+                if (e.target === trendSummaryHistoryModal) {
+                    trendSummaryHistoryModal.style.display = 'none';
+                }
+            });
 
             const estimateOneRM = (weight, reps) => {
                 if (!weight || !reps) return 0;

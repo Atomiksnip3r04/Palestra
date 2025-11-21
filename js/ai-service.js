@@ -192,6 +192,36 @@ Rispondi in formato JSON (senza markdown, solo JSON puro):
             return { success: false, message: error.message };
         }
     }
+
+    async generateTrendDigest(payload) {
+        if (!this.apiKey) return { success: false, message: "API Key mancante." };
+        try {
+            const genAI = new GoogleGenerativeAI(this.apiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" }); 
+
+            const prompt = `
+Sei un Performance Coach. Analizza queste metriche:
+
+${JSON.stringify(payload.metrics, null, 2)}
+
+Profilo: ${JSON.stringify(payload.profile || {})}
+
+Genera un resoconto in italiano con:
+- Sintesi generale dello stato
+- Miglioramenti evidenti
+- Rischi o regressioni
+- 3 consigli attuabili per i prossimi 7 giorni
+
+Tono: professionale, motivante, conciso.
+`;
+            const result = await model.generateContent(prompt);
+            const text = result.response.text();
+            return { success: true, text };
+        } catch (error) {
+            console.error("AI Trend Digest Error:", error);
+            return { success: false, message: error.message };
+        }
+    }
 }
 
 export const aiService = new AIService();
