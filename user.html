@@ -616,6 +616,34 @@
 
     <script src="js/main.js"></script>
     
+    <!-- Share Modal -->
+    <div id="shareModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center;">
+        <div style="background: var(--color-surface); padding: 2rem; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; border: 1px solid var(--color-border);">
+            <h3 style="margin-bottom: 1.5rem;">Condividi Scheda</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <a id="shareWhatsapp" href="#" target="_blank" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-decoration: none; color: white; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <span style="font-size: 2rem;">💚</span>
+                    <span>WhatsApp</span>
+                </a>
+                <a id="shareTelegram" href="#" target="_blank" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-decoration: none; color: white; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <span style="font-size: 2rem;">✈️</span>
+                    <span>Telegram</span>
+                </a>
+                <a id="shareEmail" href="#" target="_blank" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-decoration: none; color: white; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                    <span style="font-size: 2rem;">📧</span>
+                    <span>Email</span>
+                </a>
+                <button id="shareCopy" style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; border: none; color: white; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer; font-family: inherit;">
+                    <span style="font-size: 2rem;">📋</span>
+                    <span>Copia Link</span>
+                </button>
+            </div>
+
+            <button id="closeShareModal" class="btn btn-outline" style="width: 100%;">Chiudi</button>
+        </div>
+    </div>
+
     <!-- Module Script for Firebase Logic -->
     <script type="module">
         import { authService } from './js/auth-service.js';
@@ -1199,6 +1227,40 @@
                 persistSorenessSelection();
                 syncSorenessButtons();
                 updateSorenessHint();
+            });
+
+            // Share Modal Logic
+            const shareModal = document.getElementById('shareModal');
+            const closeShareModal = document.getElementById('closeShareModal');
+            const shareWhatsapp = document.getElementById('shareWhatsapp');
+            const shareTelegram = document.getElementById('shareTelegram');
+            const shareEmail = document.getElementById('shareEmail');
+            const shareCopy = document.getElementById('shareCopy');
+
+            window.showShareModal = (title, url) => {
+                const text = `Guarda la mia scheda "${title}" su IronFlow!`;
+                
+                shareWhatsapp.href = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+                shareTelegram.href = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                shareEmail.href = `mailto:?subject=${encodeURIComponent('Scheda Allenamento IronFlow')}&body=${encodeURIComponent(text + '\n\n' + url)}`;
+                
+                shareCopy.onclick = async () => {
+                    await navigator.clipboard.writeText(url);
+                    shareCopy.innerHTML = '<span style="font-size: 2rem;">✅</span><span>Copiato!</span>';
+                    setTimeout(() => {
+                        shareCopy.innerHTML = '<span style="font-size: 2rem;">📋</span><span>Copia Link</span>';
+                    }, 2000);
+                };
+
+                shareModal.style.display = 'flex';
+            };
+
+            closeShareModal.addEventListener('click', () => {
+                shareModal.style.display = 'none';
+            });
+
+            shareModal.addEventListener('click', (e) => {
+                if (e.target === shareModal) shareModal.style.display = 'none';
             });
 
             // Global Helpers for HTML attributes
@@ -1867,33 +1929,41 @@
                             const stored = getStoredWorkouts();
                             const workout = stored[idx];
                             if (!workout) return;
-
-                            if (!confirm(`Vuoi condividere "${workout.name}"?`)) return;
                             
                             e.target.textContent = '⏳';
                             try {
                                 // URL-based sharing (No Database required)
                                 const json = JSON.stringify(workout);
-                                // Compress/Encode
                                 const encoded = btoa(encodeURIComponent(json));
                                 
                                 const url = new URL(window.location.href);
                                 url.searchParams.set('shareData', encoded);
-                                // Clear other params
                                 url.searchParams.delete('shareId');
                                 
                                 const shareUrl = url.toString();
                                 
-                                // Check URL length (browser limits around 2000-8000 chars)
-                                if (shareUrl.length > 2000) {
-                                    alert('Questa scheda è troppo grande per essere condivisa via link diretto.');
-                                } else {
-                                    await navigator.clipboard.writeText(shareUrl);
-                                    alert('Link copiato negli appunti! Invialo a chi vuoi.');
+                                if (shareUrl.length > 8000) {
+                                    alert('Scheda troppo grande per la condivisione via link.');
+                                    return;
                                 }
+
+                                // Native Share API (Mobile)
+                                if (navigator.share) {
+                                    await navigator.share({
+                                        title: `Allenamento: ${workout.name}`,
+                                        text: `Prova questa scheda di allenamento su IronFlow: ${workout.name}`,
+                                        url: shareUrl
+                                    });
+                                } else {
+                                    // Desktop Fallback (Custom Modal)
+                                    showShareModal(workout.name, shareUrl);
+                                }
+
                             } catch (err) {
                                 console.error(err);
-                                alert('Errore imprevisto durante la condivisione.');
+                                if (err.name !== 'AbortError') {
+                                    alert('Errore condivisione.');
+                                }
                             } finally {
                                 e.target.textContent = '🔗';
                             }
