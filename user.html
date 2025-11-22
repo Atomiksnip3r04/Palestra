@@ -739,13 +739,21 @@
 
                     // --- CHECK FOR SHARED WORKOUT IMPORT ---
                     const urlParams = new URLSearchParams(window.location.search);
-                    const shareId = urlParams.get('shareId');
-                    if (shareId) {
-                        if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
-                            const importResult = await firestoreService.getSharedWorkout(shareId);
-                            if (importResult.success && importResult.data) {
-                                const newWorkout = importResult.data.workoutData;
-                                // Assign new ID to avoid conflicts
+                    const shareData = urlParams.get('shareData'); // New method
+                    const shareId = urlParams.get('shareId'); // Fallback (Legacy)
+
+                    if (shareData) {
+                         if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
+                            try {
+                                const json = decodeURIComponent(atob(shareData));
+                                const newWorkout = JSON.parse(json);
+                                
+                                // Validation
+                                if (!newWorkout || !newWorkout.name || !Array.isArray(newWorkout.exercises)) {
+                                    throw new Error("Dati scheda non validi");
+                                }
+
+                                // Assign new ID
                                 newWorkout.id = generateWorkoutId();
                                 newWorkout.name = `${newWorkout.name} (Importata)`;
                                 newWorkout.fromShared = true;
@@ -755,10 +763,31 @@
                                 localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
                                 renderWorkouts();
                                 
-                                // Sync immediately
                                 await firestoreService.syncToCloud();
 
-                                // Clean URL
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                                alert(`Scheda "${newWorkout.name}" importata con successo!`);
+                            } catch (e) {
+                                console.error(e);
+                                alert('Errore durante l\'importazione della scheda: link non valido.');
+                            }
+                        }
+                    } else if (shareId) {
+                        // Keep legacy support just in case
+                        if (confirm('È stato rilevato un link di condivisione (Legacy). Vuoi importare la scheda?')) {
+                            const importResult = await firestoreService.getSharedWorkout(shareId);
+                            if (importResult.success && importResult.data) {
+                                const newWorkout = importResult.data.workoutData;
+                                newWorkout.id = generateWorkoutId();
+                                newWorkout.name = `${newWorkout.name} (Importata)`;
+                                newWorkout.fromShared = true;
+
+                                const currentWorkouts = getStoredWorkouts();
+                                currentWorkouts.unshift(newWorkout);
+                                localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
+                                renderWorkouts();
+                                await firestoreService.syncToCloud();
+
                                 window.history.replaceState({}, document.title, window.location.pathname);
                                 alert(`Scheda "${newWorkout.name}" importata con successo!`);
                             } else {
@@ -1843,16 +1872,24 @@
                             
                             e.target.textContent = '⏳';
                             try {
-                                const result = await firestoreService.shareWorkout(workout);
-                                if (result.success) {
-                                    const url = new URL(window.location.href);
-                                    url.searchParams.set('shareId', result.shareId);
-                                    const shareUrl = url.toString();
-                                    
+                                // URL-based sharing (No Database required)
+                                const json = JSON.stringify(workout);
+                                // Compress/Encode
+                                const encoded = btoa(encodeURIComponent(json));
+                                
+                                const url = new URL(window.location.href);
+                                url.searchParams.set('shareData', encoded);
+                                // Clear other params
+                                url.searchParams.delete('shareId');
+                                
+                                const shareUrl = url.toString();
+                                
+                                // Check URL length (browser limits around 2000-8000 chars)
+                                if (shareUrl.length > 2000) {
+                                    alert('Questa scheda è troppo grande per essere condivisa via link diretto.');
+                                } else {
                                     await navigator.clipboard.writeText(shareUrl);
                                     alert('Link copiato negli appunti! Invialo a chi vuoi.');
-                                } else {
-                                    alert('Errore nella condivisione: ' + result.message);
                                 }
                             } catch (err) {
                                 console.error(err);
