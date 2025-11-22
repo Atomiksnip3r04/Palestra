@@ -11,7 +11,7 @@
         rel="stylesheet">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00f3ff">
-    
+
     <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -147,18 +147,23 @@
 
             <!-- AI Buttons -->
             <div style="display: flex; gap: 1rem; margin-bottom: var(--spacing-md);">
-                <button id="askCoachBtn" class="btn btn-primary" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(45deg, var(--color-primary), #ff8844);">
+                <button id="askCoachBtn" class="btn btn-primary"
+                    style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(45deg, var(--color-primary), #ff8844);">
                     <span>✨</span> Chiedi al Coach AI
                 </button>
-                <button id="historyBtn" class="btn btn-outline" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                <button id="historyBtn" class="btn btn-outline"
+                    style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 5px;">
                     <span>📜</span> Storico
                 </button>
             </div>
 
             <!-- AI History Modal -->
-            <div id="historyModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
-                <div class="card" style="max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative;">
-                    <button id="closeHistoryModal" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <div id="historyModal"
+                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+                <div class="card"
+                    style="max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative;">
+                    <button id="closeHistoryModal"
+                        style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
                     <h3 style="margin-bottom: 1rem;">Storico <span class="text-primary">Insight</span></h3>
                     <div id="historyList" style="display: flex; flex-direction: column; gap: 1rem;">
                         <!-- History items go here -->
@@ -167,9 +172,12 @@
             </div>
 
             <!-- AI Response Modal -->
-            <div id="aiModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
-                <div class="card" style="max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative;">
-                    <button id="closeAiModal" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <div id="aiModal"
+                style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 1rem;">
+                <div class="card"
+                    style="max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto; position: relative;">
+                    <button id="closeAiModal"
+                        style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
                     <h3 style="margin-bottom: 1rem;">Coach <span class="text-primary">Insight</span></h3>
                     <div id="aiResponseContent" class="markdown-content">
                         <!-- Content goes here -->
@@ -179,13 +187,53 @@
 
             <style>
                 /* Markdown Styles */
-                .markdown-content h3 { margin-top: 1.5rem; margin-bottom: 0.8rem; color: var(--color-primary); font-size: 1.3rem; }
-                .markdown-content h4 { margin-top: 1.2rem; margin-bottom: 0.6rem; color: #fff; font-size: 1.1rem; border-left: 3px solid var(--color-primary); padding-left: 10px; }
-                .markdown-content p { margin-bottom: 1rem; line-height: 1.7; color: #ccc; }
-                .markdown-content ul { margin-bottom: 1rem; padding-left: 1.5rem; }
-                .markdown-content li { margin-bottom: 0.5rem; color: #ddd; }
-                .markdown-content strong { color: white; font-weight: 600; }
-                .markdown-content blockquote { border-left: 3px solid var(--color-text-muted); padding-left: 1rem; font-style: italic; color: var(--color-text-muted); margin: 1rem 0; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 0 5px 5px 0; }
+                .markdown-content h3 {
+                    margin-top: 1.5rem;
+                    margin-bottom: 0.8rem;
+                    color: var(--color-primary);
+                    font-size: 1.3rem;
+                }
+
+                .markdown-content h4 {
+                    margin-top: 1.2rem;
+                    margin-bottom: 0.6rem;
+                    color: #fff;
+                    font-size: 1.1rem;
+                    border-left: 3px solid var(--color-primary);
+                    padding-left: 10px;
+                }
+
+                .markdown-content p {
+                    margin-bottom: 1rem;
+                    line-height: 1.7;
+                    color: #ccc;
+                }
+
+                .markdown-content ul {
+                    margin-bottom: 1rem;
+                    padding-left: 1.5rem;
+                }
+
+                .markdown-content li {
+                    margin-bottom: 0.5rem;
+                    color: #ddd;
+                }
+
+                .markdown-content strong {
+                    color: white;
+                    font-weight: 600;
+                }
+
+                .markdown-content blockquote {
+                    border-left: 3px solid var(--color-text-muted);
+                    padding-left: 1rem;
+                    font-style: italic;
+                    color: var(--color-text-muted);
+                    margin: 1rem 0;
+                    background: rgba(255, 255, 255, 0.05);
+                    padding: 1rem;
+                    border-radius: 0 5px 5px 0;
+                }
             </style>
 
             <!-- Key Stats -->
@@ -232,7 +280,8 @@
                     <small id="domsReportCount" style="color: var(--color-text-muted);"></small>
                 </div>
                 <div id="domsHotspotList" style="display:flex; flex-direction:column; gap:0.75rem;">
-                    <p style="color: var(--color-text-muted);">Compila il questionario DOMS prima di ogni Focus Mode per monitorare i recuperi specifici.</p>
+                    <p style="color: var(--color-text-muted);">Compila il questionario DOMS prima di ogni Focus Mode per
+                        monitorare i recuperi specifici.</p>
                 </div>
             </div>
 
@@ -240,7 +289,8 @@
             <div class="card" id="trendMonitorCard" style="margin-bottom: var(--spacing-md);">
                 <div style="display:flex; justify-content: space-between; align-items:center; gap:1rem;">
                     <h3 style="margin-bottom: 1rem;">Trend <span class="text-primary">Monitor</span></h3>
-                    <button id="trendSummaryHistoryBtn" class="btn btn-outline btn-compact" style="font-size: 0.75rem;">📊 Storico Resoconti</button>
+                    <button id="trendSummaryHistoryBtn" class="btn btn-outline btn-compact"
+                        style="font-size: 0.75rem;">📊 Storico Resoconti</button>
                 </div>
                 <div id="trendMetricsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     <!-- dynamic metrics -->
@@ -249,13 +299,23 @@
 
             <!-- PR Table -->
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
                     <h3 style="margin: 0;">Record Personali</h3>
-                    <div class="rm-selector" style="display: flex; gap: 5px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px;">
-                        <button class="btn-rm active" data-rm="1rm" style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">1RM</button>
-                        <button class="btn-rm" data-rm="3rm" style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">3RM</button>
-                        <button class="btn-rm" data-rm="5rm" style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">5RM</button>
-                        <button class="btn-rm" data-rm="8rm" style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">8RM</button>
+                    <div class="rm-selector"
+                        style="display: flex; gap: 5px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px;">
+                        <button class="btn-rm active" data-rm="1rm"
+                            style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">1RM</button>
+                        <button class="btn-rm" data-rm="3rm"
+                            style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">3RM</button>
+                        <button class="btn-rm" data-rm="5rm"
+                            style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">5RM</button>
+                        <button class="btn-rm" data-rm="8rm"
+                            style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">8RM</button>
+                        <button class="btn-rm" data-rm="10rm"
+                            style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">10RM</button>
+                        <button class="btn-rm" data-rm="12rm"
+                            style="border: none; background: transparent; color: #ccc; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">12RM</button>
                     </div>
                 </div>
 
@@ -278,32 +338,38 @@
 
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
-    
+
     <!-- Summary Modals -->
-    <div id="trendSummaryToast" style="display:none; position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 1px solid var(--color-primary); border-radius: 10px; padding: 1rem; z-index: 3000; max-width: 320px;">
+    <div id="trendSummaryToast"
+        style="display:none; position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 1px solid var(--color-primary); border-radius: 10px; padding: 1rem; z-index: 3000; max-width: 320px;">
         <div style="display:flex; gap:0.5rem;">
             <div style="font-size:1.5rem;">🧠</div>
             <div style="flex:1;">
                 <strong style="display:block; margin-bottom:0.25rem;">Nuovo resoconto AI</strong>
-                <p style="margin:0; font-size:0.85rem; color: var(--color-text-muted);">Clicca per leggere il riepilogo sull’andamento.</p>
+                <p style="margin:0; font-size:0.85rem; color: var(--color-text-muted);">Clicca per leggere il riepilogo
+                    sull’andamento.</p>
             </div>
             <button id="closeTrendToast" style="background:none; border:none; color:#999; font-size:1rem;">×</button>
         </div>
         <button id="openLatestSummaryBtn" class="btn btn-primary" style="margin-top:0.75rem; width:100%;">Apri</button>
     </div>
 
-    <div id="trendSummaryModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:2500; align-items:center; justify-content:center; padding:1rem;">
+    <div id="trendSummaryModal"
+        style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:2500; align-items:center; justify-content:center; padding:1rem;">
         <div class="card" style="max-width: 600px; width:100%; max-height:80vh; overflow-y:auto; position: relative;">
-            <button id="closeTrendSummaryModal" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:white; font-size:1.5rem;">×</button>
+            <button id="closeTrendSummaryModal"
+                style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:white; font-size:1.5rem;">×</button>
             <h3 style="margin-bottom:0.5rem;">Resoconto <span class="text-primary">AI</span></h3>
             <small id="trendSummaryMeta" style="color: var(--color-text-muted);"></small>
             <div id="trendSummaryContent" style="margin-top:1rem; line-height:1.6;"></div>
         </div>
     </div>
 
-    <div id="trendSummaryHistoryModal" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:2500; align-items:center; justify-content:center; padding:1rem;">
+    <div id="trendSummaryHistoryModal"
+        style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:2500; align-items:center; justify-content:center; padding:1rem;">
         <div class="card" style="max-width: 500px; width:100%; max-height:80vh; overflow-y:auto; position: relative;">
-            <button id="closeTrendSummaryHistory" style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:white; font-size:1.5rem;">×</button>
+            <button id="closeTrendSummaryHistory"
+                style="position:absolute; top:1rem; right:1rem; background:none; border:none; color:white; font-size:1.5rem;">×</button>
             <h3 style="margin-bottom:1rem;">Storico Resoconti</h3>
             <div id="trendSummaryHistoryList" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
         </div>
@@ -317,7 +383,7 @@
         import { trendEngine } from './js/trend-engine.js';
 
         // Mark services as available globally for mixed context if needed, though module scope is safer
-    
+
         document.addEventListener('DOMContentLoaded', async () => {
             // ... existing listeners ...
 
@@ -342,7 +408,7 @@
             });
 
             window.addEventListener('focus', renderHeatmap);
-            
+
             const askCoachBtn = document.getElementById('askCoachBtn');
             const aiModal = document.getElementById('aiModal');
             const closeAiModal = document.getElementById('closeAiModal');
@@ -360,7 +426,7 @@
 
             closeAiModal.addEventListener('click', () => closeModal(aiModal));
             closeHistoryModal.addEventListener('click', () => closeModal(historyModal));
-            
+
             window.addEventListener('click', (e) => {
                 if (e.target === aiModal) closeModal(aiModal);
                 if (e.target === historyModal) closeModal(historyModal);
@@ -370,7 +436,7 @@
             historyBtn.addEventListener('click', async () => {
                 openModal(historyModal);
                 historyList.innerHTML = '<p style="text-align: center; color: var(--color-text-muted);">Caricamento storico...</p>';
-                
+
                 const history = await firestoreService.getAIHistory();
                 historyList.innerHTML = '';
 
@@ -381,20 +447,20 @@
 
                 // Sort by date desc
                 history.reverse().forEach((entry, index) => {
-                    const date = new Date(entry.date).toLocaleDateString('it-IT', { 
-                        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' 
+                    const date = new Date(entry.date).toLocaleDateString('it-IT', {
+                        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
                     });
-                    
+
                     const div = document.createElement('div');
                     div.style.cssText = 'background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: border 0.2s;';
                     div.innerHTML = `
                         <div style="font-size: 0.8rem; color: var(--color-primary); margin-bottom: 0.5rem;">${date}</div>
                         <div style="font-size: 0.9rem; color: #ccc;">${entry.summary || 'Analisi Coach AI...'}</div>
                     `;
-                    
+
                     div.onmouseover = () => div.style.borderColor = 'var(--color-primary)';
                     div.onmouseout = () => div.style.borderColor = 'transparent';
-                    
+
                     div.addEventListener('click', () => {
                         closeModal(historyModal);
                         openModal(aiModal);
@@ -425,7 +491,7 @@
 
                 // 1. Gather Data
                 const data = await firestoreService.gatherDataForAI();
-                
+
                 if (!data) {
                     aiContent.innerHTML = '<p style="color: #ff4444;">Errore nel recupero dei dati.</p>';
                     return;
@@ -439,30 +505,30 @@
                 // 2. Call AI
                 const result = await aiService.analyzeProgress(data);
 
-                    // 3. Show Result & Save
-                    if (result.success) {
-                        // Save to History (Fire & Forget)
-                        firestoreService.saveAIAnalysis(result.text);
+                // 3. Show Result & Save
+                if (result.success) {
+                    // Save to History (Fire & Forget)
+                    firestoreService.saveAIAnalysis(result.text);
 
-                        // Use 'marked' library to convert Markdown to HTML
-                        if (window.marked) {
-                            aiContent.innerHTML = marked.parse(result.text);
-                        } else {
-                            aiContent.innerHTML = `<pre>${result.text}</pre>`; // Fallback
-                        }
+                    // Use 'marked' library to convert Markdown to HTML
+                    if (window.marked) {
+                        aiContent.innerHTML = marked.parse(result.text);
                     } else {
-                        aiContent.innerHTML = `<p style="color: #ff4444;">Errore AI: ${result.message}</p>`;
+                        aiContent.innerHTML = `<pre>${result.text}</pre>`; // Fallback
                     }
-                });
+                } else {
+                    aiContent.innerHTML = `<p style="color: #ff4444;">Errore AI: ${result.message}</p>`;
+                }
             });
-        </script>
+        });
+    </script>
 
-        <script type="module">
-            import { aiService } from './js/ai-service.js';
-            import { trendEngine } from './js/trend-engine.js';
-    
-            document.addEventListener('DOMContentLoaded', () => {
-                const DAY_MS = 24 * 60 * 60 * 1000;
+    <script type="module">
+        import { aiService } from './js/ai-service.js';
+        import { trendEngine } from './js/trend-engine.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const DAY_MS = 24 * 60 * 60 * 1000;
             // Initialize Services
             let unitService;
             try {
@@ -588,7 +654,7 @@
                     row.style.cssText = 'display:flex; justify-content: space-between; align-items:center; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:0.75rem;';
                     const statusColor = metric.status === 'improving' ? '#00ffb3'
                         : metric.status === 'declining' ? '#ff6b6b'
-                        : '#ccc';
+                            : '#ccc';
                     row.innerHTML = `
                         <div>
                             <strong>${metric.label}</strong>
@@ -883,7 +949,7 @@
                                 prs[name] = {
                                     ...estimates,
                                     date: log.date,
-                                    display: name 
+                                    display: name
                                 };
                             }
                         }
@@ -928,7 +994,7 @@
                 rmButtons.forEach(btn => {
                     if (btn.dataset.rm === currentView) {
                         btn.style.background = 'var(--color-primary)';
-                        btn.style.color = 'var(--color-background)'; 
+                        btn.style.color = 'var(--color-background)';
                         btn.classList.add('active');
                         btn.style.fontWeight = 'bold';
                     } else {
