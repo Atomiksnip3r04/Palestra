@@ -727,6 +727,53 @@
                     // Load Workouts from Cloud
                     syncStatus.textContent = 'Sincronizzazione...';
                     const loadResult = await firestoreService.loadFromCloud();
+
+                    if (loadResult.success) {
+                        syncStatus.textContent = 'Cloud Sincronizzato';
+                        setTimeout(() => syncStatus.textContent = '', 2000);
+                        if (loadResult.data) {
+                            renderWorkouts();
+                        }
+                    }
+
+                    // --- CHECK FOR SHARED WORKOUT IMPORT ---
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const shareId = urlParams.get('shareId');
+                    if (shareId) {
+                        if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
+                            const importResult = await firestoreService.getSharedWorkout(shareId);
+                            if (importResult.success && importResult.data) {
+                                const newWorkout = importResult.data.workoutData;
+                                // Assign new ID to avoid conflicts
+                                newWorkout.id = generateWorkoutId();
+                                newWorkout.name = `${newWorkout.name} (Importata)`;
+                                newWorkout.fromShared = true;
+
+                                const currentWorkouts = getStoredWorkouts();
+                                currentWorkouts.unshift(newWorkout);
+                                localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
+                                renderWorkouts();
+                                
+                                // Sync immediately
+                                await firestoreService.syncToCloud();
+
+                                // Clean URL
+                                window.history.replaceState({}, document.title, window.location.pathname);
+                                alert(`Scheda "${newWorkout.name}" importata con successo!`);
+                            } else {
+                                alert('Errore importazione: ' + (importResult.message || 'Scheda non valida'));
+                            }
+                        }
+                    }
+
+                } else {
+                    // Not Logged In
+                    authSection.classList.add('visible');
+                    profileContent.classList.remove('visible');
+                    // If share link present but not logged in, user will see auth form first
+                    // Once logged in, this subscription runs again and handles the import
+                }
+            });
                     if (loadResult.success) {
                         syncStatus.textContent = 'Sincronizzato';
                         renderWorkouts(); // Update list
@@ -1150,9 +1197,14 @@
 
             // Global Helpers for HTML attributes
             window.adjustTimer = (seconds) => {
-                remainingTime += seconds;
-                if (remainingTime < 0) remainingTime = 0;
-                updateTimerDisplay(remainingTime);
+                if (timerWorker) {
+                    timerWorker.postMessage({ action: 'adjust', seconds: seconds });
+                } else {
+                    // Fallback (visual update primarily, logic in interval)
+                    // This is complex to sync without worker, but we try our best if worker fails
+                    // Ideally worker is always present in modern browsers
+                    alert("Funzione non disponibile senza supporto Web Worker.");
+                }
             };
             
             window.skipRest = () => {
@@ -1778,6 +1830,7 @@
                                     ▶
                                 </button>
                                 <a href="creator.html?id=${w.id}" style="padding: 0.5rem; font-size: 0.9rem; color: var(--color-text); text-decoration: none; border: 1px solid var(--color-border); border-radius: 4px;">Modifica</a>
+                                <span class="share-workout" data-index="${index}" title="Condividi Scheda" style="padding: 0.5rem; cursor: pointer; font-size: 1.2rem;">🔗</span>
                                 <span class="delete-workout" data-index="${index}" style="padding: 0.5rem; cursor: pointer;">🗑️</span>
                             </div>
                         `;
@@ -1798,6 +1851,38 @@
                             }
 
                             window.initFocusMode(targetWorkout);
+                        });
+                    });
+
+                    // Share Workout Listener
+                    list.querySelectorAll('.share-workout').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const idx = Number(e.target.dataset.index);
+                            const stored = getStoredWorkouts();
+                            const workout = stored[idx];
+                            if (!workout) return;
+
+                            if (!confirm(`Vuoi condividere "${workout.name}"?`)) return;
+                            
+                            e.target.textContent = '⏳';
+                            try {
+                                const result = await firestoreService.shareWorkout(workout);
+                                if (result.success) {
+                                    const url = new URL(window.location.href);
+                                    url.searchParams.set('shareId', result.shareId);
+                                    const shareUrl = url.toString();
+                                    
+                                    await navigator.clipboard.writeText(shareUrl);
+                                    alert('Link copiato negli appunti! Invialo a chi vuoi.');
+                                } else {
+                                    alert('Errore nella condivisione: ' + result.message);
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert('Errore imprevisto durante la condivisione.');
+                            } finally {
+                                e.target.textContent = '🔗';
+                            }
                         });
                     });
 

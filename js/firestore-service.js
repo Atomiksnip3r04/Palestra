@@ -363,6 +363,44 @@ export class FirestoreService {
             return [];
         }
     }
+
+    // --- SHARED WORKOUTS FEATURE ---
+    
+    async shareWorkout(workout) {
+        try {
+            const uid = this.getUid();
+            const userProfile = JSON.parse(localStorage.getItem('ironflow_profile') || '{}');
+            const shareId = 'sh_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            
+            const sharedData = {
+                originalCreatorName: userProfile.name || 'Anonimo',
+                originalCreatorId: uid,
+                createdAt: new Date().toISOString(),
+                workoutData: workout
+            };
+
+            // Save to a new collection "shared_workouts"
+            await setDoc(doc(db, 'shared_workouts', shareId), sharedData);
+            
+            return { success: true, shareId: shareId };
+        } catch (error) {
+            console.error("Error sharing workout:", error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    async getSharedWorkout(shareId) {
+        try {
+            const docSnap = await getDoc(doc(db, 'shared_workouts', shareId));
+            if (docSnap.exists()) {
+                return { success: true, data: docSnap.data() };
+            }
+            return { success: false, message: "Scheda non trovata." };
+        } catch (error) {
+            console.error("Error fetching shared workout:", error);
+            return { success: false, message: error.message };
+        }
+    }
 }
 
 export const firestoreService = new FirestoreService();
