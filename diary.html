@@ -84,7 +84,7 @@
 
         .set-row {
             display: grid;
-            grid-template-columns: 0.5fr 1fr 1fr 1fr;
+            grid-template-columns: 0.5fr 1fr 1fr 1fr auto;
             gap: 10px;
             align-items: center;
             margin-bottom: 0.5rem;
@@ -108,7 +108,7 @@
 
         .set-header {
             display: grid;
-            grid-template-columns: 0.5fr 1fr 1fr 1fr;
+            grid-template-columns: 0.5fr 1fr 1fr 1fr auto;
             gap: 10px;
             margin-bottom: 0.5rem;
             font-size: 0.8rem;
@@ -337,34 +337,50 @@
                 renderLoggingForm(currentWorkout);
             });
 
-            // 4. Render Logging Form
+            // 4. Render Logging Form (with full edit capabilities)
             function renderLoggingForm(workout, existingExercises = null) {
                 exercisesLogContainer.innerHTML = '';
 
                 // If editing, we might have different exercises than the base workout
-                // But for simplicity, we stick to the workout structure or the existing log structure
                 const exercisesToRender = existingExercises || workout.exercises;
+                const isEditing = editingLogIndex >= 0;
 
                 exercisesToRender.forEach((ex, exIndex) => {
                     const exDiv = document.createElement('div');
                     exDiv.className = 'exercise-log-item';
+                    exDiv.dataset.exerciseIndex = exIndex;
 
                     const unitLabel = unitService && unitService.getSystem() === 'imperial' ? 'Lbs' : 'Kg';
 
-                    let setsHtml = `
-        <h4 style="margin-bottom: 0.5rem;">${ex.name}</h4>
-        <div class="set-header">
-            <span>Set</span>
-            <span>${unitLabel}</span>
-            <span>Reps</span>
-            <span>RPE</span>
-        </div>
-    `;
+                    // Exercise header with editable name and controls
+                    let headerHtml = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <input type="text" class="exercise-name-input" value="${ex.name}" 
+                                   style="flex: 1; padding: 0.5rem; background: var(--color-bg); border: 1px solid var(--color-border); 
+                                          color: var(--color-text-main); border-radius: 4px; font-size: 1rem; font-weight: 600;"
+                                   placeholder="Nome esercizio">
+                            <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                                <button class="add-set-btn" data-exercise-index="${exIndex}" 
+                                        style="background: var(--color-primary); color: var(--color-bg); border: none; 
+                                               padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;"
+                                        title="Aggiungi set">+ Set</button>
+                                ${exercisesToRender.length > 1 ? `
+                                <button class="remove-exercise-btn" data-exercise-index="${exIndex}" 
+                                        style="background: #ff4444; color: white; border: none; 
+                                               padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;"
+                                        title="Rimuovi esercizio">× Esercizio</button>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="set-header">
+                            <span>Set</span>
+                            <span>${unitLabel}</span>
+                            <span>Reps</span>
+                            <span>RPE</span>
+                        </div>
+                    `;
 
                     const setsToRender = ex.sets || (Array.isArray(ex.sets) ? ex.sets : []);
-                    // If it's a fresh workout, ex.sets might be a number (string) from creator
-                    // If it's an existing log, ex.sets is an array of objects
-
                     let numSets = 3;
                     if (Array.isArray(setsToRender) && setsToRender.length > 0) {
                         numSets = setsToRender.length;
@@ -372,13 +388,13 @@
                         numSets = parseInt(workout.exercises[exIndex].sets) || 3;
                     }
 
+                    let setsHtml = '';
                     for (let i = 0; i < numSets; i++) {
                         let weight = '';
                         let reps = '';
                         let rpe = '';
 
                         if (Array.isArray(setsToRender) && setsToRender[i]) {
-                            // If editing, convert stored KG to display unit
                             let storedWeight = setsToRender[i].weight;
                             if (unitService) {
                                 weight = unitService.convertWeight(storedWeight);
@@ -388,24 +404,159 @@
                             reps = setsToRender[i].reps;
                             rpe = setsToRender[i].rpe || '';
                         } else {
-                            // Pre-fill reps from plan if available
                             if (workout.exercises[exIndex]) {
                                 reps = workout.exercises[exIndex].reps || '';
                             }
                         }
 
                         setsHtml += `
-            <div class="set-row" data-exercise="${ex.name}">
-                <span class="set-label">${i + 1}</span>
-                <input type="number" class="set-input input-weight" placeholder="${unitLabel}" value="${weight}">
-                <input type="number" class="set-input input-reps" placeholder="Reps" value="${reps}">
-                <input type="number" class="set-input input-rpe" placeholder="RPE" value="${rpe}">
-            </div>
-        `;
+                            <div class="set-row" data-set-index="${i}">
+                                <span class="set-label">${i + 1}</span>
+                                <input type="number" class="set-input input-weight" placeholder="${unitLabel}" value="${weight}">
+                                <input type="number" class="set-input input-reps" placeholder="Reps" value="${reps}">
+                                <input type="number" class="set-input input-rpe" placeholder="RPE" value="${rpe}">
+                                ${numSets > 1 ? `
+                                <button class="remove-set-btn" data-set-index="${i}" 
+                                        style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 1rem; padding: 0;"
+                                        title="Rimuovi set">×</button>
+                                ` : ''}
+                            </div>
+                        `;
                     }
 
-                    exDiv.innerHTML = setsHtml;
+                    exDiv.innerHTML = headerHtml + setsHtml;
                     exercisesLogContainer.appendChild(exDiv);
+                });
+
+                // Add "New Exercise" button
+                const addExerciseBtn = document.createElement('button');
+                addExerciseBtn.className = 'btn btn-outline';
+                addExerciseBtn.textContent = '+ Aggiungi Esercizio';
+                addExerciseBtn.style.width = '100%';
+                addExerciseBtn.style.marginTop = '1rem';
+                addExerciseBtn.addEventListener('click', addNewExercise);
+                exercisesLogContainer.appendChild(addExerciseBtn);
+
+                // Attach event listeners
+                attachExerciseControls();
+            }
+
+            // Add new exercise to the form
+            function addNewExercise() {
+                const exerciseItems = document.querySelectorAll('.exercise-log-item');
+                const newIndex = exerciseItems.length;
+
+                const exDiv = document.createElement('div');
+                exDiv.className = 'exercise-log-item';
+                exDiv.dataset.exerciseIndex = newIndex;
+
+                const unitLabel = unitService && unitService.getSystem() === 'imperial' ? 'Lbs' : 'Kg';
+
+                exDiv.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <input type="text" class="exercise-name-input" value="" 
+                               style="flex: 1; padding: 0.5rem; background: var(--color-bg); border: 1px solid var(--color-border); 
+                                      color: var(--color-text-main); border-radius: 4px; font-size: 1rem; font-weight: 600;"
+                               placeholder="Nome esercizio">
+                        <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                            <button class="add-set-btn" data-exercise-index="${newIndex}" 
+                                    style="background: var(--color-primary); color: var(--color-bg); border: none; 
+                                           padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;"
+                                    title="Aggiungi set">+ Set</button>
+                            <button class="remove-exercise-btn" data-exercise-index="${newIndex}" 
+                                    style="background: #ff4444; color: white; border: none; 
+                                           padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;"
+                                    title="Rimuovi esercizio">× Esercizio</button>
+                        </div>
+                    </div>
+                    <div class="set-header">
+                        <span>Set</span>
+                        <span>${unitLabel}</span>
+                        <span>Reps</span>
+                        <span>RPE</span>
+                    </div>
+                    <div class="set-row" data-set-index="0">
+                        <span class="set-label">1</span>
+                        <input type="number" class="set-input input-weight" placeholder="${unitLabel}" value="">
+                        <input type="number" class="set-input input-reps" placeholder="Reps" value="">
+                        <input type="number" class="set-input input-rpe" placeholder="RPE" value="">
+                    </div>
+                `;
+
+                // Insert before the "Add Exercise" button
+                const addBtn = exercisesLogContainer.querySelector('.btn-outline');
+                exercisesLogContainer.insertBefore(exDiv, addBtn);
+
+                attachExerciseControls();
+            }
+
+            // Attach controls for add/remove set and exercise
+            function attachExerciseControls() {
+                // Add set buttons
+                document.querySelectorAll('.add-set-btn').forEach(btn => {
+                    btn.replaceWith(btn.cloneNode(true)); // Remove old listeners
+                });
+                document.querySelectorAll('.add-set-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const exerciseDiv = e.target.closest('.exercise-log-item');
+                        const setRows = exerciseDiv.querySelectorAll('.set-row');
+                        const newSetIndex = setRows.length;
+                        const unitLabel = unitService && unitService.getSystem() === 'imperial' ? 'Lbs' : 'Kg';
+
+                        const newSetRow = document.createElement('div');
+                        newSetRow.className = 'set-row';
+                        newSetRow.dataset.setIndex = newSetIndex;
+                        newSetRow.innerHTML = `
+                            <span class="set-label">${newSetIndex + 1}</span>
+                            <input type="number" class="set-input input-weight" placeholder="${unitLabel}" value="">
+                            <input type="number" class="set-input input-reps" placeholder="Reps" value="">
+                            <input type="number" class="set-input input-rpe" placeholder="RPE" value="">
+                            <button class="remove-set-btn" data-set-index="${newSetIndex}" 
+                                    style="background: none; border: none; color: #ff4444; cursor: pointer; font-size: 1rem; padding: 0;"
+                                    title="Rimuovi set">×</button>
+                        `;
+
+                        exerciseDiv.appendChild(newSetRow);
+                        attachExerciseControls(); // Re-attach listeners
+                    });
+                });
+
+                // Remove set buttons
+                document.querySelectorAll('.remove-set-btn').forEach(btn => {
+                    btn.replaceWith(btn.cloneNode(true));
+                });
+                document.querySelectorAll('.remove-set-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const setRow = e.target.closest('.set-row');
+                        const exerciseDiv = setRow.closest('.exercise-log-item');
+                        setRow.remove();
+
+                        // Renumber remaining sets
+                        const remainingSets = exerciseDiv.querySelectorAll('.set-row');
+                        remainingSets.forEach((row, idx) => {
+                            row.querySelector('.set-label').textContent = idx + 1;
+                            row.dataset.setIndex = idx;
+                        });
+                    });
+                });
+
+                // Remove exercise buttons
+                document.querySelectorAll('.remove-exercise-btn').forEach(btn => {
+                    btn.replaceWith(btn.cloneNode(true));
+                });
+                document.querySelectorAll('.remove-exercise-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (confirm('Rimuovere questo esercizio?')) {
+                            const exerciseDiv = e.target.closest('.exercise-log-item');
+                            exerciseDiv.remove();
+
+                            // Renumber remaining exercises
+                            const remainingExercises = document.querySelectorAll('.exercise-log-item');
+                            remainingExercises.forEach((div, idx) => {
+                                div.dataset.exerciseIndex = idx;
+                            });
+                        }
+                    });
                 });
             }
 
@@ -448,11 +599,18 @@
                     };
                 }
 
-                // Collect Data
+                // Collect Data (including editable exercise names)
                 const exerciseItems = document.querySelectorAll('.exercise-log-item');
 
                 exerciseItems.forEach(item => {
-                    const exName = item.querySelector('h4').textContent;
+                    // Get exercise name from input field (editable)
+                    const exNameInput = item.querySelector('.exercise-name-input');
+                    const exName = exNameInput ? exNameInput.value.trim() : 'Esercizio';
+                    
+                    if (!exName) {
+                        return; // Skip exercises without name
+                    }
+
                     const setRows = item.querySelectorAll('.set-row');
                     const setsData = [];
 
