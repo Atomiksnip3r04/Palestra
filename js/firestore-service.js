@@ -288,15 +288,36 @@ export class FirestoreService {
                 .slice(0, 10)
                 .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
 
-            // Simplify Logs for Token Efficiency (Date + Volume + All Exercises for Style Analysis)
+            // Simplify Logs for Token Efficiency (Date + Volume + All Exercises for Style Analysis + RPE)
             const simplifiedLogs = recentLogs.map(log => {
                 // Pass ALL exercises to allow AI to understand the split/structure
-                const workoutStructure = log.exercises.map(e => `${e.name} (${e.sets.length} sets)`);
+                const workoutStructure = log.exercises.map(e => {
+                    // Calculate average RPE for this exercise if available
+                    const rpeValues = e.sets
+                        .map(s => s.rpe)
+                        .filter(rpe => rpe && rpe > 0);
+                    const avgRpe = rpeValues.length > 0 
+                        ? (rpeValues.reduce((sum, val) => sum + val, 0) / rpeValues.length).toFixed(1)
+                        : null;
+                    
+                    return avgRpe 
+                        ? `${e.name} (${e.sets.length} sets @ RPE ${avgRpe})`
+                        : `${e.name} (${e.sets.length} sets)`;
+                });
+                
+                // Calculate overall workout RPE average
+                const allRpeValues = log.exercises
+                    .flatMap(e => e.sets.map(s => s.rpe))
+                    .filter(rpe => rpe && rpe > 0);
+                const workoutAvgRpe = allRpeValues.length > 0
+                    ? (allRpeValues.reduce((sum, val) => sum + val, 0) / allRpeValues.length).toFixed(1)
+                    : null;
                 
                 return {
                     date: log.date.split('T')[0],
                     volume: log.totalVolume, // Total tonnage if calculated, or just rely on sets
                     exercises: workoutStructure, // Renamed from mainExercises to avoid confusion
+                    avgRpe: workoutAvgRpe, // Average RPE for entire workout
                     wellness: log.wellness ? {
                         sleepQuality: log.wellness.sleepQuality,
                         energyLevel: log.wellness.energyLevel,

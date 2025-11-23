@@ -226,6 +226,12 @@ ${toonProgressions}
 **Log Allenamenti Recenti (30 giorni):**
 ${toonLogs}
 
+**NOTA IMPORTANTE - Dati RPE:**
+I log includono RPE (Rate of Perceived Exertion, scala 1-10) per esercizio e workout.
+- RPE per esercizio: media dei set di quell'esercizio
+- avgRpe per workout: media di tutti i set del workout
+Usa questi dati per valutare intensità percepita e vicinanza al cedimento.
+
 **Storico Peso Corporeo:**
 ${toonBodyStats}
 
@@ -271,10 +277,14 @@ Genera un report **estremamente dettagliato e analitico** che copra TUTTI gli as
 - Identifica se il volume è in progressione, stallo o regressione
 - Confronta con raccomandazioni scientifiche (10-20 set/muscolo/settimana per ipertrofia)
 
-**2.3 Intensità & RPE**
-- Se disponibili dati RPE, analizza se ti alleni abbastanza vicino al cedimento
+**2.3 Intensità & RPE (Rate of Perceived Exertion)**
+- Analizza RPE medio per workout e per esercizio (se disponibile)
+- Valuta se ti alleni abbastanza vicino al cedimento (RPE ottimale: 7-9 per ipertrofia, 8-10 per forza)
+- Identifica se RPE è troppo basso (rischio undertraining) o troppo alto (rischio overtraining)
+- Correla RPE con progressioni/regressioni (es. "RPE alto ma nessuna progressione = possibile tecnica scadente")
 - Valuta il rapporto intensità/volume (alto volume + bassa intensità = endurance, basso volume + alta intensità = forza)
-- Suggerisci aggiustamenti basati sull'obiettivo dichiarato
+- Suggerisci aggiustamenti RPE target basati sull'obiettivo dichiarato
+- Identifica pattern RPE nel tempo (es. "RPE in calo = adattamento positivo o perdita motivazione?")
 
 **2.4 Sovraccarico Progressivo**
 - Verifica se c'è evidenza di progressione nei carichi settimana dopo settimana

@@ -602,7 +602,7 @@
 
             <!-- Active Inputs Area -->
             <div id="focusActiveArea" style="width: 100%; margin-bottom: 2rem;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                     <div style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">KG</label>
                         <input type="number" id="focusWeightInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
@@ -610,6 +610,10 @@
                     <div style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">REPS</label>
                         <input type="text" id="focusRepsInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
+                    </div>
+                    <div style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
+                        <label style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">RPE</label>
+                        <input type="number" id="focusRpeInput" min="1" max="10" step="0.5" style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="" placeholder="1-10">
                     </div>
                 </div>
             </div>
@@ -1116,6 +1120,7 @@
             const focusActiveArea = document.getElementById('focusActiveArea');
             const focusWeightInput = document.getElementById('focusWeightInput');
             const focusRepsInput = document.getElementById('focusRepsInput');
+            const focusRpeInput = document.getElementById('focusRpeInput');
             const focusHistoryList = document.getElementById('focusHistoryList');
             const focusExerciseName = document.getElementById('focusExerciseName');
             const focusSetCounter = document.getElementById('focusSetCounter');
@@ -1530,19 +1535,23 @@
 
                     const weightInputRaw = focusWeightInput.value.trim();
                     const repsInputRaw = focusRepsInput.value.trim();
+                    const rpeInputRaw = focusRpeInput.value.trim();
 
                     const loggedWeight = weightInputRaw === '' ? 0 : parseFloat(weightInputRaw) || 0;
                     const loggedReps = repsInputRaw || activeSet?.target || activeSet?.reps || '';
+                    const loggedRpe = rpeInputRaw ? parseFloat(rpeInputRaw) : 0;
 
                     if (activeSet) {
                         activeSet.weight = loggedWeight;
                         if (repsInputRaw) activeSet.reps = repsInputRaw;
+                        if (loggedRpe > 0) activeSet.rpe = loggedRpe;
                     }
                     
                     const historyItem = document.createElement('div');
                     const repsDisplay = loggedReps || '—';
                     const weightDisplay = loggedWeight ? loggedWeight : '—';
-                    historyItem.innerHTML = `✅ Set ${currentSetIndex + 1}: ${weightDisplay}kg x ${repsDisplay}`;
+                    const rpeDisplay = loggedRpe > 0 ? ` @ RPE ${loggedRpe}` : '';
+                    historyItem.innerHTML = `✅ Set ${currentSetIndex + 1}: ${weightDisplay}kg x ${repsDisplay}${rpeDisplay}`;
                     focusHistoryList.prepend(historyItem);
 
                     startRest();
@@ -1592,6 +1601,14 @@
                     focusRepsInput.value = '';
                 }
                 focusRepsInput.placeholder = targetLabel || 'Reps';
+
+                // Pre-fill RPE if available
+                if (set.rpe && set.rpe > 0) {
+                    focusRpeInput.value = set.rpe;
+                } else {
+                    focusRpeInput.value = '';
+                }
+                focusRpeInput.placeholder = '1-10';
 
                 // Reset UI State
                 focusActiveArea.style.display = 'block';
