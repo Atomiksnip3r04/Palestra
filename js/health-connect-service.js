@@ -34,15 +34,15 @@ class HealthConnectService {
     }
 
     /**
-     * Inizia il flusso OAuth per connettere Google Fit
+     * Inizia il flusso OAuth per connettere Google Fit (Implicit Flow)
      */
     async connect() {
+        // Usa Implicit Flow (token diretto, no code exchange)
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
             `client_id=${this.clientId}&` +
             `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
-            `response_type=code&` +
+            `response_type=token&` + // Cambiato da 'code' a 'token'
             `scope=${encodeURIComponent(this.scopes)}&` +
-            `access_type=offline&` +
             `prompt=consent`;
         
         // Apri popup OAuth
@@ -63,11 +63,19 @@ class HealthConnectService {
                 if (event.origin !== window.location.origin) return;
                 
                 if (event.data.type === 'oauth_success') {
-                    popup.close();
-                    await this.handleAuthCode(event.data.code);
+                    try {
+                        popup.close();
+                    } catch (e) {
+                        console.log('Popup already closed');
+                    }
+                    await this.handleAuthToken(event.data.token, event.data.expiresIn);
                     resolve(true);
                 } else if (event.data.type === 'oauth_error') {
-                    popup.close();
+                    try {
+                        popup.close();
+                    } catch (e) {
+                        console.log('Popup already closed');
+                    }
                     reject(new Error(event.data.error));
                 }
             }, { once: true });
@@ -75,89 +83,37 @@ class HealthConnectService {
     }
 
     /**
-     * Gestisce il codice di autorizzazione OAuth
+     * Gestisce il token di autorizzazione OAuth (Implicit Flow)
      */
-    async handleAuthCode(code) {
+    async handleAuthToken(accessToken, expiresIn) {
         try {
-            // Scambia il code per access token
-            // NOTA: Questo dovrebbe essere fatto server-side per sicurezza
-            // Per ora usiamo un approccio client-side semplificato
+            this.accessToken = accessToken;
+            this.tokenExpiry = Date.now() + (parseInt(expiresIn) * 1000);
+            this.isConnected = true;
             
-            const response = await fetch('https://oauth2.googleapis.com/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({
-                    code: code,
-                    client_id: this.clientId,
-                    client_secret: 'YOUR_CLIENT_SECRET', // Da configurare (meglio server-side)
-                    redirect_uri: this.redirectUri,
-                    grant_type: 'authorization_code'
-                })
-            });
+            // Salva token in Firestore
+            await this.saveToken();
             
-            const data = await response.json();
+            // Prima sincronizzazione
+            await this.syncAllData();
             
-            if (data.access_token) {
-                this.accessToken = data.access_token;
-                this.refreshToken = data.refresh_token;
-                this.tokenExpiry = Date.now() + (data.expires_in * 1000);
-                this.isConnected = true;
-                
-                // Salva token in Firestore (encrypted)
-                await this.saveToken();
-                
-                // Prima sincronizzazione
-                await this.syncAllData();
-                
-                return true;
-            }
-            
-            throw new Error('Failed to get access token');
+            return true;
         } catch (error) {
-            console.error('Error handling auth code:', error);
+            console.error('Error handling auth token:', error);
             throw error;
         }
     }
 
     /**
      * Refresh access token quando scade
+     * NOTA: Implicit Flow non fornisce refresh token
+     * L'utente dovrà riconnettersi quando il token scade
      */
     async refreshAccessToken() {
-        if (!this.refreshToken) {
-            throw new Error('No refresh token available');
-        }
-        
-        try {
-            const response = await fetch('https://oauth2.googleapis.com/token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({
-                    refresh_token: this.refreshToken,
-                    client_id: this.clientId,
-                    client_secret: 'YOUR_CLIENT_SECRET',
-                    grant_type: 'refresh_token'
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (data.access_token) {
-                this.accessToken = data.access_token;
-                this.tokenExpiry = Date.now() + (data.expires_in * 1000);
-                await this.saveToken();
-                return true;
-            }
-            
-            throw new Error('Failed to refresh token');
-        } catch (error) {
-            console.error('Error refreshing token:', error);
-            this.isConnected = false;
-            throw error;
-        }
+        // Implicit Flow non supporta refresh token
+        // Chiedi all'utente di riconnettersi
+        this.isConnected = false;
+        throw new Error('Token scaduto. Riconnetti Google Fit.');
     }
 
     /**
@@ -168,9 +124,10 @@ class HealthConnectService {
             throw new Error('Not connected to Google Fit');
         }
         
-        // Se il token scade tra meno di 5 minuti, refresh
-        if (this.tokenExpiry && this.tokenExpiry - Date.now() < 5 * 60 * 1000) {
-            await this.refreshAccessToken();
+        // Se il token è scaduto, disconnetti
+        if (this.tokenExpiry && this.tokenExpiry < Date.now()) {
+            this.isConnected = false;
+            throw new Error('Token scaduto. Riconnetti Google Fit.');
         }
     }
 

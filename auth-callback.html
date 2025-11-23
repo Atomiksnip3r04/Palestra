@@ -49,10 +49,12 @@
     </div>
 
     <script>
-        // Estrai parametri URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const error = urlParams.get('error');
+        // Estrai parametri da URL hash (Implicit Flow usa # invece di ?)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const expiresIn = hashParams.get('expires_in');
+        const error = hashParams.get('error');
+        
         const statusEl = document.getElementById('status');
         const errorEl = document.getElementById('error');
 
@@ -70,26 +72,45 @@
                 }, window.location.origin);
             }
             
-            setTimeout(() => window.close(), 3000);
-        } else if (code) {
-            // Successo - invia code al parent
+            setTimeout(() => {
+                try {
+                    window.close();
+                } catch (e) {
+                    console.log('Cannot close window');
+                }
+            }, 3000);
+        } else if (accessToken) {
+            // Successo - invia token al parent
             statusEl.textContent = 'Autenticazione completata!';
             
             if (window.opener) {
                 window.opener.postMessage({
                     type: 'oauth_success',
-                    code: code
+                    token: accessToken,
+                    expiresIn: expiresIn
                 }, window.location.origin);
             }
             
-            setTimeout(() => window.close(), 1000);
+            setTimeout(() => {
+                try {
+                    window.close();
+                } catch (e) {
+                    console.log('Cannot close window');
+                }
+            }, 1000);
         } else {
             // Nessun parametro valido
             statusEl.textContent = 'Parametri mancanti';
             errorEl.textContent = 'URL di callback non valido';
             errorEl.style.display = 'block';
             
-            setTimeout(() => window.close(), 3000);
+            setTimeout(() => {
+                try {
+                    window.close();
+                } catch (e) {
+                    console.log('Cannot close window');
+                }
+            }, 3000);
         }
     </script>
 </body>
