@@ -677,6 +677,70 @@
                                 unit: 'ore',
                                 format: (v) => v?.toFixed(1),
                                 trend: trends.sleep
+                            },
+                            {
+                                icon: '⏱️',
+                                label: 'Minuti Attivi',
+                                value: data?.activeMinutes,
+                                unit: 'min',
+                                format: (v) => v,
+                                trend: trends.activeMinutes
+                            },
+                            {
+                                icon: '💓',
+                                label: 'HRV',
+                                value: data?.hrv,
+                                unit: 'ms',
+                                format: (v) => v?.toFixed(1),
+                                trend: trends.hrv
+                            },
+                            {
+                                icon: '📊',
+                                label: 'Grasso Corporeo',
+                                value: data?.bodyFat,
+                                unit: '%',
+                                format: (v) => v?.toFixed(1),
+                                trend: trends.bodyFat
+                            },
+                            {
+                                icon: '📐',
+                                label: 'Altezza',
+                                value: data?.height,
+                                unit: 'cm',
+                                format: (v) => v?.toFixed(0),
+                                trend: trends.height
+                            },
+                            {
+                                icon: '💧',
+                                label: 'Idratazione',
+                                value: data?.hydration,
+                                unit: 'ml',
+                                format: (v) => v?.toLocaleString('it-IT'),
+                                trend: trends.hydration
+                            },
+                            {
+                                icon: '🩺',
+                                label: 'Pressione',
+                                value: data?.bloodPressure ? `${data.bloodPressure.systolic}/${data.bloodPressure.diastolic}` : null,
+                                unit: 'mmHg',
+                                format: (v) => v,
+                                trend: trends.bloodPressure
+                            },
+                            {
+                                icon: '🩸',
+                                label: 'Glicemia',
+                                value: data?.bloodGlucose,
+                                unit: 'mg/dL',
+                                format: (v) => v,
+                                trend: trends.bloodGlucose
+                            },
+                            {
+                                icon: '🫁',
+                                label: 'SpO2',
+                                value: data?.oxygenSaturation,
+                                unit: '%',
+                                format: (v) => v?.toFixed(1),
+                                trend: trends.oxygenSaturation
                             }
                         ];
 
