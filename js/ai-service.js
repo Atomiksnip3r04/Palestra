@@ -175,16 +175,22 @@ ${buildDomsSummaryBlock(domsHotspots)}
             // Health Data from Google Fit (already decoded by gatherDataForAI)
             const healthBlock = data.healthData ? `
 **Dati Salute (Google Fit - Ultimi 7 giorni)**
-- Passi Totali: ${data.healthData.steps ? Math.round(data.healthData.steps).toLocaleString('it-IT') : 'N/D'}
+- Passi Totali (Settimanali): ${data.healthData.steps ? Math.round(data.healthData.steps).toLocaleString('it-IT') : 'N/D'} passi
 - Frequenza Cardiaca Media: ${data.healthData.heartRate ? Math.round(data.healthData.heartRate) : 'N/D'} bpm
 - Peso (Google Fit): ${data.healthData.weight ? data.healthData.weight.toFixed(1) : 'N/D'} kg
-- Calorie Bruciate: ${data.healthData.calories ? Math.round(data.healthData.calories).toLocaleString('it-IT') : 'N/D'} kcal
+- Calorie Totali: ${data.healthData.calories ? Math.round(data.healthData.calories).toLocaleString('it-IT') : 'N/D'} kcal (include metabolismo basale + attività fisica da passi)
 - Distanza Percorsa: ${data.healthData.distance ? data.healthData.distance.toFixed(1) : 'N/D'} km
-- Sonno Medio: ${data.healthData.sleep ? data.healthData.sleep.toFixed(1) : 'N/D'} ore/notte
+- Sonno Totale: ${data.healthData.sleep ? data.healthData.sleep.toFixed(1) : 'N/D'} ore (attenzione: possibili anomalie di misurazione)
 - Fonte: ${data.healthData.source || 'google_fit'}
 - Ultimo Sync: ${data.healthData.syncTimestamp ? new Date(data.healthData.syncTimestamp).toLocaleString('it-IT') : 'N/D'}
 
-*Nota: Questi dati sono sincronizzati automaticamente da Google Fit e forniscono un quadro oggettivo dell'attività quotidiana e del recupero. Il sonno è particolarmente importante per valutare la capacità di recupero.*
+**IMPORTANTE - Note sui Dati Health:**
+1. **Passi**: Valore cumulativo settimanale (7 giorni), non giornaliero
+2. **Calorie**: Include TDEE completo (metabolismo basale + attività da passi). NON include allenamenti specifici o cardio dedicato perché l'orologio non li traccia
+3. **Sonno**: Dato potenzialmente inaccurato a causa di limitazioni hardware dell'orologio. Valori anomali (es. <2h o >12h/notte) vanno ignorati o presi con cautela
+4. **Distanza**: Calcolata solo dai passi, non include altre attività
+
+*Usa questi dati per valutare NEAT (attività non da esercizio) e recupero generale, ma non fare affidamento assoluto sul sonno se i valori sembrano irrealistici.*
 ` : '';
 
             const prompt = `
@@ -360,12 +366,17 @@ ${domsGuidance}
 
 **Dati Salute (Google Fit - Ultimi 7 giorni):**
 ${data.healthData ? `
-- Passi Totali: ${data.healthData.steps ? Math.round(data.healthData.steps).toLocaleString('it-IT') : 'N/D'}
-- Frequenza Cardiaca: ${data.healthData.heartRate ? Math.round(data.healthData.heartRate) : 'N/D'} bpm
-- Calorie Bruciate: ${data.healthData.calories ? Math.round(data.healthData.calories).toLocaleString('it-IT') : 'N/D'} kcal
-- Sonno Medio: ${data.healthData.sleep ? data.healthData.sleep.toFixed(1) : 'N/D'} ore/notte
+- Passi Totali (Settimanali): ${data.healthData.steps ? Math.round(data.healthData.steps).toLocaleString('it-IT') : 'N/D'} passi
+- Frequenza Cardiaca Media: ${data.healthData.heartRate ? Math.round(data.healthData.heartRate) : 'N/D'} bpm
+- Calorie Totali: ${data.healthData.calories ? Math.round(data.healthData.calories).toLocaleString('it-IT') : 'N/D'} kcal (include metabolismo basale + passi)
+- Sonno Totale: ${data.healthData.sleep ? data.healthData.sleep.toFixed(1) : 'N/D'} ore (possibili anomalie di misurazione)
 - Distanza: ${data.healthData.distance ? data.healthData.distance.toFixed(1) : 'N/D'} km
-*Usa questi dati per valutare il livello di recupero e attività generale dell'atleta. Il sonno è cruciale per decidere l'intensità dell'allenamento.*
+
+**Note Importanti:**
+- Passi: valore settimanale cumulativo, non giornaliero
+- Calorie: TDEE completo (basale + passi), NON include allenamenti specifici
+- Sonno: dato potenzialmente inaccurato, ignora valori irrealistici (<2h o >12h/notte)
+*Usa questi dati per valutare NEAT e recupero generale, ma con cautela sul sonno.*
 ` : '- Dati salute non disponibili'}
 
 **ANALISI STILE E STRUTTURA:**
@@ -456,13 +467,18 @@ ${toonHistoricalTrends}
 
 **Dati Salute (Google Fit - Ultimi 7 giorni):**
 ${payload.healthData ? `
-- Passi: ${payload.healthData.steps ? Math.round(payload.healthData.steps).toLocaleString('it-IT') : 'N/D'}
-- Frequenza Cardiaca: ${payload.healthData.heartRate ? Math.round(payload.healthData.heartRate) : 'N/D'} bpm
+- Passi Totali (Settimanali): ${payload.healthData.steps ? Math.round(payload.healthData.steps).toLocaleString('it-IT') : 'N/D'} passi
+- Frequenza Cardiaca Media: ${payload.healthData.heartRate ? Math.round(payload.healthData.heartRate) : 'N/D'} bpm
 - Peso: ${payload.healthData.weight ? payload.healthData.weight.toFixed(1) : 'N/D'} kg
-- Calorie: ${payload.healthData.calories ? Math.round(payload.healthData.calories).toLocaleString('it-IT') : 'N/D'} kcal
-- Sonno: ${payload.healthData.sleep ? payload.healthData.sleep.toFixed(1) : 'N/D'} ore/notte
+- Calorie Totali: ${payload.healthData.calories ? Math.round(payload.healthData.calories).toLocaleString('it-IT') : 'N/D'} kcal (include metabolismo basale + passi)
+- Sonno Totale: ${payload.healthData.sleep ? payload.healthData.sleep.toFixed(1) : 'N/D'} ore (possibili anomalie di misurazione)
 - Distanza: ${payload.healthData.distance ? payload.healthData.distance.toFixed(1) : 'N/D'} km
-*Considera questi dati oggettivi per valutare il recupero e l'attività generale. Il sonno è un indicatore chiave della capacità di recupero.*
+
+**Note Importanti:**
+- Passi: valore settimanale cumulativo
+- Calorie: TDEE completo (basale + passi), NON include allenamenti specifici
+- Sonno: dato potenzialmente inaccurato, ignora valori irrealistici
+*Considera questi dati per valutare NEAT e recupero generale, ma con cautela sul sonno.*
 ` : '- Dati salute non disponibili'}
 
 - Tono: professionale, motivante, conciso.
