@@ -5,6 +5,16 @@ service cloud.firestore {
     // User profiles: Users can read/write only their own data
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Private subcollection (health tokens, etc.)
+      match /private/{document=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Health data subcollection
+      match /health/{healthId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
     
     // Config: Public read (for global API key if needed), Admin write only
