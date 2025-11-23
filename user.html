@@ -474,6 +474,38 @@
                             </div>
                         </div>
 
+                        <!-- Health Connect Section -->
+                        <div class="setting-item" style="border-left: 3px solid var(--color-primary); padding-left: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                <span style="font-size: 1.5rem;">🏥</span>
+                                <span class="setting-label" style="font-size: 1rem; font-weight: 600;">Connessione Salute</span>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1rem; line-height: 1.4;">
+                                Sincronizza automaticamente i tuoi dati fitness da Google Fit per analisi AI più complete.
+                            </p>
+                            
+                            <div id="healthConnectStatus" style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px;">
+                                <p id="healthStatusText" style="font-size: 0.9rem; color: var(--color-text-muted); margin: 0;">
+                                    Non connesso
+                                </p>
+                                <small id="healthLastSync" style="font-size: 0.75rem; color: var(--color-text-muted); display: none; margin-top: 0.25rem;">
+                                    Ultimo sync: <span id="lastSyncTime"></span>
+                                </small>
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <button id="connectHealthBtn" class="btn btn-primary btn-compact" style="display: flex; align-items: center; gap: 6px;">
+                                    <span>🔗</span> Connetti Google Fit
+                                </button>
+                                <button id="syncHealthBtn" class="btn btn-outline btn-compact" style="display: none;">
+                                    <span>🔄</span> Sincronizza Ora
+                                </button>
+                                <button id="disconnectHealthBtn" class="btn btn-outline btn-compact" style="display: none; color: #ef4444; border-color: #ef4444;">
+                                    <span>❌</span> Disconnetti
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="setting-item">
                             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
                                 <span class="setting-label">Sincronizzazione</span>
@@ -1974,6 +2006,112 @@
                  });
             }
         });
+    </script>
+
+    <!-- Health Connect Integration Script -->
+    <script type="module">
+        import { healthConnectService } from './js/health-connect-service.js';
+        import { firestoreService } from './js/firestore-service.js';
+        
+        const connectBtn = document.getElementById('connectHealthBtn');
+        const syncBtn = document.getElementById('syncHealthBtn');
+        const disconnectBtn = document.getElementById('disconnectHealthBtn');
+        const statusText = document.getElementById('healthStatusText');
+        const lastSyncEl = document.getElementById('healthLastSync');
+        const lastSyncTime = document.getElementById('lastSyncTime');
+        
+        // Carica status
+        async function updateStatus() {
+            const status = healthConnectService.getStatus();
+            
+            if (status.isConnected && status.tokenValid) {
+                statusText.textContent = '✅ Connesso a Google Fit';
+                statusText.style.color = '#10b981';
+                connectBtn.style.display = 'none';
+                syncBtn.style.display = 'flex';
+                disconnectBtn.style.display = 'flex';
+                
+                // Mostra ultimo sync
+                const lastSync = await firestoreService.getLastHealthSync();
+                if (lastSync && lastSync.syncTimestamp) {
+                    lastSyncEl.style.display = 'block';
+                    lastSyncTime.textContent = new Date(lastSync.syncTimestamp).toLocaleString('it-IT');
+                }
+            } else {
+                statusText.textContent = 'Non connesso';
+                statusText.style.color = 'var(--color-text-muted)';
+                connectBtn.style.display = 'flex';
+                syncBtn.style.display = 'none';
+                disconnectBtn.style.display = 'none';
+                lastSyncEl.style.display = 'none';
+            }
+        }
+        
+        // Connect
+        connectBtn.addEventListener('click', async () => {
+            try {
+                connectBtn.disabled = true;
+                connectBtn.innerHTML = '⏳ Connessione...';
+                
+                await healthConnectService.connect();
+                
+                alert('✅ Connesso con successo! I tuoi dati verranno sincronizzati automaticamente.');
+                await updateStatus();
+            } catch (error) {
+                console.error('Errore connessione:', error);
+                alert('❌ Errore durante la connessione: ' + error.message);
+            } finally {
+                connectBtn.disabled = false;
+                connectBtn.innerHTML = '<span>🔗</span> Connetti Google Fit';
+            }
+        });
+        
+        // Sync
+        syncBtn.addEventListener('click', async () => {
+            try {
+                syncBtn.disabled = true;
+                syncBtn.innerHTML = '⏳ Sincronizzazione...';
+                
+                const result = await healthConnectService.syncAllData();
+                
+                if (result.success) {
+                    alert('✅ Dati sincronizzati con successo!');
+                    await updateStatus();
+                } else {
+                    alert('❌ Errore: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Errore sync:', error);
+                alert('❌ Errore durante la sincronizzazione: ' + error.message);
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = '<span>🔄</span> Sincronizza Ora';
+            }
+        });
+        
+        // Disconnect
+        disconnectBtn.addEventListener('click', async () => {
+            if (!confirm('Sei sicuro di voler disconnettere Google Fit?')) return;
+            
+            try {
+                await healthConnectService.disconnect();
+                alert('✅ Disconnesso con successo');
+                await updateStatus();
+            } catch (error) {
+                console.error('Errore disconnect:', error);
+                alert('❌ Errore: ' + error.message);
+            }
+        });
+        
+        // Carica status iniziale quando la pagina è pronta
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus();
+        });
+        
+        // Aggiorna status anche se già caricato
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            updateStatus();
+        }
     </script>
 </body>
 
