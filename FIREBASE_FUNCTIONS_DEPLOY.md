@@ -33,7 +33,7 @@ Seleziona:
 Imposta il Client ID e Client Secret di Google:
 
 ```bash
-firebase functions:config:set google.client_id="658389886558-tteapc0f1jrd0kq3psg79tep57kcpf6n.apps.googleusercontent.com"
+firebase functions:config:set google.client_id="254296220548-ucevne2u3r2t8pga65b4jbcdj91jneec.apps.googleusercontent.com"
 
 firebase functions:config:set google.client_secret="IL_TUO_CLIENT_SECRET_QUI"
 

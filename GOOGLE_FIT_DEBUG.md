@@ -75,7 +75,7 @@ Dovresti vedere:
 ```json
 {
   "google": {
-    "client_id": "658389886558-tteapc0f1jrd0kq3psg79tep57kcpf6n.apps.googleusercontent.com",
+    "client_id": "254296220548-ucevne2u3r2t8pga65b4jbcdj91jneec.apps.googleusercontent.com",
     "client_secret": "YOUR_CLIENT_SECRET",
     "redirect_uri": "https://atomiksnip3r04.github.io/Palestra/auth-callback.html"
   }
@@ -85,7 +85,7 @@ Dovresti vedere:
 ### 2. Se mancano, impostale:
 
 ```bash
-firebase functions:config:set google.client_id="658389886558-tteapc0f1jrd0kq3psg79tep57kcpf6n.apps.googleusercontent.com"
+firebase functions:config:set google.client_id="254296220548-ucevne2u3r2t8pga65b4jbcdj91jneec.apps.googleusercontent.com"
 firebase functions:config:set google.client_secret="YOUR_CLIENT_SECRET"
 firebase functions:config:set google.redirect_uri="https://atomiksnip3r04.github.io/Palestra/auth-callback.html"
 ```

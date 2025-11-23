@@ -13,3 +13,6 @@ functions/.env.local
 *.secret
 .env
 .env.local
+
+# Firebase Config (contiene chiavi API)
+js/firebase-config.js
