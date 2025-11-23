@@ -5,13 +5,17 @@ const { google } = require('googleapis');
 // Inizializza Firebase Admin
 admin.initializeApp();
 
-// Configurazione OAuth2
+// Configurazione OAuth2 (supporta sia .env che functions.config per retrocompatibilità)
 const getOAuth2Client = () => {
-  return new google.auth.OAuth2(
-    functions.config().google.client_id,
-    functions.config().google.client_secret,
-    functions.config().google.redirect_uri
-  );
+  const clientId = process.env.GOOGLE_CLIENT_ID || functions.config().google?.client_id;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET || functions.config().google?.client_secret;
+  const redirectUri = process.env.GOOGLE_REDIRECT_URI || functions.config().google?.redirect_uri;
+  
+  if (!clientId || !clientSecret || !redirectUri) {
+    throw new Error('Missing OAuth2 configuration. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI');
+  }
+  
+  return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 };
 
 /**

@@ -25,12 +25,10 @@ class HealthConnectService {
         this.refreshToken = null;
         this.tokenExpiry = null;
         this.isConnected = false;
+        this.tokenLoadPromise = null;
         
         // Base URL Google Fit API
         this.apiBase = 'https://www.googleapis.com/fitness/v1/users/me';
-        
-        // Carica token salvato
-        this.loadSavedToken();
     }
 
     /**
@@ -97,9 +95,20 @@ class HealthConnectService {
             const result = await exchangeCode({ code });
             
             if (result.data.success) {
+                console.log('Auth code exchanged successfully');
+                
+                // Aspetta un momento per assicurarsi che Firestore sia aggiornato
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
                 // Token salvato server-side, ora caricalo
                 await this.loadSavedToken();
+                
+                if (!this.accessToken) {
+                    throw new Error('Failed to load token after exchange');
+                }
+                
                 this.isConnected = true;
+                console.log('Health Connect is now connected');
                 
                 // Prima sincronizzazione
                 await this.syncAllData();
@@ -164,6 +173,8 @@ class HealthConnectService {
         const dataSourceId = this.getDataSourceId(dataType);
         const url = `${this.apiBase}/dataSources/${dataSourceId}/datasets/${startTime}-${endTime}`;
         
+        console.log(`Fetching ${dataType} from Google Fit:`, url);
+        
         const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${this.accessToken}`
@@ -171,7 +182,29 @@ class HealthConnectService {
         });
         
         if (!response.ok) {
-            throw new Error(`Google Fit API error: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error(`Google Fit API error for ${dataType}:`, response.status, errorText);
+            
+            // Se 403, potrebbe essere un problema di permessi o token scaduto
+            if (response.status === 403) {
+                console.log('403 error - attempting token refresh');
+                try {
+                    await this.refreshAccessToken();
+                    // Riprova la richiesta con il nuovo token
+                    const retryResponse = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${this.accessToken}`
+                        }
+                    });
+                    if (retryResponse.ok) {
+                        return await retryResponse.json();
+                    }
+                } catch (refreshError) {
+                    console.error('Token refresh failed:', refreshError);
+                }
+            }
+            
+            throw new Error(`Google Fit API error (${response.status}): ${response.statusText}`);
         }
         
         return await response.json();
@@ -198,12 +231,16 @@ class HealthConnectService {
      */
     async syncAllData(days = 7) {
         try {
+            console.log(`Starting health data sync for last ${days} days`);
+            
             const endTime = Date.now();
             const startTime = endTime - (days * 24 * 60 * 60 * 1000);
             
             // Converti in nanosecondi (formato Google Fit)
             const startNanos = startTime * 1000000;
             const endNanos = endTime * 1000000;
+            
+            console.log('Time range:', new Date(startTime), 'to', new Date(endTime));
             
             // Fetch tutti i tipi di dati
             const [steps, heartRate, weight, calories, distance, sleep] = await Promise.allSettled([
@@ -214,6 +251,24 @@ class HealthConnectService {
                 this.fetchDistance(startNanos, endNanos),
                 this.fetchSleep(startNanos, endNanos)
             ]);
+            
+            // Log risultati
+            console.log('Sync results:', {
+                steps: steps.status,
+                heartRate: heartRate.status,
+                weight: weight.status,
+                calories: calories.status,
+                distance: distance.status,
+                sleep: sleep.status
+            });
+            
+            // Log errori
+            [steps, heartRate, weight, calories, distance, sleep].forEach((result, idx) => {
+                if (result.status === 'rejected') {
+                    const names = ['steps', 'heartRate', 'weight', 'calories', 'distance', 'sleep'];
+                    console.error(`Failed to fetch ${names[idx]}:`, result.reason);
+                }
+            });
             
             // Processa risultati
             const healthData = {
@@ -227,11 +282,15 @@ class HealthConnectService {
                 source: 'google_fit'
             };
             
+            console.log('Health data collected:', healthData);
+            
             // Converti in formato TOON
             const toonData = healthTOONEncoder.fromGoogleFit(healthData);
             
             // Salva in Firestore
             await firestoreService.saveHealthData(toonData);
+            
+            console.log('Health data saved successfully');
             
             return {
                 success: true,
@@ -364,18 +423,40 @@ class HealthConnectService {
             if (tokenData) {
                 this.accessToken = tokenData.accessToken;
                 this.refreshToken = tokenData.refreshToken;
-                this.tokenExpiry = tokenData.tokenExpiry;
-                this.isConnected = true;
+                this.tokenExpiry = tokenData.expiryDate || tokenData.tokenExpiry; // Usa expiryDate dalla Firebase Function
+                
+                // Verifica se il token è ancora valido
+                if (this.tokenExpiry && this.tokenExpiry > Date.now()) {
+                    this.isConnected = true;
+                    console.log('Health token loaded successfully, expires:', new Date(this.tokenExpiry));
+                } else {
+                    console.log('Health token expired, needs refresh');
+                    this.isConnected = false;
+                }
+            } else {
+                this.isConnected = false;
             }
         } catch (error) {
             console.error('Error loading saved token:', error);
+            this.isConnected = false;
         }
     }
 
     /**
-     * Get status connessione
+     * Get status connessione (async per assicurarsi che i token siano caricati)
      */
-    getStatus() {
+    async getStatus() {
+        // Se non abbiamo ancora caricato i token, caricali ora
+        if (!this.tokenLoadPromise && !this.accessToken) {
+            this.tokenLoadPromise = this.loadSavedToken();
+        }
+        
+        // Aspetta che il caricamento sia completato
+        if (this.tokenLoadPromise) {
+            await this.tokenLoadPromise;
+            this.tokenLoadPromise = null;
+        }
+        
         return {
             isConnected: this.isConnected,
             hasToken: !!this.accessToken,

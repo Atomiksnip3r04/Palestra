@@ -3,3 +3,13 @@ node_modules/
 Thumbs.db
 *.log
 .vscode/
+
+# Firebase Functions
+functions/.env
+functions/.env.local
+.runtimeconfig.json
+
+# Secrets
+*.secret
+.env
+.env.local

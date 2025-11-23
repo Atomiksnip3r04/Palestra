@@ -2022,28 +2022,47 @@
         
         // Carica status
         async function updateStatus() {
-            const status = healthConnectService.getStatus();
-            
-            if (status.isConnected && status.tokenValid) {
-                statusText.textContent = '✅ Connesso a Google Fit';
-                statusText.style.color = '#10b981';
-                connectBtn.style.display = 'none';
-                syncBtn.style.display = 'flex';
-                disconnectBtn.style.display = 'flex';
+            try {
+                // Aspetta che il servizio carichi i token
+                const status = await healthConnectService.getStatus();
                 
-                // Mostra ultimo sync
-                const lastSync = await firestoreService.getLastHealthSync();
-                if (lastSync && lastSync.syncTimestamp) {
-                    lastSyncEl.style.display = 'block';
-                    lastSyncTime.textContent = new Date(lastSync.syncTimestamp).toLocaleString('it-IT');
+                console.log('Health Connect Status:', status);
+                
+                if (status.isConnected && status.tokenValid) {
+                    statusText.textContent = '✅ Connesso a Google Fit';
+                    statusText.style.color = '#10b981';
+                    connectBtn.style.display = 'none';
+                    syncBtn.style.display = 'flex';
+                    disconnectBtn.style.display = 'flex';
+                    
+                    // Mostra ultimo sync
+                    const lastSync = await firestoreService.getLastHealthSync();
+                    if (lastSync && lastSync.syncTimestamp) {
+                        lastSyncEl.style.display = 'block';
+                        lastSyncTime.textContent = new Date(lastSync.syncTimestamp).toLocaleString('it-IT');
+                    }
+                } else if (status.hasToken && !status.tokenValid) {
+                    // Token scaduto
+                    statusText.textContent = '⚠️ Token scaduto - Riconnetti';
+                    statusText.style.color = '#f59e0b';
+                    connectBtn.style.display = 'flex';
+                    connectBtn.innerHTML = '<span>🔄</span> Riconnetti Google Fit';
+                    syncBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'flex';
+                    lastSyncEl.style.display = 'none';
+                } else {
+                    statusText.textContent = 'Non connesso';
+                    statusText.style.color = 'var(--color-text-muted)';
+                    connectBtn.style.display = 'flex';
+                    connectBtn.innerHTML = '<span>🔗</span> Connetti Google Fit';
+                    syncBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'none';
+                    lastSyncEl.style.display = 'none';
                 }
-            } else {
-                statusText.textContent = 'Non connesso';
-                statusText.style.color = 'var(--color-text-muted)';
-                connectBtn.style.display = 'flex';
-                syncBtn.style.display = 'none';
-                disconnectBtn.style.display = 'none';
-                lastSyncEl.style.display = 'none';
+            } catch (error) {
+                console.error('Error updating status:', error);
+                statusText.textContent = '❌ Errore caricamento stato';
+                statusText.style.color = '#ef4444';
             }
         }
         
@@ -2105,13 +2124,24 @@
         
         // Carica status iniziale quando la pagina è pronta
         document.addEventListener('DOMContentLoaded', () => {
-            updateStatus();
+            // Aspetta un momento per assicurarsi che l'autenticazione sia completa
+            setTimeout(() => updateStatus(), 500);
         });
         
         // Aggiorna status anche se già caricato
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            updateStatus();
+            setTimeout(() => updateStatus(), 500);
         }
+        
+        // Ascolta i cambiamenti di autenticazione per aggiornare lo stato
+        import('./js/auth-service.js').then(({ authService }) => {
+            authService.subscribe((user) => {
+                if (user) {
+                    // Utente autenticato, aggiorna lo stato dopo un breve delay
+                    setTimeout(() => updateStatus(), 1000);
+                }
+            });
+        });
     </script>
 </body>
 
