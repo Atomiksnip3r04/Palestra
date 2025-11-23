@@ -14,6 +14,14 @@ const getOAuth2Client = () => {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET || functions.config().google?.client_secret;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI || functions.config().google?.redirect_uri;
   
+  // Log per debug (rimuovi in produzione)
+  console.log('OAuth Config:', {
+    clientId: clientId ? `${clientId.substring(0, 20)}...` : 'MISSING',
+    clientSecret: clientSecret ? `${clientSecret.substring(0, 10)}...` : 'MISSING',
+    redirectUri: redirectUri || 'MISSING',
+    source: process.env.GOOGLE_CLIENT_ID ? '.env' : 'functions.config()'
+  });
+  
   if (!clientId || !clientSecret || !redirectUri) {
     throw new Error('Missing OAuth2 configuration. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and GOOGLE_REDIRECT_URI');
   }
@@ -23,6 +31,7 @@ const getOAuth2Client = () => {
 
 /**
  * Scambia authorization code per access token e refresh token
+ * Updated: 2025-11-23 - Fixed OAuth credentials
  */
 exports.exchangeHealthCode = functions.https.onCall(async (data, context) => {
   // Verifica autenticazione

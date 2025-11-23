@@ -9,7 +9,7 @@ import { firestoreService } from './firestore-service.js';
 class HealthConnectService {
     constructor() {
         // Configurazione OAuth Google
-        this.clientId = '254296220548-ucevne2u3r2t8pga65b4jbcdj91jneec.apps.googleusercontent.com';
+        this.clientId = '658389886558-i33b8t1d482g394brc4h8bl8g7368ep3.apps.googleusercontent.com';
         // Gestisce sia GitHub Pages che locale
         const basePath = window.location.pathname.includes('/Palestra/') ? '/Palestra' : '';
         this.redirectUri = window.location.origin + basePath + '/auth-callback.html';
