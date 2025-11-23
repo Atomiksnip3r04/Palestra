@@ -5,25 +5,24 @@
 class ExportService {
     constructor() {
         this.supportedFormats = ['markdown', 'text', 'html', 'docx'];
-        this.htmlDocxLoaded = false;
-        this.loadHtmlDocx();
+        this.docxLoaded = false;
     }
 
     /**
-     * Carica la libreria html-docx-js dinamicamente
+     * Carica la libreria docx dinamicamente
      */
-    async loadHtmlDocx() {
-        if (this.htmlDocxLoaded || window.htmlDocx) {
-            this.htmlDocxLoaded = true;
+    async loadDocx() {
+        if (this.docxLoaded || window.docx) {
+            this.docxLoaded = true;
             return true;
         }
 
         try {
-            await this.loadScript('https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js');
-            this.htmlDocxLoaded = true;
+            await this.loadScript('https://unpkg.com/docx@8.5.0/build/index.js');
+            this.docxLoaded = true;
             return true;
         } catch (error) {
-            console.error('Errore caricamento html-docx:', error);
+            console.error('Errore caricamento docx:', error);
             return false;
         }
     }
@@ -111,22 +110,30 @@ class ExportService {
     async downloadAsWord(content, filename, title = 'Report IronFlow') {
         try {
             // Assicurati che la libreria sia caricata
-            if (!this.htmlDocxLoaded) {
-                await this.loadHtmlDocx();
+            if (!this.docxLoaded) {
+                await this.loadDocx();
             }
 
-            if (!window.htmlDocx) {
+            if (!window.docx) {
                 return { success: false, message: 'Libreria Word non disponibile' };
             }
 
-            // Prepara HTML ben formattato per Word
-            const styledHtml = this.prepareHtmlForWord(content, title);
+            // Converti HTML in elementi docx
+            const children = this.htmlToDocxElements(content, title);
             
-            // Converti HTML in DOCX
-            const converted = window.htmlDocx.asBlob(styledHtml);
+            // Crea documento
+            const doc = new window.docx.Document({
+                sections: [{
+                    properties: {},
+                    children: children
+                }]
+            });
+            
+            // Genera blob
+            const blob = await window.docx.Packer.toBlob(doc);
             
             // Download del file
-            const url = URL.createObjectURL(converted);
+            const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `${filename}.docx`;
@@ -140,6 +147,246 @@ class ExportService {
             console.error('Errore download Word:', error);
             return { success: false, message: 'Errore durante la creazione del file Word' };
         }
+    }
+
+    /**
+     * Converte HTML in elementi docx
+     */
+    htmlToDocxElements(htmlContent, title) {
+        const { Paragraph, TextRun, HeadingLevel, AlignmentType, UnderlineType } = window.docx;
+        const elements = [];
+        
+        // Header con titolo
+        elements.push(
+            new Paragraph({
+                text: 'IRONFLOW',
+                heading: HeadingLevel.HEADING_1,
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 200 }
+            })
+        );
+        
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: `Report generato il ${new Date().toLocaleDateString('it-IT', { 
+                            day: 'numeric', 
+                            month: 'long', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}`,
+                        size: 20,
+                        color: '666666'
+                    })
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 }
+            })
+        );
+        
+        // Parse HTML content
+        const temp = document.createElement('div');
+        temp.innerHTML = htmlContent;
+        
+        // Converti elementi HTML in docx
+        this.parseHtmlNode(temp, elements);
+        
+        // Footer
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: '─'.repeat(50),
+                        color: 'CCCCCC'
+                    })
+                ],
+                spacing: { before: 400, after: 200 }
+            })
+        );
+        
+        elements.push(
+            new Paragraph({
+                children: [
+                    new TextRun({
+                        text: 'Generato da IronFlow - Il tuo assistente di allenamento intelligente',
+                        size: 18,
+                        color: '666666',
+                        italics: true
+                    })
+                ],
+                alignment: AlignmentType.CENTER
+            })
+        );
+        
+        return elements;
+    }
+
+    /**
+     * Parse ricorsivo dei nodi HTML
+     */
+    parseHtmlNode(node, elements) {
+        const { Paragraph, TextRun, HeadingLevel, AlignmentType } = window.docx;
+        
+        for (const child of node.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE) {
+                const text = child.textContent.trim();
+                if (text) {
+                    elements.push(
+                        new Paragraph({
+                            children: [new TextRun(text)],
+                            spacing: { after: 100 }
+                        })
+                    );
+                }
+            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                const tagName = child.tagName.toLowerCase();
+                
+                switch (tagName) {
+                    case 'h1':
+                        elements.push(
+                            new Paragraph({
+                                text: child.textContent,
+                                heading: HeadingLevel.HEADING_1,
+                                spacing: { before: 240, after: 120 }
+                            })
+                        );
+                        break;
+                    
+                    case 'h2':
+                        elements.push(
+                            new Paragraph({
+                                text: child.textContent,
+                                heading: HeadingLevel.HEADING_2,
+                                spacing: { before: 200, after: 100 }
+                            })
+                        );
+                        break;
+                    
+                    case 'h3':
+                        elements.push(
+                            new Paragraph({
+                                text: child.textContent,
+                                heading: HeadingLevel.HEADING_3,
+                                spacing: { before: 160, after: 80 }
+                            })
+                        );
+                        break;
+                    
+                    case 'h4':
+                        elements.push(
+                            new Paragraph({
+                                text: child.textContent,
+                                heading: HeadingLevel.HEADING_4,
+                                spacing: { before: 120, after: 60 }
+                            })
+                        );
+                        break;
+                    
+                    case 'p':
+                        const pChildren = this.parseInlineElements(child);
+                        if (pChildren.length > 0) {
+                            elements.push(
+                                new Paragraph({
+                                    children: pChildren,
+                                    spacing: { after: 120 }
+                                })
+                            );
+                        }
+                        break;
+                    
+                    case 'ul':
+                    case 'ol':
+                        const items = child.querySelectorAll('li');
+                        items.forEach((li, index) => {
+                            elements.push(
+                                new Paragraph({
+                                    text: `• ${li.textContent}`,
+                                    spacing: { after: 80 },
+                                    indent: { left: 720 }
+                                })
+                            );
+                        });
+                        break;
+                    
+                    case 'blockquote':
+                        elements.push(
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: child.textContent,
+                                        italics: true,
+                                        color: '666666'
+                                    })
+                                ],
+                                spacing: { before: 120, after: 120 },
+                                indent: { left: 720 }
+                            })
+                        );
+                        break;
+                    
+                    case 'table':
+                        // Per semplicità, convertiamo le tabelle in testo formattato
+                        const rows = child.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            const cells = row.querySelectorAll('td, th');
+                            const rowText = Array.from(cells).map(cell => cell.textContent.trim()).join(' | ');
+                            if (rowText) {
+                                elements.push(
+                                    new Paragraph({
+                                        text: rowText,
+                                        spacing: { after: 60 }
+                                    })
+                                );
+                            }
+                        });
+                        break;
+                    
+                    default:
+                        // Ricorsione per altri elementi
+                        this.parseHtmlNode(child, elements);
+                        break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Parse elementi inline (strong, em, etc.)
+     */
+    parseInlineElements(element) {
+        const { TextRun } = window.docx;
+        const runs = [];
+        
+        for (const child of element.childNodes) {
+            if (child.nodeType === Node.TEXT_NODE) {
+                const text = child.textContent;
+                if (text.trim()) {
+                    runs.push(new TextRun(text));
+                }
+            } else if (child.nodeType === Node.ELEMENT_NODE) {
+                const tagName = child.tagName.toLowerCase();
+                const text = child.textContent;
+                
+                if (!text.trim()) continue;
+                
+                const options = { text };
+                
+                if (tagName === 'strong' || tagName === 'b') {
+                    options.bold = true;
+                } else if (tagName === 'em' || tagName === 'i') {
+                    options.italics = true;
+                } else if (tagName === 'code') {
+                    options.font = 'Courier New';
+                    options.size = 20;
+                }
+                
+                runs.push(new TextRun(options));
+            }
+        }
+        
+        return runs.length > 0 ? runs : [new TextRun(element.textContent)];
     }
 
     /**

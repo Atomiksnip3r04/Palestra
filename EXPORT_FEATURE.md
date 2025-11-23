@@ -20,11 +20,13 @@ Il sistema di esportazione permette agli utenti di salvare, condividere e copiar
 
 ### 3. **Download Word** 📄
 - Scarica il report come file `.docx` (Microsoft Word)
-- Formattazione professionale con stili personalizzati
+- Formato Office Open XML standard e completamente compatibile
+- Formattazione professionale con heading styles
 - Header con logo IronFlow e data di generazione
 - Footer con branding
-- Compatibile con Microsoft Word, Google Docs, LibreOffice
-- Utilizza libreria html-docx-js (CDN)
+- Supporto per tabelle, liste, grassetto, corsivo
+- Compatibile con Microsoft Word, Google Docs, LibreOffice, Pages
+- Utilizza libreria docx v8.5 (CDN unpkg)
 
 ### 4. **Condivisione Nativa** 📱
 - Utilizza la Web Share API per condivisione nativa mobile
@@ -74,10 +76,11 @@ Il sistema di esportazione permette agli utenti di salvare, condividere e copiar
    - Nessun limite
    - API pubblica
 
-5. **html-docx-js** (CDN)
+5. **docx library** (CDN unpkg)
    - Gratuito
    - Nessun limite
-   - Libreria open source per conversione HTML → DOCX
+   - Libreria open source per generazione DOCX standard
+   - Formato Office Open XML completamente compatibile
    - Caricamento dinamico on-demand
 
 6. **Mailto Protocol**
@@ -262,10 +265,11 @@ Il servizio include un convertitore HTML-to-Markdown che:
 
 ## Performance
 
-- **Tempo di conversione**: < 50ms per report tipico
-- **Dimensione bundle**: ~8KB (minificato)
-- **Dipendenze**: Zero dipendenze esterne
+- **Tempo di conversione**: < 100ms per report tipico
+- **Dimensione bundle**: ~8KB export-service + ~200KB docx library (caricata on-demand)
+- **Dipendenze**: docx library caricata solo quando necessario
 - **Memoria**: Minimo impatto, cleanup automatico
+- **Lazy loading**: La libreria docx viene caricata solo al primo utilizzo
 
 ## Conclusione
 
