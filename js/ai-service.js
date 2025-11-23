@@ -504,6 +504,7 @@ Usa Markdown con questa struttura OBBLIGATORIA:
 - USA terminologia tecnica ma spiega i concetti
 - SII SPECIFICO: no "aumenta il volume", ma "aggiungi 2 serie di rematore"
 - MOTIVA ogni raccomandazione con i dati
+- **NON USARE MAI LATEX O FORMULE MATEMATICHE**: Scrivi tutti i numeri, formule e calcoli in testo normale. Esempio: scrivi "24.38 kg/m²" NON "$24.38 \\text{ kg/m}^2$". Scrivi "0.78x BW" NON "$0.78$x BW". Scrivi "1.8 g/kg" NON "$1.8 \\text{ g/kg}$". Il report deve essere leggibile come testo semplice senza rendering LaTeX.
 
 ---
 
@@ -512,6 +513,7 @@ Usa Markdown con questa struttura OBBLIGATORIA:
 - Ogni affermazione deve essere supportata da dati specifici.
 - Usa tabelle Markdown se utile per confronti (es. progressioni/regressioni).
 - Il report finale dovrebbe essere di almeno 2000-3000 parole per essere veramente utile e analitico.
+- RICORDA: Nessuna formula LaTeX, solo testo normale e numeri semplici.
 `;
             console.log("Sending Advanced TOON Prompt size:", prompt.length);
 
