@@ -4,7 +4,41 @@
 
 class ExportService {
     constructor() {
-        this.supportedFormats = ['markdown', 'text', 'html'];
+        this.supportedFormats = ['markdown', 'text', 'html', 'docx'];
+        this.htmlDocxLoaded = false;
+        this.loadHtmlDocx();
+    }
+
+    /**
+     * Carica la libreria html-docx-js dinamicamente
+     */
+    async loadHtmlDocx() {
+        if (this.htmlDocxLoaded || window.htmlDocx) {
+            this.htmlDocxLoaded = true;
+            return true;
+        }
+
+        try {
+            await this.loadScript('https://cdn.jsdelivr.net/npm/html-docx-js@0.3.1/dist/html-docx.min.js');
+            this.htmlDocxLoaded = true;
+            return true;
+        } catch (error) {
+            console.error('Errore caricamento html-docx:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Carica uno script esterno
+     */
+    loadScript(src) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
     }
 
     /**
@@ -69,6 +103,194 @@ class ExportService {
             console.error('Errore download:', error);
             return { success: false, message: 'Errore durante il download' };
         }
+    }
+
+    /**
+     * Download come file Word (.docx)
+     */
+    async downloadAsWord(content, filename, title = 'Report IronFlow') {
+        try {
+            // Assicurati che la libreria sia caricata
+            if (!this.htmlDocxLoaded) {
+                await this.loadHtmlDocx();
+            }
+
+            if (!window.htmlDocx) {
+                return { success: false, message: 'Libreria Word non disponibile' };
+            }
+
+            // Prepara HTML ben formattato per Word
+            const styledHtml = this.prepareHtmlForWord(content, title);
+            
+            // Converti HTML in DOCX
+            const converted = window.htmlDocx.asBlob(styledHtml);
+            
+            // Download del file
+            const url = URL.createObjectURL(converted);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${filename}.docx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            return { success: true, message: 'File Word scaricato!' };
+        } catch (error) {
+            console.error('Errore download Word:', error);
+            return { success: false, message: 'Errore durante la creazione del file Word' };
+        }
+    }
+
+    /**
+     * Prepara HTML ben formattato per Word
+     */
+    prepareHtmlForWord(content, title) {
+        return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>${title}</title>
+    <style>
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.6;
+            color: #000000;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #00f3ff;
+            margin-top: 0;
+            margin-bottom: 16pt;
+            border-bottom: 2px solid #00f3ff;
+            padding-bottom: 8pt;
+        }
+        h2 {
+            font-size: 18pt;
+            font-weight: bold;
+            color: #00f3ff;
+            margin-top: 16pt;
+            margin-bottom: 12pt;
+        }
+        h3 {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #00f3ff;
+            margin-top: 12pt;
+            margin-bottom: 8pt;
+        }
+        h4 {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #333333;
+            margin-top: 10pt;
+            margin-bottom: 6pt;
+            border-left: 3px solid #00f3ff;
+            padding-left: 10px;
+        }
+        p {
+            margin-top: 0;
+            margin-bottom: 10pt;
+            text-align: justify;
+        }
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 10pt;
+            padding-left: 30px;
+        }
+        li {
+            margin-bottom: 6pt;
+        }
+        strong, b {
+            font-weight: bold;
+            color: #000000;
+        }
+        em, i {
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10pt;
+            margin-bottom: 10pt;
+        }
+        th {
+            background-color: #00f3ff;
+            color: #000000;
+            font-weight: bold;
+            padding: 8pt;
+            border: 1px solid #cccccc;
+            text-align: left;
+        }
+        td {
+            padding: 6pt;
+            border: 1px solid #cccccc;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        blockquote {
+            border-left: 3px solid #cccccc;
+            padding-left: 15px;
+            margin-left: 0;
+            font-style: italic;
+            color: #666666;
+            background-color: #f5f5f5;
+            padding: 10pt;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10pt;
+        }
+        pre {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+            padding: 10pt;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10pt;
+            margin-bottom: 10pt;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30pt;
+        }
+        .footer {
+            margin-top: 30pt;
+            padding-top: 10pt;
+            border-top: 1px solid #cccccc;
+            font-size: 9pt;
+            color: #666666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>IRONFLOW</h1>
+        <p style="font-size: 10pt; color: #666666;">Report generato il ${new Date().toLocaleDateString('it-IT', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        })}</p>
+    </div>
+    ${content}
+    <div class="footer">
+        <p>Generato da IronFlow - Il tuo assistente di allenamento intelligente</p>
+    </div>
+</body>
+</html>`;
     }
 
     /**
@@ -214,7 +436,10 @@ class ExportService {
                         📋 Copia negli Appunti
                     </button>
                     <button class="export-btn" data-action="download">
-                        💾 Scarica File
+                        💾 Scarica Markdown
+                    </button>
+                    <button class="export-btn" data-action="word">
+                        📄 Scarica Word
                     </button>
                     <button class="export-btn" data-action="share">
                         📱 Condividi
@@ -272,6 +497,11 @@ class ExportService {
                 gap: 0.75rem;
                 margin-bottom: 1rem;
             }
+            @media (max-width: 400px) {
+                .export-options {
+                    grid-template-columns: 1fr;
+                }
+            }
             .export-btn {
                 background: rgba(255, 255, 255, 0.05);
                 border: 1px solid var(--color-border);
@@ -328,6 +558,10 @@ class ExportService {
                     case 'download':
                         const filename = `ironflow-report-${Date.now()}`;
                         result = this.downloadAsFile(content, filename, 'markdown');
+                        break;
+                    case 'word':
+                        const wordFilename = `ironflow-report-${Date.now()}`;
+                        result = await this.downloadAsWord(content, wordFilename, title);
                         break;
                     case 'share':
                         result = await this.shareNative(title, content, 'text');

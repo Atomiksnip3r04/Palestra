@@ -12,31 +12,39 @@ Il sistema di esportazione permette agli utenti di salvare, condividere e copiar
 - Supporto universale su tutti i dispositivi moderni
 - Notifica di conferma dopo la copia
 
-### 2. **Download File** 💾
+### 2. **Download Markdown** 💾
 - Scarica il report come file `.md` (Markdown)
 - Nome file automatico con timestamp: `ironflow-report-{timestamp}.md`
 - Formato leggibile e modificabile
 - Compatibile con editor Markdown e note-taking apps
 
-### 3. **Condivisione Nativa** 📱
+### 3. **Download Word** 📄
+- Scarica il report come file `.docx` (Microsoft Word)
+- Formattazione professionale con stili personalizzati
+- Header con logo IronFlow e data di generazione
+- Footer con branding
+- Compatibile con Microsoft Word, Google Docs, LibreOffice
+- Utilizza libreria html-docx-js (CDN)
+
+### 4. **Condivisione Nativa** 📱
 - Utilizza la Web Share API per condivisione nativa mobile
 - Integrazione con il menu di condivisione del sistema operativo
 - Supporto per iOS e Android
 - Fallback automatico se non supportato
 
-### 4. **WhatsApp** 💬
+### 5. **WhatsApp** 💬
 - Condivisione diretta su WhatsApp
 - Apertura automatica dell'app o web.whatsapp.com
 - Testo pre-compilato pronto per l'invio
 - Supporto mobile e desktop
 
-### 5. **Telegram** ✈️
+### 6. **Telegram** ✈️
 - Condivisione diretta su Telegram
 - Apertura automatica dell'app o t.me
 - Testo pre-compilato pronto per l'invio
 - Supporto mobile e desktop
 
-### 6. **Email** 📧
+### 7. **Email** 📧
 - Apertura del client email predefinito
 - Subject e body pre-compilati
 - Compatibile con tutti i client email
@@ -66,7 +74,13 @@ Il sistema di esportazione permette agli utenti di salvare, condividere e copiar
    - Nessun limite
    - API pubblica
 
-5. **Mailto Protocol**
+5. **html-docx-js** (CDN)
+   - Gratuito
+   - Nessun limite
+   - Libreria open source per conversione HTML → DOCX
+   - Caricamento dinamico on-demand
+
+6. **Mailto Protocol**
    - Gratuito
    - Nessun limite
    - Standard universale
@@ -109,7 +123,7 @@ Il sistema di esportazione permette agli utenti di salvare, condividere e copiar
    ↓
 3. Click su "Esporta Report"
    ↓
-4. Si apre menu con 6 opzioni
+4. Si apre menu con 7 opzioni
    ↓
 5. Utente sceglie metodo preferito
    ↓
@@ -161,7 +175,8 @@ Il servizio include un convertitore HTML-to-Markdown che:
 |---------|--------|---------|--------|------|
 | Clipboard API | ✅ | ✅ | ✅ | ✅ |
 | Web Share API | ✅ | ❌ | ✅ | ✅ |
-| Download File | ✅ | ✅ | ✅ | ✅ |
+| Download Markdown | ✅ | ✅ | ✅ | ✅ |
+| Download Word | ✅ | ✅ | ✅ | ✅ |
 | WhatsApp Share | ✅ | ✅ | ✅ | ✅ |
 | Telegram Share | ✅ | ✅ | ✅ | ✅ |
 | Email Share | ✅ | ✅ | ✅ | ✅ |
@@ -175,10 +190,11 @@ Il servizio include un convertitore HTML-to-Markdown che:
 ### Menu di Esportazione
 
 - **Design**: Modal overlay con backdrop scuro
-- **Layout**: Grid 2 colonne per le opzioni
+- **Layout**: Grid 2 colonne per le opzioni (1 colonna su mobile < 400px)
 - **Icone**: Emoji per identificazione rapida
 - **Animazioni**: Transizioni smooth per hover
 - **Responsive**: Ottimizzato per mobile e desktop
+- **7 opzioni**: Copia, Markdown, Word, Condividi, WhatsApp, Telegram, Email
 
 ### Notifiche Toast
 
