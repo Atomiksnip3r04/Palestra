@@ -342,24 +342,31 @@ class HealthConnectService {
      */
     async syncAllData() {
         try {
-            console.log(`Starting health data sync for TODAY`);
+            console.log(`Starting health data sync`);
 
             const now = new Date();
             const endTime = now.getTime();
             const endNanos = endTime * 1000000;
 
-            // 1. Time range per metriche giornaliere (Passi, Calorie, etc.) - Inizio di OGGI
+            // 1. Time range per metriche giornaliere (HR, etc.) - Inizio di OGGI
             const todayStart = new Date(now);
             todayStart.setHours(0, 0, 0, 0);
             const todayStartNanos = todayStart.getTime() * 1000000;
 
-            // 2. Time range per metriche di stato (Peso, Altezza) - Ultimi 30 giorni
+            // 2. Time range per metriche SETTIMANALI (Passi, Calorie, Sonno) - Ultimi 7 giorni
+            const weekStart = new Date(now);
+            weekStart.setDate(weekStart.getDate() - 7);
+            weekStart.setHours(0, 0, 0, 0);
+            const weekStartNanos = weekStart.getTime() * 1000000;
+
+            // 3. Time range per metriche di stato (Peso, Altezza) - Ultimi 30 giorni
             // Serve per trovare l'ultimo valore registrato anche se non è di oggi
             const stateStart = new Date(now);
             stateStart.setDate(stateStart.getDate() - 30);
             const stateStartNanos = stateStart.getTime() * 1000000;
 
             console.log('Syncing daily metrics from:', todayStart.toLocaleString());
+            console.log('Syncing weekly metrics (Steps, Calories, Sleep) from:', weekStart.toLocaleString());
             console.log('Syncing state metrics from:', stateStart.toLocaleString());
 
             // Fetch tutti i tipi di dati (base + aggiuntivi)
@@ -369,21 +376,21 @@ class HealthConnectService {
                 bloodPressure, bloodGlucose, oxygenSaturation
             ] = await Promise.allSettled([
                 // Dati base
-                this.fetchSteps(todayStartNanos, endNanos),
-                this.fetchHeartRate(todayStartNanos, endNanos),
+                this.fetchSteps(weekStartNanos, endNanos), // Weekly
+                this.fetchHeartRate(todayStartNanos, endNanos), // Daily
                 this.fetchWeight(stateStartNanos, endNanos), // State metric
-                this.fetchCalories(todayStartNanos, endNanos),
-                this.fetchDistance(todayStartNanos, endNanos),
-                this.fetchSleep(todayStartNanos, endNanos),
+                this.fetchCalories(weekStartNanos, endNanos), // Weekly
+                this.fetchDistance(weekStartNanos, endNanos), // Weekly
+                this.fetchSleep(weekStartNanos, endNanos), // Weekly (Average)
                 // Dati aggiuntivi
-                this.fetchActiveMinutes(todayStartNanos, endNanos),
-                this.fetchHRV(todayStartNanos, endNanos),
+                this.fetchActiveMinutes(weekStartNanos, endNanos), // Weekly
+                this.fetchHRV(todayStartNanos, endNanos), // Daily
                 this.fetchBodyFat(stateStartNanos, endNanos), // State metric
                 this.fetchHeight(stateStartNanos, endNanos), // State metric
-                this.fetchHydration(todayStartNanos, endNanos),
-                this.fetchBloodPressure(todayStartNanos, endNanos),
-                this.fetchBloodGlucose(todayStartNanos, endNanos),
-                this.fetchOxygenSaturation(todayStartNanos, endNanos)
+                this.fetchHydration(todayStartNanos, endNanos), // Daily
+                this.fetchBloodPressure(todayStartNanos, endNanos), // Daily
+                this.fetchBloodGlucose(todayStartNanos, endNanos), // Daily
+                this.fetchOxygenSaturation(todayStartNanos, endNanos) // Daily
             ]);
 
             // Log risultati
@@ -539,31 +546,11 @@ class HealthConnectService {
             return null;
         }
 
-        // Rimuovi outliers usando metodo IQR (Interquartile Range)
-        const sorted = [...hrValues].sort((a, b) => a - b);
-        const q1Index = Math.floor(sorted.length * 0.25);
-        const q3Index = Math.floor(sorted.length * 0.75);
-        const q1 = sorted[q1Index];
-        const q3 = sorted[q3Index];
-        const iqr = q3 - q1;
-        const lowerBound = q1 - 1.5 * iqr;
-        const upperBound = q3 + 1.5 * iqr;
+        // Calcola media su TUTTI i valori validi
+        // NOTA: Rimosso filtro IQR perché eliminava picchi reali durante allenamento
+        const avgHR = hrValues.reduce((a, b) => a + b, 0) / hrValues.length;
 
-        // Filtra outliers
-        const filteredValues = hrValues.filter(v => v >= lowerBound && v <= upperBound);
-
-        if (filteredValues.length === 0) {
-            console.log('All heart rate values were outliers, using original data');
-            // Fallback: usa tutti i valori se il filtro è troppo aggressivo
-            const avgHR = hrValues.reduce((a, b) => a + b, 0) / hrValues.length;
-            console.log(`Heart rate average: ${Math.round(avgHR)} bpm (${hrValues.length} readings, no filtering)`);
-            return Math.round(avgHR);
-        }
-
-        // Calcola media
-        const avgHR = filteredValues.reduce((a, b) => a + b, 0) / filteredValues.length;
-
-        console.log(`Heart rate average: ${Math.round(avgHR)} bpm (${filteredValues.length}/${hrValues.length} readings after outlier removal)`);
+        console.log(`Heart rate average: ${Math.round(avgHR)} bpm (${hrValues.length} readings)`);
 
         return Math.round(avgHR);
     }
@@ -604,6 +591,11 @@ class HealthConnectService {
      * Fetch sonno (media giornaliera) - ULTRA PRECISO
      * Google Fit registra segmenti di sonno con diversi tipi (light, deep, REM, awake)
      * Contiamo solo i segmenti di sonno effettivo (escludendo awake)
+     * 
+     * NOTA: Usiamo una media "Rolling" sugli ultimi 7 giorni, non la "Settimana Calendario".
+     * Questo significa che se oggi è lunedì e hai dormito 6h stanotte, ma hai dormito
+     * 8h nelle notti precedenti, la media sarà ~7.5h, mentre Google Fit mostrerà 6h
+     * (perché considera solo i giorni della settimana calendario corrente, che è appena iniziata).
      */
     async fetchSleep(startTime, endTime) {
         const data = await this.fetchGoogleFitData('sleep', startTime, endTime);
