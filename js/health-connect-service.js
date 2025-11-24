@@ -26,9 +26,44 @@ class HealthConnectService {
         this.tokenExpiry = null;
         this.isConnected = false;
         this.tokenLoadPromise = null;
+        this.autoRefreshInterval = null;
         
         // Base URL Google Fit API
         this.apiBase = 'https://www.googleapis.com/fitness/v1/users/me';
+        
+        // Avvia auto-refresh proattivo del token
+        this.startAutoRefresh();
+    }
+    
+    /**
+     * Avvia il sistema di auto-refresh proattivo del token
+     * Controlla ogni 5 minuti se il token sta per scadere e lo refresha automaticamente
+     */
+    startAutoRefresh() {
+        // Pulisci eventuali interval esistenti
+        if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+        }
+        
+        // Controlla ogni 5 minuti
+        this.autoRefreshInterval = setInterval(async () => {
+            try {
+                // Se non siamo connessi, salta
+                if (!this.isConnected || !this.accessToken) {
+                    return;
+                }
+                
+                // Se il token scade tra meno di 15 minuti, refresha
+                if (this.tokenExpiry && this.tokenExpiry - Date.now() < 15 * 60 * 1000) {
+                    console.log('Auto-refresh: Token expiring soon, refreshing proactively...');
+                    await this.refreshAccessToken();
+                }
+            } catch (error) {
+                console.error('Auto-refresh error:', error);
+            }
+        }, 5 * 60 * 1000); // Ogni 5 minuti
+        
+        console.log('Auto-refresh system started (checks every 5 minutes)');
     }
 
     /**
@@ -41,8 +76,9 @@ class HealthConnectService {
             `redirect_uri=${encodeURIComponent(this.redirectUri)}&` +
             `response_type=code&` + // Code per avere refresh_token
             `scope=${encodeURIComponent(this.scopes)}&` +
-            `access_type=offline&` + // Necessario per refresh_token
-            `prompt=consent`;
+            `access_type=offline&` + // CRITICO: Necessario per refresh_token
+            `prompt=consent&` + // CRITICO: Forza consent per ottenere refresh_token ogni volta
+            `include_granted_scopes=true`; // Include scopes già garantiti
         
         // Apri popup OAuth
         const width = 500;
@@ -128,6 +164,8 @@ class HealthConnectService {
      */
     async refreshAccessToken() {
         try {
+            console.log('Refreshing access token...');
+            
             // Importa Firebase Functions
             const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js');
             const functions = getFunctions();
@@ -139,13 +177,28 @@ class HealthConnectService {
             if (result.data.success) {
                 this.accessToken = result.data.accessToken;
                 this.tokenExpiry = result.data.expiryDate;
+                
+                const minutesUntilExpiry = Math.round((this.tokenExpiry - Date.now()) / (60 * 1000));
+                console.log(`✅ Token refreshed successfully! New expiry in ${minutesUntilExpiry} minutes (${new Date(this.tokenExpiry).toLocaleString()})`);
+                
                 return true;
             } else {
                 throw new Error(result.data.message || 'Failed to refresh token');
             }
         } catch (error) {
-            console.error('Error refreshing token:', error);
-            this.isConnected = false;
+            console.error('❌ Error refreshing token:', error);
+            
+            // Se il refresh fallisce, potrebbe essere che il refresh token sia scaduto
+            // In questo caso, l'utente deve riconnettersi
+            if (error.message.includes('invalid_grant') || error.message.includes('Token has been expired or revoked')) {
+                console.error('Refresh token expired or revoked. User needs to reconnect.');
+                this.isConnected = false;
+                // Pulisci i token locali
+                this.accessToken = null;
+                this.refreshToken = null;
+                this.tokenExpiry = null;
+            }
+            
             throw error;
         }
     }
@@ -158,8 +211,9 @@ class HealthConnectService {
             throw new Error('Not connected to Google Fit');
         }
         
-        // Se il token scade tra meno di 5 minuti, refresh automatico
-        if (this.tokenExpiry && this.tokenExpiry - Date.now() < 5 * 60 * 1000) {
+        // Se il token scade tra meno di 10 minuti, refresh automatico (aumentato da 5 a 10 per maggiore sicurezza)
+        if (this.tokenExpiry && this.tokenExpiry - Date.now() < 10 * 60 * 1000) {
+            console.log('Token expiring soon, refreshing...');
             await this.refreshAccessToken();
         }
     }
@@ -385,24 +439,95 @@ class HealthConnectService {
     }
 
     /**
-     * Fetch passi
+     * Fetch passi - ULTRA PRECISO
+     * Somma tutti i delta di passi nel periodo, gestendo correttamente i duplicati
      */
     async fetchSteps(startTime, endTime) {
         const data = await this.fetchGoogleFitData('steps', startTime, endTime);
-        const totalSteps = data.point?.reduce((sum, point) => {
-            return sum + (point.value?.[0]?.intVal || 0);
-        }, 0) || 0;
+        
+        if (!data.point || data.point.length === 0) {
+            console.log('No steps data available');
+            return 0;
+        }
+        
+        // Google Fit può avere dati duplicati da diverse fonti (phone, watch, etc.)
+        // Usiamo un set per tracciare i timestamp e evitare duplicati
+        const stepsByTimestamp = new Map();
+        
+        data.point.forEach(point => {
+            const steps = point.value?.[0]?.intVal || 0;
+            const startNanos = point.startTimeNanos;
+            const endNanos = point.endTimeNanos;
+            
+            // Crea una chiave unica per questo intervallo temporale
+            const key = `${startNanos}-${endNanos}`;
+            
+            // Se abbiamo già dati per questo intervallo, prendi il valore più alto
+            // (Google Fit a volte ha stime multiple, prendiamo la più accurata)
+            if (stepsByTimestamp.has(key)) {
+                const existing = stepsByTimestamp.get(key);
+                stepsByTimestamp.set(key, Math.max(existing, steps));
+            } else {
+                stepsByTimestamp.set(key, steps);
+            }
+        });
+        
+        // Somma tutti i passi unici
+        const totalSteps = Array.from(stepsByTimestamp.values()).reduce((sum, steps) => sum + steps, 0);
+        
+        console.log(`Total steps: ${totalSteps.toLocaleString()} (${stepsByTimestamp.size} unique intervals, ${data.point.length} total data points)`);
+        
         return totalSteps;
     }
 
     /**
-     * Fetch frequenza cardiaca
+     * Fetch frequenza cardiaca - ULTRA PRECISO
+     * Calcola la media ponderata escludendo outliers (valori anomali)
      */
     async fetchHeartRate(startTime, endTime) {
         const data = await this.fetchGoogleFitData('heartRate', startTime, endTime);
-        const hrValues = data.point?.map(p => p.value?.[0]?.fpVal).filter(v => v) || [];
-        if (hrValues.length === 0) return null;
-        const avgHR = hrValues.reduce((a, b) => a + b, 0) / hrValues.length;
+        
+        if (!data.point || data.point.length === 0) {
+            console.log('No heart rate data available');
+            return null;
+        }
+        
+        // Estrai tutti i valori validi
+        const hrValues = data.point
+            .map(p => p.value?.[0]?.fpVal)
+            .filter(v => v && v > 30 && v < 220); // Filtra valori fisiologicamente validi (30-220 bpm)
+        
+        if (hrValues.length === 0) {
+            console.log('No valid heart rate values found');
+            return null;
+        }
+        
+        // Rimuovi outliers usando metodo IQR (Interquartile Range)
+        const sorted = [...hrValues].sort((a, b) => a - b);
+        const q1Index = Math.floor(sorted.length * 0.25);
+        const q3Index = Math.floor(sorted.length * 0.75);
+        const q1 = sorted[q1Index];
+        const q3 = sorted[q3Index];
+        const iqr = q3 - q1;
+        const lowerBound = q1 - 1.5 * iqr;
+        const upperBound = q3 + 1.5 * iqr;
+        
+        // Filtra outliers
+        const filteredValues = hrValues.filter(v => v >= lowerBound && v <= upperBound);
+        
+        if (filteredValues.length === 0) {
+            console.log('All heart rate values were outliers, using original data');
+            // Fallback: usa tutti i valori se il filtro è troppo aggressivo
+            const avgHR = hrValues.reduce((a, b) => a + b, 0) / hrValues.length;
+            console.log(`Heart rate average: ${Math.round(avgHR)} bpm (${hrValues.length} readings, no filtering)`);
+            return Math.round(avgHR);
+        }
+        
+        // Calcola media
+        const avgHR = filteredValues.reduce((a, b) => a + b, 0) / filteredValues.length;
+        
+        console.log(`Heart rate average: ${Math.round(avgHR)} bpm (${filteredValues.length}/${hrValues.length} readings after outlier removal)`);
+        
         return Math.round(avgHR);
     }
 
@@ -439,36 +564,83 @@ class HealthConnectService {
     }
 
     /**
-     * Fetch sonno (media giornaliera)
+     * Fetch sonno (media giornaliera) - ULTRA PRECISO
+     * Google Fit registra segmenti di sonno con diversi tipi (light, deep, REM, awake)
+     * Contiamo solo i segmenti di sonno effettivo (escludendo awake)
      */
     async fetchSleep(startTime, endTime) {
         const data = await this.fetchGoogleFitData('sleep', startTime, endTime);
         
+        if (!data.point || data.point.length === 0) {
+            console.log('No sleep data available');
+            return 0;
+        }
+        
         // Raggruppa i segmenti di sonno per giorno
         const sleepByDay = {};
         
+        // Sleep segment types da Google Fit:
+        // 1 = awake (sveglio - NON contare)
+        // 2 = sleep (sonno generico)
+        // 3 = out-of-bed (fuori dal letto - NON contare)
+        // 4 = light sleep (sonno leggero)
+        // 5 = deep sleep (sonno profondo)
+        // 6 = REM sleep (sonno REM)
+        
+        const SLEEP_TYPES = [2, 4, 5, 6]; // Solo sonno effettivo
+        
         data.point?.forEach(point => {
+            const sleepType = point.value?.[0]?.intVal;
+            
+            // Salta segmenti non-sonno (awake, out-of-bed)
+            if (!SLEEP_TYPES.includes(sleepType)) {
+                return;
+            }
+            
             const start = parseInt(point.startTimeNanos) / 1000000;
             const end = parseInt(point.endTimeNanos) / 1000000;
-            const duration = (end - start) / (1000 * 60); // minuti
+            const durationMinutes = (end - start) / (1000 * 60);
             
-            // Usa la data di inizio del segmento come chiave
+            // Usa la data di inizio del segmento come chiave (formato YYYY-MM-DD)
             const dayKey = new Date(start).toISOString().split('T')[0];
             
             if (!sleepByDay[dayKey]) {
-                sleepByDay[dayKey] = 0;
+                sleepByDay[dayKey] = {
+                    totalMinutes: 0,
+                    segments: []
+                };
             }
-            sleepByDay[dayKey] += duration;
+            
+            sleepByDay[dayKey].totalMinutes += durationMinutes;
+            sleepByDay[dayKey].segments.push({
+                type: sleepType,
+                start: new Date(start).toISOString(),
+                end: new Date(end).toISOString(),
+                minutes: Math.round(durationMinutes)
+            });
         });
         
-        // Calcola la media giornaliera
+        // Log dettagliato per debug
+        console.log('Sleep data by day:', Object.entries(sleepByDay).map(([day, data]) => ({
+            day,
+            hours: (data.totalMinutes / 60).toFixed(1),
+            segments: data.segments.length
+        })));
+        
+        // Calcola la media giornaliera solo sui giorni con dati
         const days = Object.keys(sleepByDay);
-        if (days.length === 0) return 0;
+        if (days.length === 0) {
+            console.log('No valid sleep days found');
+            return 0;
+        }
         
-        const totalMinutes = Object.values(sleepByDay).reduce((sum, min) => sum + min, 0);
+        const totalMinutes = Object.values(sleepByDay).reduce((sum, data) => sum + data.totalMinutes, 0);
         const avgMinutes = totalMinutes / days.length;
+        const avgHours = avgMinutes / 60;
         
-        return Math.round(avgMinutes / 60 * 10) / 10; // Converti in ore con 1 decimale
+        console.log(`Sleep average: ${avgHours.toFixed(1)} hours/night (${days.length} days with data)`);
+        
+        return Math.round(avgHours * 10) / 10; // Ore con 1 decimale
     }
 
     /**
@@ -603,7 +775,7 @@ class HealthConnectService {
     }
 
     /**
-     * Carica token salvato
+     * Carica token salvato e refresha automaticamente se scaduto
      */
     async loadSavedToken() {
         try {
@@ -616,12 +788,38 @@ class HealthConnectService {
                 // Verifica se il token è ancora valido
                 if (this.tokenExpiry && this.tokenExpiry > Date.now()) {
                     this.isConnected = true;
-                    console.log('Health token loaded successfully, expires:', new Date(this.tokenExpiry));
+                    const minutesUntilExpiry = Math.round((this.tokenExpiry - Date.now()) / (60 * 1000));
+                    console.log(`Health token loaded successfully, expires in ${minutesUntilExpiry} minutes (${new Date(this.tokenExpiry).toLocaleString()})`);
+                    
+                    // Se scade tra meno di 20 minuti, refresha subito
+                    if (minutesUntilExpiry < 20) {
+                        console.log('Token expiring soon, refreshing immediately...');
+                        try {
+                            await this.refreshAccessToken();
+                        } catch (refreshError) {
+                            console.error('Failed to refresh token on load:', refreshError);
+                            this.isConnected = false;
+                        }
+                    }
                 } else {
-                    console.log('Health token expired, needs refresh');
-                    this.isConnected = false;
+                    console.log('Health token expired, attempting refresh...');
+                    // Token scaduto, prova a refreshare
+                    if (this.refreshToken) {
+                        try {
+                            await this.refreshAccessToken();
+                            this.isConnected = true;
+                            console.log('Token refreshed successfully after expiry');
+                        } catch (refreshError) {
+                            console.error('Failed to refresh expired token:', refreshError);
+                            this.isConnected = false;
+                        }
+                    } else {
+                        console.log('No refresh token available, user needs to reconnect');
+                        this.isConnected = false;
+                    }
                 }
             } else {
+                console.log('No saved token found');
                 this.isConnected = false;
             }
         } catch (error) {
