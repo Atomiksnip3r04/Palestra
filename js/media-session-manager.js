@@ -10,12 +10,14 @@ export class MediaSessionManager {
         this.totalSets = 3;
         this.timerValue = 0;
         this.timerInterval = null;
+        this.audioElement = null;
     }
 
     // Initialize Media Session
     init() {
         if ('mediaSession' in navigator) {
             console.log('Media Session API available');
+            this.createSilentAudio();
 
             // Set default metadata
             this.updateMetadata({
@@ -29,6 +31,14 @@ export class MediaSessionManager {
         } else {
             console.warn('Media Session API not supported on this browser');
         }
+    }
+
+    createSilentAudio() {
+        // Create a silent audio element to keep the session alive
+        this.audioElement = document.createElement('audio');
+        this.audioElement.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAGZGF0YQQAAAAAAA=='; // Silent wav
+        this.audioElement.loop = true;
+        document.body.appendChild(this.audioElement);
     }
 
     // Update metadata with current workout info
@@ -55,10 +65,14 @@ export class MediaSessionManager {
             // Play/Pause for timer control
             navigator.mediaSession.setActionHandler('play', () => {
                 this.onPlayPause?.(true);
+                if (this.audioElement) this.audioElement.play();
+                navigator.mediaSession.playbackState = 'playing';
             });
 
             navigator.mediaSession.setActionHandler('pause', () => {
                 this.onPlayPause?.(false);
+                if (this.audioElement) this.audioElement.pause();
+                navigator.mediaSession.playbackState = 'paused';
             });
 
             // Next/Previous for exercise navigation
@@ -82,6 +96,11 @@ export class MediaSessionManager {
         this.updateMetadata({
             album: workoutName
         });
+
+        // Play silent audio to activate session (must be triggered by user interaction)
+        if (this.audioElement) {
+            this.audioElement.play().catch(e => console.log('Audio play failed (interaction needed):', e));
+        }
 
         if ('mediaSession' in navigator) {
             navigator.mediaSession.playbackState = 'playing';
@@ -113,6 +132,15 @@ export class MediaSessionManager {
             title: `⏱️ Rest: ${timerText}`,
             artist: this.currentExercise || 'Recupero'
         });
+
+        // Update position state if supported
+        if ('setPositionState' in navigator.mediaSession) {
+            navigator.mediaSession.setPositionState({
+                duration: seconds || 1,
+                playbackRate: 1,
+                position: 0
+            });
+        }
     }
 
     // Start timer countdown on lockscreen
@@ -147,7 +175,7 @@ export class MediaSessionManager {
         }
 
         if ('mediaSession' in navigator) {
-            navigator.mediaSession.playbackState = 'paused';
+            navigator.mediaSession.playbackState = 'playing'; // Keep playing to maintain session
         }
     }
 
@@ -161,6 +189,10 @@ export class MediaSessionManager {
             artist: 'IRONFLOW',
             album: this.currentWorkoutName
         });
+
+        if (this.audioElement) {
+            this.audioElement.pause();
+        }
 
         if ('mediaSession' in navigator) {
             navigator.mediaSession.playbackState = 'none';
