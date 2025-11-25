@@ -1957,11 +1957,28 @@
                         const weightVal = Number(set.weight) || 0;
                         const repsVal = parseFloat(set.reps ?? set.target);
                         if (weightVal <= 0 || !Number.isFinite(repsVal) || repsVal <= 0) return null;
-                        return { weight: weightVal, reps: repsVal };
+                        
+                        // Include RPE if available
+                        const setData = { weight: weightVal, reps: repsVal };
+                        if (set.rpe !== undefined && set.rpe !== null && set.rpe !== '') {
+                            setData.rpe = Number(set.rpe);
+                        }
+                        return setData;
                     }).filter(Boolean);
 
                     if (!validSets.length) return null;
-                    return { name: ex.name, sets: validSets };
+                    
+                    // Calculate average RPE for the exercise
+                    const setsWithRpe = validSets.filter(s => s.rpe !== undefined);
+                    const avgRpe = setsWithRpe.length > 0 
+                        ? Math.round((setsWithRpe.reduce((sum, s) => sum + s.rpe, 0) / setsWithRpe.length) * 10) / 10
+                        : undefined;
+                    
+                    const exerciseData = { name: ex.name, sets: validSets };
+                    if (avgRpe !== undefined) {
+                        exerciseData.avgRpe = avgRpe;
+                    }
+                    return exerciseData;
                 }).filter(Boolean);
 
                 if (!exercises.length) {
@@ -1977,6 +1994,12 @@
                     ? Math.max(1, Math.round((Date.now() - sessionStartTime) / 60000))
                     : null;
 
+                // Calculate average RPE for the entire workout
+                const exercisesWithRpe = exercises.filter(ex => ex.avgRpe !== undefined);
+                const workoutAvgRpe = exercisesWithRpe.length > 0
+                    ? Math.round((exercisesWithRpe.reduce((sum, ex) => sum + ex.avgRpe, 0) / exercisesWithRpe.length) * 10) / 10
+                    : undefined;
+
                 const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
                 const logEntry = {
                     id: Date.now(),
@@ -1986,11 +2009,13 @@
                     duration: durationMinutes ? `${durationMinutes} min` : '',
                     totalVolume,
                     exercises,
+                    avgRpe: workoutAvgRpe, // Average RPE for the entire workout
                     wellness: currentWellnessSnapshot ? { ...currentWellnessSnapshot } : undefined,
                     fromAI: !!currentWorkout?.fromAI,
                     source: 'focus'
                 };
                 if (!logEntry.wellness) delete logEntry.wellness;
+                if (logEntry.avgRpe === undefined) delete logEntry.avgRpe;
                 logs.unshift(logEntry);
                 localStorage.setItem('ironflow_logs', JSON.stringify(logs));
                 sessionLogSaved = true;
