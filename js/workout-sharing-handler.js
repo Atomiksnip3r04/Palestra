@@ -298,4 +298,4 @@ export class WorkoutSharingHandler {
 }
 
 // Export class (not singleton, needs firestoreService instance)
-export { WorkoutSharingHandler };
+
