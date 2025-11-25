@@ -84,13 +84,65 @@ class ExportService {
             // Crea blob RTF
             const blob = new Blob([rtfContent], { type: 'application/rtf' });
             
-            // Download del file
+            // Check if running in Capacitor (native app)
+            const isCapacitor = typeof window.Capacitor !== 'undefined';
+            
+            if (isCapacitor && window.Capacitor.isNativePlatform()) {
+                // Use Capacitor Filesystem plugin for native download
+                try {
+                    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                    const { Share } = await import('@capacitor/share');
+                    
+                    // Convert blob to base64
+                    const reader = new FileReader();
+                    const base64Promise = new Promise((resolve, reject) => {
+                        reader.onloadend = () => {
+                            const base64 = reader.result.split(',')[1];
+                            resolve(base64);
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    const base64Data = await base64Promise;
+                    
+                    // Save to cache directory
+                    const savedFile = await Filesystem.writeFile({
+                        path: `${filename}.doc`,
+                        data: base64Data,
+                        directory: Directory.Cache
+                    });
+                    
+                    // Share the file (this opens the native share dialog)
+                    await Share.share({
+                        title: title,
+                        text: 'Report IronFlow',
+                        url: savedFile.uri,
+                        dialogTitle: 'Salva o condividi il report'
+                    });
+                    
+                    return { success: true, message: 'File pronto per il salvataggio!' };
+                } catch (capacitorError) {
+                    console.warn('Capacitor plugins not available, falling back to web download:', capacitorError);
+                    // Fall through to web download
+                }
+            }
+            
+            // Web download fallback
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `${filename}.doc`;
+            a.style.display = 'none';
             document.body.appendChild(a);
-            a.click();
+            
+            // Use setTimeout to ensure the click is processed
+            await new Promise(resolve => {
+                setTimeout(() => {
+                    a.click();
+                    resolve();
+                }, 100);
+            });
+            
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
@@ -689,7 +741,11 @@ class ExportService {
         try {
             const formattedContent = this.formatContent(content, format);
             const encodedText = encodeURIComponent(formattedContent);
-            const url = `https://t.me/share/url?text=${encodedText}`;
+            // Usa tg:// per app nativa o https://telegram.me per web
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const url = isMobile 
+                ? `tg://msg?text=${encodedText}`
+                : `https://telegram.me/share/msg?text=${encodedText}`;
             window.open(url, '_blank');
             return { success: true, message: 'Apertura Telegram...' };
         } catch (error) {

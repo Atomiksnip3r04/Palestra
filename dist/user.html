@@ -957,6 +957,29 @@
                         if (loadResult.data) {
                             renderWorkouts();
                             
+                            // Auto-restore Gemini API key from profile if local is empty
+                            const cloudProfile = loadResult.data.profile || {};
+                            if (cloudProfile.geminiKey && !aiService.hasKey()) {
+                                console.log('🔑 Auto-restoring Gemini API key from cloud profile...');
+                                aiService.saveKey(cloudProfile.geminiKey);
+                                const aiKeyInput = document.getElementById('aiKeyInput');
+                                if (aiKeyInput) aiKeyInput.value = cloudProfile.geminiKey;
+                            }
+                            
+                            // Auto-check and refresh Google Fit token if needed
+                            try {
+                                if (typeof healthConnectService !== 'undefined') {
+                                    const healthStatus = await healthConnectService.getStatus();
+                                    if (healthStatus.hasToken && !healthStatus.tokenValid) {
+                                        console.log('🔄 Google Fit token expired, attempting auto-refresh...');
+                                        await healthConnectService.refreshAccessToken();
+                                        console.log('✅ Google Fit token refreshed successfully');
+                                    }
+                                }
+                            } catch (healthError) {
+                                console.warn('Could not auto-refresh Google Fit token:', healthError.message);
+                            }
+                            
                             // Merge AI history: if local has items not in cloud, sync back
                             const localAiHistory = JSON.parse(localStorage.getItem('ironflow_ai_plan_history') || '[]');
                             const cloudAiHistory = loadResult.data.aiPlanHistory || [];
