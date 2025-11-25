@@ -1178,28 +1178,30 @@
                 });
             };
 
-            refreshAiPredictor.addEventListener('click', async () => {
-                if (!aiService.hasKey()) {
-                    aiPredictorContent.innerHTML = '<p style="color: #ff4444;">Imposta prima la tua API Key.</p>';
-                    return;
-                }
+            if (refreshAiPredictor) {
+                refreshAiPredictor.addEventListener('click', async () => {
+                    if (!aiService.hasKey()) {
+                        aiPredictorContent.innerHTML = '<p style="color: #ff4444;">Imposta prima la tua API Key.</p>';
+                        return;
+                    }
 
-                aiPredictorContent.innerHTML = '<p style="color: var(--color-text-muted);">Generazione allenamento in corso...</p>';
+                    aiPredictorContent.innerHTML = '<p style="color: var(--color-text-muted);">Generazione allenamento in corso...</p>';
 
-                const data = await firestoreService.gatherDataForAI();
-                const result = await aiService.predictNextSession(data);
+                    const data = await firestoreService.gatherDataForAI();
+                    const result = await aiService.predictNextSession(data);
 
-                if (result.success) {
-                    const plan = {
-                        ...result.data,
-                        createdAt: new Date().toISOString()
-                    };
-                    saveAiPlanHistory(plan);
-                    renderAiPlan(plan);
-                } else {
-                    aiPredictorContent.innerHTML = `<p style="color: #ff4444;">Errore: ${result.message}</p>`;
-                }
-            });
+                    if (result.success) {
+                        const plan = {
+                            ...result.data,
+                            createdAt: new Date().toISOString()
+                        };
+                        saveAiPlanHistory(plan);
+                        renderAiPlan(plan);
+                    } else {
+                        aiPredictorContent.innerHTML = `<p style="color: #ff4444;">Errore: ${result.message}</p>`;
+                    }
+                });
+            }
 
             // --- ImgBB Key Logic ---
             const imgbbKeyInput = document.getElementById('imgbbKeyInput');
@@ -1242,14 +1244,18 @@
                 });
             }
 
-            aiPlanHistoryBtn.addEventListener('click', () => {
-                renderAiPlanHistoryList();
-                aiPlanHistoryModal.style.display = 'flex';
-            });
+            if (aiPlanHistoryBtn) {
+                aiPlanHistoryBtn.addEventListener('click', () => {
+                    renderAiPlanHistoryList();
+                    aiPlanHistoryModal.style.display = 'flex';
+                });
+            }
 
-            closeAiPlanHistory.addEventListener('click', () => {
-                aiPlanHistoryModal.style.display = 'none';
-            });
+            if (closeAiPlanHistory) {
+                closeAiPlanHistory.addEventListener('click', () => {
+                    aiPlanHistoryModal.style.display = 'none';
+                });
+            }
 
             window.addEventListener('click', (e) => {
                 if (e.target === aiPlanHistoryModal) {
@@ -2086,7 +2092,11 @@
                                 return;
                             }
 
-                            window.initFocusMode(targetWorkout);
+                            if (typeof window.initFocusMode === 'function') {
+                                window.initFocusMode(targetWorkout);
+                            } else {
+                                alert('Focus Mode non ancora caricato. Riprova tra un secondo.');
+                            }
                         });
                     });
 
