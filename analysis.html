@@ -558,24 +558,40 @@
                 </div>
             </div>
 
-            <!-- PR Table -->
+            <!-- PR Table - PESI REALI MASSIMI -->
+            <div class="card" style="margin-bottom: var(--spacing-md);">
+                <h3 style="margin-bottom: 1rem;">🏋️ Record Personali <span class="text-primary">(Pesi Reali)</span></h3>
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                    Pesi massimi effettivamente sollevati per ogni esercizio, categorizzati per range di ripetizioni.
+                </p>
+                
+                <div class="rm-selector" style="display: flex; gap: 5px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <button class="btn-rm-real active" data-rm="all" style="border: none; background: var(--color-primary); color: var(--color-background); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">Tutti</button>
+                    <button class="btn-rm-real" data-rm="1-3" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">1-3 reps</button>
+                    <button class="btn-rm-real" data-rm="4-6" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">4-6 reps</button>
+                    <button class="btn-rm-real" data-rm="7-10" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">7-10 reps</button>
+                    <button class="btn-rm-real" data-rm="11+" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">11+ reps</button>
+                </div>
+
+                <div id="realPRsContainer" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Dynamic Real PRs -->
+                </div>
+            </div>
+
+            <!-- PR Table - STIME RM SCIENTIFICHE -->
             <div class="card">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                    <h3 style="margin: 0;">Record Personali <span style="font-size: 0.7rem; color: var(--color-text-muted);">(Pesi Reali)</span></h3>
-                    <div class="rm-selector"
-                        style="display: flex; gap: clamp(2px, 1vw, 5px); background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; flex-wrap: nowrap; overflow-x: auto;">
-                        <button class="btn-rm active" data-rm="max"
-                            style="border: none; background: transparent; color: #ccc; padding: 5px clamp(6px, 2vw, 10px); border-radius: 6px; cursor: pointer; font-size: clamp(0.7rem, 2.5vw, 0.85rem); transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">Max</button>
-                        <button class="btn-rm" data-rm="5rm"
-                            style="border: none; background: transparent; color: #ccc; padding: 5px clamp(6px, 2vw, 10px); border-radius: 6px; cursor: pointer; font-size: clamp(0.7rem, 2.5vw, 0.85rem); transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">4-6</button>
-                        <button class="btn-rm" data-rm="8rm"
-                            style="border: none; background: transparent; color: #ccc; padding: 5px clamp(6px, 2vw, 10px); border-radius: 6px; cursor: pointer; font-size: clamp(0.7rem, 2.5vw, 0.85rem); transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">7-9</button>
-                        <button class="btn-rm" data-rm="10rm"
-                            style="border: none; background: transparent; color: #ccc; padding: 5px clamp(6px, 2vw, 10px); border-radius: 6px; cursor: pointer; font-size: clamp(0.7rem, 2.5vw, 0.85rem); transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">9-11</button>
-                        <button class="btn-rm" data-rm="12rm"
-                            style="border: none; background: transparent; color: #ccc; padding: 5px clamp(6px, 2vw, 10px); border-radius: 6px; cursor: pointer; font-size: clamp(0.7rem, 2.5vw, 0.85rem); transition: all 0.2s; white-space: nowrap; flex-shrink: 0;">11-15</button>
-                    </div>
+                <h3 style="margin-bottom: 1rem;">📊 Stime Massimali <span class="text-primary">(Calcolo Scientifico)</span></h3>
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                    Stime basate su formule ibride (Epley + Brzycki + Lombardi + Mayhew + Wathen) per massima accuratezza.
+                </p>
+                
+                <div class="rm-selector" style="display: flex; gap: 5px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 8px; flex-wrap: wrap; margin-bottom: 1rem;">
+                    <button class="btn-rm active" data-rm="1rm" style="border: none; background: var(--color-primary); color: var(--color-background); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">1RM</button>
+                    <button class="btn-rm" data-rm="3rm" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">3RM</button>
+                    <button class="btn-rm" data-rm="5rm" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">5RM</button>
+                    <button class="btn-rm" data-rm="8rm" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">8RM</button>
+                    <button class="btn-rm" data-rm="10rm" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">10RM</button>
+                    <button class="btn-rm" data-rm="12rm" style="border: none; background: transparent; color: #ccc; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">12RM</button>
                 </div>
 
                 <table style="width: 100%; text-align: left; border-collapse: collapse;">
@@ -583,11 +599,11 @@
                         <tr style="border-bottom: 1px solid var(--color-border); color: var(--color-text-muted);">
                             <th style="padding: 10px;">Esercizio</th>
                             <th style="padding: 10px;" id="rmHeader">1RM (Stima)</th>
-                            <th style="padding: 10px;">Data</th>
+                            <th style="padding: 10px;">Basato su</th>
                         </tr>
                     </thead>
                     <tbody id="prTableBody">
-                        <!-- Dynamic PRs -->
+                        <!-- Dynamic Estimated PRs -->
                     </tbody>
                 </table>
             </div>
@@ -1881,101 +1897,261 @@
 
             updateTopLiftsCards();
 
-            // Update Table Logic with Selector - USA PESI REALI
-            const prTableBody = document.getElementById('prTableBody');
-            const rmHeader = document.getElementById('rmHeader');
-            const rmButtons = document.querySelectorAll('.btn-rm');
-            let currentView = 'max'; // Default: peso massimo reale
+            // ========== SEZIONE 1: PESI REALI ==========
+            const realPRsContainer = document.getElementById('realPRsContainer');
+            const realRmButtons = document.querySelectorAll('.btn-rm-real');
+            let currentRealFilter = 'all';
 
-            // Mappa view -> campo dati
-            const viewToField = {
-                'max': 'maxWeight',
-                '1rm': 'best1rep',
-                '3rm': 'best3rep',
-                '5rm': 'best5rep',
-                '8rm': 'best8rep',
-                '10rm': 'best10rep',
-                '12rm': 'best12rep'
+            // Organizza i PR per rep range (pesi reali)
+            const realPRsByRange = {
+                '1-3': [],   // 1-3 reps (forza massimale)
+                '4-6': [],   // 4-6 reps (forza)
+                '7-10': [],  // 7-10 reps (ipertrofia)
+                '11+': []    // 11+ reps (resistenza)
             };
 
-            const viewLabels = {
-                'max': 'Max (Reale)',
-                '1rm': '1 Rep',
-                '3rm': '2-4 Reps',
-                '5rm': '4-6 Reps',
-                '8rm': '7-9 Reps',
-                '10rm': '9-11 Reps',
-                '12rm': '11-15 Reps'
-            };
+            // Popola i range con i dati reali
+            logs.forEach(log => {
+                if (!log.exercises) return;
+                log.exercises.forEach(ex => {
+                    const name = ex.name.toLowerCase();
+                    ex.sets.forEach(set => {
+                        const w = parseFloat(set.weight);
+                        const r = parseInt(set.reps);
+                        if (w > 0 && r > 0) {
+                            let range = '';
+                            if (r >= 1 && r <= 3) range = '1-3';
+                            else if (r >= 4 && r <= 6) range = '4-6';
+                            else if (r >= 7 && r <= 10) range = '7-10';
+                            else if (r >= 11) range = '11+';
+                            
+                            if (range) {
+                                const existing = realPRsByRange[range].find(p => p.name === name);
+                                if (existing) {
+                                    if (w > existing.weight) {
+                                        existing.weight = w;
+                                        existing.reps = r;
+                                        existing.date = log.date;
+                                    }
+                                } else {
+                                    realPRsByRange[range].push({ name, weight: w, reps: r, date: log.date });
+                                }
+                            }
+                        }
+                    });
+                });
+            });
 
-            const renderTable = () => {
-                prTableBody.innerHTML = '';
+            // Ordina ogni range per peso decrescente
+            Object.keys(realPRsByRange).forEach(range => {
+                realPRsByRange[range].sort((a, b) => b.weight - a.weight);
+            });
 
-                // Update Header Text
-                rmHeader.textContent = viewLabels[currentView] || 'Peso Reale';
+            const renderRealPRs = () => {
+                realPRsContainer.innerHTML = '';
 
-                // Update Buttons State
-                rmButtons.forEach(btn => {
-                    if (btn.dataset.rm === currentView) {
+                // Update buttons state
+                realRmButtons.forEach(btn => {
+                    if (btn.dataset.rm === currentRealFilter) {
                         btn.style.background = 'var(--color-primary)';
                         btn.style.color = 'var(--color-background)';
-                        btn.classList.add('active');
                         btn.style.fontWeight = 'bold';
                     } else {
                         btn.style.background = 'transparent';
                         btn.style.color = '#ccc';
-                        btn.classList.remove('active');
                         btn.style.fontWeight = 'normal';
                     }
                 });
 
-                // Ottieni il campo corretto per la view
-                const field = viewToField[currentView] || 'maxWeight';
+                const rangesToShow = currentRealFilter === 'all' 
+                    ? ['1-3', '4-6', '7-10', '11+'] 
+                    : [currentRealFilter];
 
-                // Sort by current view metric (PESO REALE)
-                const sortedPRs = Object.entries(prs)
-                    .filter(([_, data]) => data[field] > 0)
-                    .sort((a, b) => b[1][field] - a[1][field])
-                    .slice(0, 5); // Top 5
+                const rangeLabels = {
+                    '1-3': '💪 Forza Massimale (1-3 reps)',
+                    '4-6': '🏋️ Forza (4-6 reps)',
+                    '7-10': '💥 Ipertrofia (7-10 reps)',
+                    '11+': '🔥 Resistenza (11+ reps)'
+                };
 
-                if (sortedPRs.length === 0) {
+                let hasData = false;
+
+                rangesToShow.forEach(range => {
+                    const prList = realPRsByRange[range];
+                    if (prList.length === 0) return;
+                    hasData = true;
+
+                    const section = document.createElement('div');
+                    section.style.marginBottom = '1rem';
+                    section.innerHTML = `<h4 style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">${rangeLabels[range]}</h4>`;
+
+                    const list = document.createElement('div');
+                    list.style.display = 'flex';
+                    list.style.flexDirection = 'column';
+                    list.style.gap = '4px';
+
+                    prList.slice(0, 5).forEach((pr, idx) => {
+                        const date = new Date(pr.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
+                        const weightDisplay = unitService ? unitService.formatWeight(pr.weight) : Math.round(pr.weight) + ' kg';
+                        
+                        const item = document.createElement('div');
+                        item.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid ' + (idx === 0 ? 'var(--color-primary)' : 'transparent');
+                        item.innerHTML = `
+                            <span style="text-transform: capitalize; flex: 1;">${pr.name}</span>
+                            <span style="color: var(--color-primary); font-weight: bold; margin: 0 12px;">${weightDisplay}</span>
+                            <span style="font-size: 0.75rem; color: var(--color-text-muted);">${pr.reps} reps • ${date}</span>
+                        `;
+                        list.appendChild(item);
+                    });
+
+                    section.appendChild(list);
+                    realPRsContainer.appendChild(section);
+                });
+
+                if (!hasData) {
+                    realPRsContainer.innerHTML = '<p style="text-align: center; color: var(--color-text-muted); padding: 20px;">Nessun record per questo range di ripetizioni</p>';
+                }
+            };
+
+            // Attach listeners for real PRs
+            realRmButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    currentRealFilter = e.target.dataset.rm;
+                    renderRealPRs();
+                });
+            });
+
+            renderRealPRs();
+
+            // ========== SEZIONE 2: STIME RM SCIENTIFICHE ==========
+            const prTableBody = document.getElementById('prTableBody');
+            const rmHeader = document.getElementById('rmHeader');
+            const rmButtons = document.querySelectorAll('.btn-rm');
+            let currentRMView = '1rm';
+
+            // Formule scientifiche per calcolo RM
+            const calculateHybrid1RM = (weight, reps) => {
+                if (reps === 1) return weight;
+                if (reps > 15) return null; // Non affidabile oltre 15 reps
+                
+                // Formula ibrida: media pesata di 5 formule
+                const epley = weight * (1 + reps / 30);
+                const brzycki = weight * (36 / (37 - reps));
+                const lombardi = weight * Math.pow(reps, 0.1);
+                const mayhew = weight * (100 / (52.2 + 41.9 * Math.exp(-0.055 * reps)));
+                const wathen = weight * (100 / (48.8 + 53.8 * Math.exp(-0.075 * reps)));
+                
+                // Media pesata (Brzycki e Epley più affidabili)
+                return (epley * 0.25 + brzycki * 0.25 + lombardi * 0.15 + mayhew * 0.15 + wathen * 0.2);
+            };
+
+            // Percentuali NSCA per convertire 1RM in altri RM
+            const rmPercentages = {
+                '1rm': 1.00,
+                '3rm': 0.93,
+                '5rm': 0.87,
+                '8rm': 0.80,
+                '10rm': 0.75,
+                '12rm': 0.70
+            };
+
+            // Calcola stime RM per ogni esercizio
+            const estimatedRMs = {};
+            
+            logs.forEach(log => {
+                if (!log.exercises) return;
+                log.exercises.forEach(ex => {
+                    const name = ex.name.toLowerCase();
+                    ex.sets.forEach(set => {
+                        const w = parseFloat(set.weight);
+                        const r = parseInt(set.reps);
+                        if (w > 0 && r > 0 && r <= 15) {
+                            const est1RM = calculateHybrid1RM(w, r);
+                            if (est1RM) {
+                                if (!estimatedRMs[name] || est1RM > estimatedRMs[name].est1RM) {
+                                    estimatedRMs[name] = {
+                                        est1RM: est1RM,
+                                        basedOn: `${w}kg x ${r}`,
+                                        date: log.date
+                                    };
+                                }
+                            }
+                        }
+                    });
+                });
+            });
+
+            const rmLabels = {
+                '1rm': '1RM (Stima)',
+                '3rm': '3RM (Stima)',
+                '5rm': '5RM (Stima)',
+                '8rm': '8RM (Stima)',
+                '10rm': '10RM (Stima)',
+                '12rm': '12RM (Stima)'
+            };
+
+            const renderEstimatedTable = () => {
+                prTableBody.innerHTML = '';
+                rmHeader.textContent = rmLabels[currentRMView] || '1RM (Stima)';
+
+                // Update buttons state
+                rmButtons.forEach(btn => {
+                    if (btn.dataset.rm === currentRMView) {
+                        btn.style.background = 'var(--color-primary)';
+                        btn.style.color = 'var(--color-background)';
+                        btn.style.fontWeight = 'bold';
+                    } else {
+                        btn.style.background = 'transparent';
+                        btn.style.color = '#ccc';
+                        btn.style.fontWeight = 'normal';
+                    }
+                });
+
+                const percentage = rmPercentages[currentRMView] || 1.0;
+
+                // Calcola e ordina per il RM selezionato
+                const sortedEstimates = Object.entries(estimatedRMs)
+                    .map(([name, data]) => ({
+                        name,
+                        estimatedWeight: data.est1RM * percentage,
+                        basedOn: data.basedOn,
+                        date: data.date
+                    }))
+                    .sort((a, b) => b.estimatedWeight - a.estimatedWeight)
+                    .slice(0, 8);
+
+                if (sortedEstimates.length === 0) {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td colspan="3" style="padding: 20px; text-align: center; color: var(--color-text-muted);">Nessun dato per questo range di reps</td>`;
+                    tr.innerHTML = `<td colspan="3" style="padding: 20px; text-align: center; color: var(--color-text-muted);">Nessun dato disponibile per le stime</td>`;
                     prTableBody.appendChild(tr);
                     return;
                 }
 
-                sortedPRs.forEach(([name, data]) => {
-                    const date = new Date(data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
-                    const weight = data[field];
-                    const repsInfo = currentView === 'max' ? ` (${data.maxWeightReps} reps)` : '';
-
-                    let weightDisplay = Math.round(weight) + ' kg';
-                    if (unitService) {
-                        weightDisplay = unitService.formatWeight(weight);
-                    }
+                sortedEstimates.forEach(item => {
+                    const weightDisplay = unitService 
+                        ? unitService.formatWeight(item.estimatedWeight) 
+                        : Math.round(item.estimatedWeight) + ' kg';
 
                     const tr = document.createElement('tr');
                     tr.style.borderBottom = '1px solid var(--color-border)';
                     tr.innerHTML = `
-<td style="padding: 10px; text-transform: capitalize;">${name}${repsInfo}</td>
-<td style="padding: 10px; color: var(--color-primary); font-weight: bold;">${weightDisplay}</td>
-<td style="padding: 10px; font-size: 0.8rem;">${date}</td>
-`;
+                        <td style="padding: 10px; text-transform: capitalize;">${item.name}</td>
+                        <td style="padding: 10px; color: var(--color-primary); font-weight: bold;">${weightDisplay}</td>
+                        <td style="padding: 10px; font-size: 0.75rem; color: var(--color-text-muted);">${item.basedOn}</td>
+                    `;
                     prTableBody.appendChild(tr);
                 });
             };
 
-            // Attach Listeners
+            // Attach listeners for estimated RMs
             rmButtons.forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    currentView = e.target.dataset.rm;
-                    renderTable();
+                    currentRMView = e.target.dataset.rm;
+                    renderEstimatedTable();
                 });
             });
 
-            // Initial Render
-            renderTable();
+            renderEstimatedTable();
         });
     </script>
 </body>
