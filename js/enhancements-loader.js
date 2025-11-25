@@ -194,34 +194,54 @@ function setupAIGenerationInterception() {
                             ${suggestion.reasoning || 'Nessuna nota disponibile.'}
                         </div>
                         
-                        <button id="acceptAiWorkout" class="btn btn-primary" style="width:100%; margin-top:1rem;">
-                            Avvia Questo Allenamento
-                        </button>
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button id="saveAiWorkout" class="btn btn-outline" style="flex: 1; border-color: var(--color-primary); color: var(--color-primary);">
+                                💾 Salva
+                            </button>
+                            <button id="startAiWorkout" class="btn btn-primary" style="flex: 1;">
+                                🚀 Avvia
+                            </button>
+                        </div>
                     </div>
                 `;
 
-                // Handle Accept
-                document.getElementById('acceptAiWorkout').addEventListener('click', () => {
-                    // Create workout object
-                    const newWorkout = {
-                        id: Date.now(),
-                        name: suggestion.suggestion,
-                        exercises: suggestion.exercises ? suggestion.exercises.map(ex => ({
-                            name: ex.name,
-                            sets: Array(parseInt(ex.sets) || 3).fill({ weight: 0, reps: ex.reps || '10', rpe: 8 }),
-                            rest: 90,
-                            notes: ex.notes || ''
-                        })) : [],
-                        aiGenerated: true,
-                        createdAt: new Date().toISOString()
-                    };
+                const createWorkoutObj = () => ({
+                    id: Date.now(),
+                    name: suggestion.suggestion,
+                    exercises: suggestion.exercises ? suggestion.exercises.map(ex => ({
+                        name: ex.name,
+                        sets: Array(parseInt(ex.sets) || 3).fill({ weight: 0, reps: ex.reps || '10', rpe: 8 }),
+                        rest: 90,
+                        notes: ex.notes || ''
+                    })) : [],
+                    aiGenerated: true,
+                    createdAt: new Date().toISOString()
+                });
 
-                    // Save and start
+                // Handle Save
+                document.getElementById('saveAiWorkout').addEventListener('click', () => {
+                    const newWorkout = createWorkoutObj();
                     const currentWorkouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
                     currentWorkouts.unshift(newWorkout);
                     localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
 
-                    // Reload to show in list
+                    alert('Scheda salvata con successo!');
+                    // Optional: reload list without page reload if possible, otherwise reload
+                    if (typeof window.renderWorkouts === 'function') {
+                        window.renderWorkouts();
+                    } else {
+                        window.location.reload();
+                    }
+                });
+
+                // Handle Start
+                document.getElementById('startAiWorkout').addEventListener('click', () => {
+                    const newWorkout = createWorkoutObj();
+                    const currentWorkouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
+                    currentWorkouts.unshift(newWorkout);
+                    localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
+
+                    // Reload to show in list and start (user will click play)
                     window.location.reload();
                 });
 
