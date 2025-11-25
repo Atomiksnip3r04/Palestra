@@ -615,53 +615,51 @@ export class AdvancedMetricsEngine {
 
     /**
      * 9. PERSONAL BESTS TIMELINE
-     * Timeline dei PR raggiunti - USA PESO REALE MASSIMO (non stimato)
+     * Mostra TUTTI gli esercizi con il peso reale massimo mai registrato
      */
     getPersonalBestsTimeline(months = 6) {
-        const cutoff = Date.now() - (months * 30 * DAY_MS);
         const prs = {}; // Traccia il peso reale massimo per esercizio
-        const timeline = [];
+        const prDetails = {}; // Dettagli del PR (data, reps)
 
-        // Ordina log per data
+        // Usa TUTTI i log (senza limite di tempo) per trovare i PR
         const sortedLogs = [...this.logs]
-            .filter(log => new Date(log.date).getTime() >= cutoff)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
         sortedLogs.forEach(log => {
             (log.exercises || []).forEach(ex => {
                 const name = (ex.name || '').toLowerCase();
+                const displayName = ex.name || name;
                 (ex.sets || []).forEach(set => {
                     const w = parseFloat(set.weight) || 0;
                     const r = parseFloat(set.reps) || 0;
                     if (w > 0 && r > 0) {
-                        // Usa il PESO REALE invece della stima 1RM
+                        // Aggiorna se è un nuovo PR
                         if (!prs[name] || w > prs[name]) {
-                            // Nuovo PR con peso reale!
-                            const isNewPR = prs[name] !== undefined;
                             prs[name] = w;
-                            
-                            if (isNewPR) {
-                                timeline.push({
-                                    date: log.date.split('T')[0],
-                                    exercise: ex.name,
-                                    value: Math.round(w), // PESO REALE
-                                    weight: w,
-                                    reps: r
-                                });
-                            }
+                            prDetails[name] = {
+                                date: log.date.split('T')[0],
+                                exercise: displayName,
+                                value: Math.round(w),
+                                weight: w,
+                                reps: r
+                            };
                         }
                     }
                 });
             });
         });
 
+        // Converti in array timeline (tutti gli esercizi con PR)
+        const timeline = Object.values(prDetails)
+            .sort((a, b) => b.value - a.value); // Ordina per peso decrescente
+
         return {
-            timeline: timeline.slice(-10), // Ultimi 10 PR
+            timeline: timeline, // TUTTI gli esercizi
             totalPRs: timeline.length,
-            currentPRs: Object.entries(prs).map(([name, value]) => ({
-                exercise: name,
-                value: Math.round(value) // PESO REALE
-            })).sort((a, b) => b.value - a.value).slice(0, 10)
+            currentPRs: timeline.map(pr => ({
+                exercise: pr.exercise,
+                value: pr.value
+            }))
         };
     }
 
