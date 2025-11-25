@@ -30,5 +30,13 @@ service cloud.firestore {
       allow write: if request.auth != null;
       allow read: if true; 
     }
+    
+    // Shared Workout Logs (Diary entries):
+    // - Write: Any authenticated user can create/update a shared log
+    // - Read: Publicly readable (so anyone with the link can import it)
+    match /shared_logs/{shareId} {
+      allow write: if request.auth != null;
+      allow read: if true; 
+    }
   }
 }
