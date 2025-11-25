@@ -1737,6 +1737,8 @@
                     sorenessMuscles: muscleSelection,
                     sorenessLabels: muscleSelection.map(id => muscleLabelMap[id] || id)
                 };
+                console.log('[Wellness] Snapshot created:', currentWellnessSnapshot);
+                console.log('[Wellness] Selected DOMS muscles:', muscleSelection);
                 wellnessModal.style.display = 'none';
                 if (pendingFocusWorkout) {
                     startFocusSession(pendingFocusWorkout);
@@ -2119,6 +2121,8 @@
                     fromAI: !!currentWorkout?.fromAI,
                     source: 'focus'
                 };
+                console.log('[Focus] Saving log with wellness:', logEntry.wellness);
+                console.log('[Focus] sorenessMuscles in log:', logEntry.wellness?.sorenessMuscles);
                 if (!logEntry.wellness) delete logEntry.wellness;
                 if (logEntry.avgRpe === undefined) delete logEntry.avgRpe;
                 logs.unshift(logEntry);

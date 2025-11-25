@@ -128,14 +128,20 @@ export const computeDomsInsights = (logs = []) => {
         if (!wellness) return;
         
         // Check for explicit soreness muscles
-        let muscles = Array.isArray(wellness.sorenessMuscles) ? wellness.sorenessMuscles : [];
+        let muscles = Array.isArray(wellness.sorenessMuscles) ? [...wellness.sorenessMuscles] : [];
+        
+        // Debug log per verificare i dati
+        if (wellness.sorenessMuscles && wellness.sorenessMuscles.length > 0) {
+            console.log('[DOMS] Found explicit sorenessMuscles:', wellness.sorenessMuscles, 'in log:', log.date);
+        }
         
         // FALLBACK: Se non ci sono muscoli specifici ma c'è sorenessLevel > 3,
-        // inferisci i muscoli dall'allenamento precedente
+        // inferisci i muscoli dall'allenamento corrente
         if (!muscles.length && wellness.sorenessLevel && wellness.sorenessLevel > 3) {
             const logMuscles = collectLogMuscles(log);
             if (logMuscles.size > 0) {
                 muscles = Array.from(logMuscles);
+                console.log('[DOMS] Inferred muscles from exercises:', muscles, 'sorenessLevel:', wellness.sorenessLevel);
             }
         }
         
