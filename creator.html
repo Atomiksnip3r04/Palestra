@@ -75,6 +75,123 @@
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
         }
+
+        /* Set Types Styles */
+        .sets-container {
+            margin-top: 1rem;
+            border-top: 1px solid var(--color-border);
+            padding-top: 1rem;
+        }
+
+        .sets-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .sets-header h4 {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        .add-set-btn {
+            background: transparent;
+            border: 1px dashed var(--color-primary);
+            color: var(--color-primary);
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-set-btn:hover {
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        .set-item {
+            display: grid;
+            grid-template-columns: auto 1fr 80px 80px 80px 30px;
+            gap: 8px;
+            align-items: center;
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: var(--radius-sm);
+            margin-bottom: 0.5rem;
+        }
+
+        .set-item .set-number {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            min-width: 25px;
+        }
+
+        .set-item select,
+        .set-item input {
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .set-item .remove-set-btn {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 0;
+        }
+
+        .set-type-badge {
+            display: inline-block;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .set-type-normal { background: rgba(0, 243, 255, 0.2); color: var(--color-primary); }
+        .set-type-warmup { background: rgba(255, 193, 7, 0.2); color: #ffc107; }
+        .set-type-backoff { background: rgba(156, 39, 176, 0.2); color: #9c27b0; }
+        .set-type-dropset { background: rgba(244, 67, 54, 0.2); color: #f44336; }
+        .set-type-amrap { background: rgba(76, 175, 80, 0.2); color: #4caf50; }
+        .set-type-pause { background: rgba(255, 152, 0, 0.2); color: #ff9800; }
+
+        .quick-sets-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-set-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-set-btn:hover {
+            border-color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .set-item {
+                grid-template-columns: auto 1fr 60px 60px 30px;
+            }
+            .set-item .set-rpe-input {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -137,8 +254,17 @@
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
 
+        // Set types configuration
+        const SET_TYPES = {
+            normal: { label: 'Normale', color: 'normal' },
+            warmup: { label: 'Warm-up', color: 'warmup' },
+            backoff: { label: 'Back-off', color: 'backoff' },
+            dropset: { label: 'Drop Set', color: 'dropset' },
+            amrap: { label: 'AMRAP', color: 'amrap' },
+            pause: { label: 'Pausa', color: 'pause' }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
-            // Creator Logic with Edit Mode & Sync
             const exercisesList = document.getElementById('exercisesList');
             const addBtn = document.getElementById('addExerciseBtn');
             const saveBtn = document.getElementById('saveWorkoutBtn');
@@ -156,35 +282,134 @@
                 console.error('StorageService not available:', e);
             }
 
+            // Generate set type options HTML
+            function getSetTypeOptions(selectedType = 'normal') {
+                return Object.entries(SET_TYPES).map(([key, val]) => 
+                    `<option value="${key}" ${key === selectedType ? 'selected' : ''}>${val.label}</option>`
+                ).join('');
+            }
+
+            // Add a single set row to an exercise
+            function addSetRow(container, setData = null, setNumber = null) {
+                const setsContainer = container.querySelector('.sets-list');
+                const currentSets = setsContainer.querySelectorAll('.set-item').length;
+                const num = setNumber || currentSets + 1;
+
+                const setDiv = document.createElement('div');
+                setDiv.className = 'set-item';
+                setDiv.innerHTML = `
+                    <span class="set-number">#${num}</span>
+                    <select class="set-type">
+                        ${getSetTypeOptions(setData?.type || 'normal')}
+                    </select>
+                    <input type="text" class="set-reps" placeholder="Reps" value="${setData?.target || setData?.reps || ''}">
+                    <input type="number" class="set-rpe-input" placeholder="RPE" value="${setData?.rpe || ''}">
+                    <button type="button" class="remove-set-btn" title="Rimuovi serie">×</button>
+                `;
+
+                // Remove set handler
+                setDiv.querySelector('.remove-set-btn').addEventListener('click', () => {
+                    setDiv.remove();
+                    renumberSets(container);
+                });
+
+                setsContainer.appendChild(setDiv);
+            }
+
+            // Renumber sets after removal
+            function renumberSets(container) {
+                const sets = container.querySelectorAll('.set-item');
+                sets.forEach((set, idx) => {
+                    set.querySelector('.set-number').textContent = `#${idx + 1}`;
+                });
+            }
+
+            // Add quick sets (e.g., "3x Normal")
+            function addQuickSets(container, count, type = 'normal') {
+                for (let i = 0; i < count; i++) {
+                    addSetRow(container, { type });
+                }
+            }
+
             function addExerciseUI(data = null) {
                 const div = document.createElement('div');
                 div.className = 'exercise-item';
+                
+                // Convert old format (sets as number) to new format (sets as array)
+                let setsArray = [];
+                if (data) {
+                    if (Array.isArray(data.sets)) {
+                        // New format - already an array
+                        setsArray = data.sets;
+                    } else if (data.sets) {
+                        // Old format - number of sets
+                        const numSets = parseInt(data.sets) || 3;
+                        for (let i = 0; i < numSets; i++) {
+                            setsArray.push({
+                                type: 'normal',
+                                target: data.reps || '',
+                                rpe: data.rpe || ''
+                            });
+                        }
+                    }
+                }
+
                 div.innerHTML = `
-<span class="remove-btn" onclick="this.parentElement.remove()">×</span>
-<div class="form-group">
-    <label>Esercizio</label>
-    <input type="text" class="ex-name" placeholder="es. Panca Piana" value="${data ? data.name : ''}">
-</div>
-<div class="row-inputs">
-    <div class="form-group">
-        <label>Serie</label>
-        <input type="number" class="ex-sets" placeholder="4" value="${data ? data.sets : ''}">
-    </div>
-    <div class="form-group">
-        <label>Reps</label>
-        <input type="text" class="ex-reps" placeholder="8-10" value="${data ? data.reps : ''}">
-    </div>
-    <div class="form-group">
-        <label>RPE</label>
-        <input type="number" class="ex-rpe" placeholder="8" value="${data ? data.rpe : ''}">
-    </div>
-</div>
-<div class="form-group">
-    <label>Note</label>
-    <input type="text" class="ex-notes" placeholder="Fermo 1s al petto" value="${data ? data.notes : ''}">
-</div>
-`;
+                    <span class="remove-btn" onclick="this.parentElement.remove()">×</span>
+                    <div class="form-group">
+                        <label>Esercizio</label>
+                        <input type="text" class="ex-name" placeholder="es. Panca Piana" value="${data?.name || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Note</label>
+                        <input type="text" class="ex-notes" placeholder="Fermo 1s al petto" value="${data?.notes || ''}">
+                    </div>
+                    
+                    <div class="sets-container">
+                        <div class="sets-header">
+                            <h4>Serie</h4>
+                            <button type="button" class="add-set-btn">+ Aggiungi Serie</button>
+                        </div>
+                        
+                        <div class="quick-sets-row">
+                            <button type="button" class="quick-set-btn" data-count="3" data-type="normal">3x Normali</button>
+                            <button type="button" class="quick-set-btn" data-count="4" data-type="normal">4x Normali</button>
+                            <button type="button" class="quick-set-btn" data-count="1" data-type="warmup">+ Warm-up</button>
+                            <button type="button" class="quick-set-btn" data-count="1" data-type="backoff">+ Back-off</button>
+                            <button type="button" class="quick-set-btn" data-count="1" data-type="dropset">+ Drop Set</button>
+                        </div>
+                        
+                        <div class="sets-list">
+                            <!-- Individual sets will be added here -->
+                        </div>
+                    </div>
+                `;
+
                 exercisesList.appendChild(div);
+
+                // Add set button handler
+                div.querySelector('.add-set-btn').addEventListener('click', () => {
+                    addSetRow(div);
+                });
+
+                // Quick set buttons handlers
+                div.querySelectorAll('.quick-set-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const count = parseInt(btn.dataset.count);
+                        const type = btn.dataset.type;
+                        addQuickSets(div, count, type);
+                    });
+                });
+
+                // Add existing sets or default
+                if (setsArray.length > 0) {
+                    setsArray.forEach((set, idx) => {
+                        addSetRow(div, set, idx + 1);
+                    });
+                } else {
+                    // Add 3 default normal sets
+                    addQuickSets(div, 3, 'normal');
+                }
             }
 
             if (addBtn) {
@@ -230,13 +455,31 @@
 
                     const exercises = [];
                     document.querySelectorAll('.exercise-item').forEach(item => {
-                        exercises.push({
-                            name: item.querySelector('.ex-name').value,
-                            sets: item.querySelector('.ex-sets').value,
-                            reps: item.querySelector('.ex-reps').value,
-                            rpe: item.querySelector('.ex-rpe').value,
-                            notes: item.querySelector('.ex-notes').value
+                        const exName = item.querySelector('.ex-name').value;
+                        const exNotes = item.querySelector('.ex-notes').value;
+                        
+                        // Collect all sets
+                        const sets = [];
+                        item.querySelectorAll('.set-item').forEach(setItem => {
+                            const type = setItem.querySelector('.set-type').value;
+                            const reps = setItem.querySelector('.set-reps').value;
+                            const rpe = setItem.querySelector('.set-rpe-input').value;
+                            
+                            sets.push({
+                                type: type,
+                                target: reps,
+                                rpe: rpe ? parseFloat(rpe) : null,
+                                weight: 0 // Will be filled during workout
+                            });
                         });
+
+                        if (exName || sets.length > 0) {
+                            exercises.push({
+                                name: exName,
+                                sets: sets,
+                                notes: exNotes
+                            });
+                        }
                     });
 
                     const workouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
@@ -273,7 +516,7 @@
                     try {
                         await firestoreService.syncToCloud();
                     } catch (err) {
-                        console.warn('Sync Firestore non riuscita (probabilmente utente non loggato):', err.message || err);
+                        console.warn('Sync Firestore non riuscita:', err.message || err);
                     }
 
                     alert('Scheda salvata con successo!');

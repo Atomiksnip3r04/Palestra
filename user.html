@@ -1735,7 +1735,20 @@
                     const repsDisplay = loggedReps || '—';
                     const weightDisplay = loggedWeight ? loggedWeight : '—';
                     const rpeDisplay = loggedRpe > 0 ? ` @ RPE ${loggedRpe}` : '';
-                    historyItem.innerHTML = `✅ Set ${currentSetIndex + 1}: ${weightDisplay}kg x ${repsDisplay}${rpeDisplay}`;
+                    
+                    // Show set type badge if not normal
+                    const setTypeBadges = {
+                        normal: '',
+                        warmup: '<span style="color:#ffc107;font-size:0.8em;">[W]</span> ',
+                        backoff: '<span style="color:#9c27b0;font-size:0.8em;">[B]</span> ',
+                        dropset: '<span style="color:#f44336;font-size:0.8em;">[D]</span> ',
+                        amrap: '<span style="color:#4caf50;font-size:0.8em;">[A]</span> ',
+                        pause: '<span style="color:#ff9800;font-size:0.8em;">[P]</span> '
+                    };
+                    const setType = activeSet?.type || 'normal';
+                    const typeBadge = setTypeBadges[setType] || '';
+                    
+                    historyItem.innerHTML = `✅ ${typeBadge}Set ${currentSetIndex + 1}: ${weightDisplay}kg x ${repsDisplay}${rpeDisplay}`;
                     focusHistoryList.prepend(historyItem);
 
                     startRest();
@@ -1768,7 +1781,27 @@
                 focusExerciseName.textContent = ex.name;
                 const targetLabel = set?.target || ex.reps || '';
                 const baseCounter = `Set ${currentSetIndex + 1} / ${ex.sets.length}`;
-                focusSetCounter.textContent = targetLabel ? `${baseCounter} • Target ${targetLabel}` : baseCounter;
+                
+                // Show set type if not normal
+                const setTypeLabels = {
+                    normal: '',
+                    warmup: '🔥 Warm-up',
+                    backoff: '📉 Back-off',
+                    dropset: '⬇️ Drop Set',
+                    amrap: '💪 AMRAP',
+                    pause: '⏸️ Pausa'
+                };
+                const setType = set?.type || 'normal';
+                const setTypeLabel = setTypeLabels[setType] || '';
+                
+                let counterText = baseCounter;
+                if (setTypeLabel) {
+                    counterText = `${setTypeLabel} • ${baseCounter}`;
+                }
+                if (targetLabel) {
+                    counterText += ` • Target ${targetLabel}`;
+                }
+                focusSetCounter.textContent = counterText;
 
                 // Pre-fill inputs
                 if (set.weight && set.weight > 0) {
@@ -1958,10 +1991,14 @@
                         const repsVal = parseFloat(set.reps ?? set.target);
                         if (weightVal <= 0 || !Number.isFinite(repsVal) || repsVal <= 0) return null;
                         
-                        // Include RPE if available
+                        // Include RPE and set type if available
                         const setData = { weight: weightVal, reps: repsVal };
                         if (set.rpe !== undefined && set.rpe !== null && set.rpe !== '') {
                             setData.rpe = Number(set.rpe);
+                        }
+                        // Include set type if not normal
+                        if (set.type && set.type !== 'normal') {
+                            setData.type = set.type;
                         }
                         return setData;
                     }).filter(Boolean);
