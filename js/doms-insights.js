@@ -24,12 +24,74 @@ const safeDate = (value) => {
     return Number.isNaN(time) ? null : time;
 };
 
+/**
+ * Calcola il carico di fatica per gruppo muscolare basandosi sugli esercizi
+ * Questo permette di mostrare dati anche senza questionario DOMS esplicito
+ */
+const computeMuscleFatigue = (logs = [], days = 14) => {
+    const cutoff = Date.now() - (days * DAY_MS);
+    const recentLogs = logs.filter(log => {
+        const time = safeDate(log?.date);
+        return time && time >= cutoff;
+    });
+
+    const muscleStats = {};
+
+    recentLogs.forEach(log => {
+        const logTime = safeDate(log.date);
+        const daysAgo = Math.floor((Date.now() - logTime) / DAY_MS);
+        const recencyFactor = Math.max(0.3, 1 - (daysAgo * 0.07)); // Decay over time
+
+        (log.exercises || []).forEach(ex => {
+            const muscles = matchExerciseMuscles(ex?.name || '');
+            const sets = (ex.sets || []).length;
+            const volume = (ex.sets || []).reduce((sum, s) => {
+                const w = parseFloat(s.weight) || 0;
+                const r = parseFloat(s.reps) || 0;
+                return sum + (w * r);
+            }, 0);
+
+            // Calcola intensità basata su RPE se disponibile
+            const rpeValues = (ex.sets || []).map(s => s.rpe).filter(r => r > 0);
+            const avgRpe = rpeValues.length ? rpeValues.reduce((a, b) => a + b, 0) / rpeValues.length : 6;
+
+            muscles.forEach(muscle => {
+                if (!muscleStats[muscle]) {
+                    muscleStats[muscle] = {
+                        totalSets: 0,
+                        totalVolume: 0,
+                        avgRpe: 0,
+                        rpeCount: 0,
+                        lastWorked: null,
+                        workoutCount: 0
+                    };
+                }
+
+                const stat = muscleStats[muscle];
+                stat.totalSets += sets * recencyFactor;
+                stat.totalVolume += volume * recencyFactor;
+                stat.avgRpe = ((stat.avgRpe * stat.rpeCount) + avgRpe) / (stat.rpeCount + 1);
+                stat.rpeCount++;
+                stat.workoutCount++;
+
+                if (!stat.lastWorked || logTime > safeDate(stat.lastWorked)) {
+                    stat.lastWorked = log.date;
+                }
+            });
+        });
+    });
+
+    return muscleStats;
+};
+
 export const computeDomsInsights = (logs = []) => {
     if (!Array.isArray(logs) || !logs.length) {
         return {
             hotspots: [],
             timeline: [],
-            totalReports: 0
+            totalReports: 0,
+            fatigueData: {},
+            hasSorenessData: false
         };
     }
 
@@ -48,11 +110,10 @@ export const computeDomsInsights = (logs = []) => {
         for (let i = trainingLookup.length - 1; i >= 0; i--) {
             const entry = trainingLookup[i];
             const entryTime = safeDate(entry.date);
-            // Ignore entries in the future relative to the report
             if (entryTime === null || entryTime >= beforeTimestamp) continue;
             
             if (entry.muscles.has(muscle)) {
-                return entryTime; // Return timestamp instead of date string
+                return entryTime;
             }
         }
         return null;
@@ -60,12 +121,27 @@ export const computeDomsInsights = (logs = []) => {
 
     const stats = {};
     const timeline = [];
+    let hasSorenessData = false;
 
     logs.forEach(log => {
         const wellness = log?.wellness;
         if (!wellness) return;
-        const muscles = Array.isArray(wellness.sorenessMuscles) ? wellness.sorenessMuscles : [];
+        
+        // Check for explicit soreness muscles
+        let muscles = Array.isArray(wellness.sorenessMuscles) ? wellness.sorenessMuscles : [];
+        
+        // FALLBACK: Se non ci sono muscoli specifici ma c'è sorenessLevel > 3,
+        // inferisci i muscoli dall'allenamento precedente
+        if (!muscles.length && wellness.sorenessLevel && wellness.sorenessLevel > 3) {
+            const logMuscles = collectLogMuscles(log);
+            if (logMuscles.size > 0) {
+                muscles = Array.from(logMuscles);
+            }
+        }
+        
         if (!muscles.length) return;
+        
+        hasSorenessData = true;
 
         const recordedAt = wellness.recordedAt || log.date;
         const recordedTs = safeDate(recordedAt);
@@ -78,7 +154,8 @@ export const computeDomsInsights = (logs = []) => {
             date: log.date,
             recordedAt,
             intensity: intensityValue,
-            muscles: []
+            muscles: [],
+            inferred: !Array.isArray(wellness.sorenessMuscles) || !wellness.sorenessMuscles.length
         };
 
         muscles.forEach(muscle => {
@@ -88,9 +165,8 @@ export const computeDomsInsights = (logs = []) => {
             let gapDays = null;
             if (stimulusTs !== null) {
                 const diff = recordedTs - stimulusTs;
-                // Ensure non-negative gap. Cap at 30 days to avoid outliers (like 20000 days)
                 gapDays = Math.max(0, Math.round(diff / DAY_MS));
-                if (gapDays > 60) gapDays = null; // Discard realistic outliers (e.g. > 2 months or bad dates)
+                if (gapDays > 60) gapDays = null;
             }
 
             entryDetail.muscles.push({
@@ -129,7 +205,11 @@ export const computeDomsInsights = (logs = []) => {
         timeline.push(entryDetail);
     });
 
-    const hotspots = Object.entries(stats).map(([muscle, bucket]) => ({
+    // Calcola anche i dati di fatica muscolare (sempre disponibili)
+    const fatigueData = computeMuscleFatigue(logs, 14);
+
+    // Se non ci sono hotspots da DOMS espliciti, genera hotspots da fatica
+    let hotspots = Object.entries(stats).map(([muscle, bucket]) => ({
         muscle,
         label: MUSCLE_GROUPS[muscle]?.label || muscle,
         occurrences: bucket.occurrences,
@@ -141,7 +221,8 @@ export const computeDomsInsights = (logs = []) => {
         avgRecoveryDays: bucket.gapCount
             ? Number((bucket.gapSum / bucket.gapCount).toFixed(1))
             : null,
-        lastRecoveryDays: bucket.lastGap
+        lastRecoveryDays: bucket.lastGap,
+        source: 'doms'
     })).sort((a, b) => {
         if (a.occurrences === b.occurrences) {
             return (safeDate(b.lastReportedAt) || 0) - (safeDate(a.lastReportedAt) || 0);
@@ -149,12 +230,46 @@ export const computeDomsInsights = (logs = []) => {
         return b.occurrences - a.occurrences;
     });
 
+    // Se non ci sono hotspots DOMS, genera da fatica muscolare
+    if (!hotspots.length && Object.keys(fatigueData).length > 0) {
+        hotspots = Object.entries(fatigueData)
+            .map(([muscle, data]) => {
+                const daysAgo = data.lastWorked 
+                    ? Math.floor((Date.now() - safeDate(data.lastWorked)) / DAY_MS)
+                    : null;
+                
+                // Stima intensità DOMS basata su volume e RPE
+                const estimatedIntensity = Math.min(10, Math.round(
+                    (data.totalSets / 10) * (data.avgRpe / 6) * 2
+                ));
+
+                return {
+                    muscle,
+                    label: MUSCLE_GROUPS[muscle]?.label || muscle,
+                    occurrences: data.workoutCount,
+                    avgIntensity: estimatedIntensity > 0 ? estimatedIntensity : null,
+                    lastReportedAt: data.lastWorked,
+                    lastIntensity: estimatedIntensity > 0 ? estimatedIntensity : null,
+                    avgRecoveryDays: daysAgo,
+                    lastRecoveryDays: daysAgo,
+                    source: 'fatigue',
+                    totalSets: Math.round(data.totalSets),
+                    avgRpe: data.avgRpe.toFixed(1)
+                };
+            })
+            .filter(h => h.occurrences > 0)
+            .sort((a, b) => b.occurrences - a.occurrences)
+            .slice(0, 8);
+    }
+
     timeline.sort((a, b) => (safeDate(b.recordedAt) || 0) - (safeDate(a.recordedAt) || 0));
 
     return {
         hotspots,
         timeline: timeline.slice(0, 20),
-        totalReports: timeline.length
+        totalReports: timeline.length,
+        fatigueData,
+        hasSorenessData
     };
 };
 

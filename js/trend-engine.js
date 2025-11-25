@@ -384,6 +384,8 @@ export const trendEngine = {
             generatedAt: new Date().toISOString(),
             domsHotspots: domsInsights.hotspots,
             domsReportCount: domsInsights.totalReports,
+            hasSorenessData: domsInsights.hasSorenessData,
+            fatigueData: domsInsights.fatigueData,
             dataSnapshot: {
                 totalLogs: logs.length,
                 recentLogsCount: recentLogs.length,
