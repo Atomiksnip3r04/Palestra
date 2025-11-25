@@ -176,9 +176,18 @@ function setupAIGenerationInterception() {
     const refreshBtn = document.getElementById('refreshAiPredictor');
     if (!refreshBtn) return;
 
-    // Remove old listeners by cloning (brute force but effective)
-    const newBtn = refreshBtn.cloneNode(true);
-    refreshBtn.parentNode.replaceChild(newBtn, refreshBtn);
+    // Create a NEW button to replace the old one completely
+    // This avoids any event listener conflicts or race conditions
+    const newBtn = document.createElement('button');
+    newBtn.id = 'customAiGenerateBtn';
+    newBtn.className = refreshBtn.className;
+    newBtn.innerHTML = refreshBtn.innerHTML;
+    newBtn.style.cssText = refreshBtn.style.cssText;
+
+    // Insert new button and hide old one
+    refreshBtn.parentNode.insertBefore(newBtn, refreshBtn);
+    refreshBtn.style.display = 'none'; // Hide original
+    refreshBtn.id = 'refreshAiPredictor_hidden'; // Remove ID to prevent conflicts
 
     // Add new listener
     newBtn.addEventListener('click', async () => {
@@ -227,7 +236,6 @@ function setupAIGenerationInterception() {
 
             if (result.success) {
                 // Render result
-                // result.data is already an object from aiService, no need to parse again
                 const suggestion = result.data;
 
                 aiContent.innerHTML = `
@@ -284,12 +292,8 @@ function setupAIGenerationInterception() {
                     localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
 
                     alert('Scheda salvata con successo!');
-                    // Optional: reload list without page reload if possible, otherwise reload
-                    if (typeof window.renderWorkouts === 'function') {
-                        window.renderWorkouts();
-                    } else {
-                        window.location.reload();
-                    }
+                    // Reload to show in list
+                    setTimeout(() => window.location.reload(), 100);
                 });
 
                 // Handle Start
@@ -299,8 +303,8 @@ function setupAIGenerationInterception() {
                     currentWorkouts.unshift(newWorkout);
                     localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
 
-                    // Reload to show in list and start (user will click play)
-                    window.location.reload();
+                    // Reload to show in list and start
+                    setTimeout(() => window.location.reload(), 100);
                 });
 
             } else {
@@ -318,7 +322,7 @@ function setupAIGenerationInterception() {
         }
     });
 
-    console.log('🤖 AI Generation intercepted');
+    console.log('🤖 AI Generation intercepted (Button Replaced)');
 }
 
 // Check for shared workout
