@@ -169,7 +169,8 @@ function setupAIGenerationInterception() {
 
             if (result.success) {
                 // Render result
-                const suggestion = JSON.parse(result.data);
+                // result.data is already an object from aiService, no need to parse again
+                const suggestion = result.data;
 
                 aiContent.innerHTML = `
                     <div style="background: rgba(0, 243, 255, 0.05); border: 1px solid var(--color-primary); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem;">
@@ -179,18 +180,18 @@ function setupAIGenerationInterception() {
                         <div style="margin-bottom: 1rem;">
                             <strong style="display:block; margin-bottom:0.5rem; font-size:0.8rem;">ESERCIZI SUGGERITI:</strong>
                             <ul style="list-style: none; padding: 0;">
-                                ${suggestion.exercises.map(ex => `
+                                ${suggestion.exercises ? suggestion.exercises.map(ex => `
                                     <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--color-border); display:flex; justify-content:space-between;">
                                         <span>${ex.name}</span>
                                         <span style="color:var(--color-text-muted); font-size:0.85rem;">${ex.sets} x ${ex.reps}</span>
                                     </li>
-                                `).join('')}
+                                `).join('') : '<li style="color:var(--color-text-muted)">Nessun esercizio specifico elencato.</li>'}
                             </ul>
                         </div>
                         
                         <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: var(--radius-sm); font-size: 0.85rem; margin-top: 1rem;">
                             <strong>💡 Coach Note:</strong><br>
-                            ${suggestion.reasoning}
+                            ${suggestion.reasoning || 'Nessuna nota disponibile.'}
                         </div>
                         
                         <button id="acceptAiWorkout" class="btn btn-primary" style="width:100%; margin-top:1rem;">
@@ -205,12 +206,12 @@ function setupAIGenerationInterception() {
                     const newWorkout = {
                         id: Date.now(),
                         name: suggestion.suggestion,
-                        exercises: suggestion.exercises.map(ex => ({
+                        exercises: suggestion.exercises ? suggestion.exercises.map(ex => ({
                             name: ex.name,
-                            sets: Array(parseInt(ex.sets)).fill({ weight: 0, reps: ex.reps, rpe: 8 }),
+                            sets: Array(parseInt(ex.sets) || 3).fill({ weight: 0, reps: ex.reps || '10', rpe: 8 }),
                             rest: 90,
                             notes: ex.notes || ''
-                        })),
+                        })) : [],
                         aiGenerated: true,
                         createdAt: new Date().toISOString()
                     };

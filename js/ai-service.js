@@ -615,8 +615,21 @@ Rispondi in formato JSON (senza markdown, solo JSON puro):
 {
     "suggestion": "Titolo Allenamento (es. Push Day o nome di una scheda esistente)",
     "focus": "Breve spiegazione del perché (es. 'Visto il tuo stile PPL e l'ultimo leg day, oggi tocca Push. Mantengo il volume alto come piace a te').",
-    "warmup": ["Esercizio 1", "Esercizio 2"],
-    "main_lifts": ["Esercizio Key 1", "Esercizio Key 2", "Esercizio Key 3 (se necessario)"]
+    "reasoning": "Spiegazione tecnica per il coach (perché questi esercizi, perché questo volume).",
+    "exercises": [
+        {
+            "name": "Nome Esercizio (es. Panca Piana Bilanciere)",
+            "sets": "4",
+            "reps": "8-10",
+            "notes": "Note tecniche (es. 'Fermo al petto', 'RPE 8')"
+        },
+        {
+            "name": "Nome Esercizio 2",
+            "sets": "3",
+            "reps": "12",
+            "notes": "..."
+        }
+    ]
 }
 `;
             const result = await model.generateContent(prompt);
