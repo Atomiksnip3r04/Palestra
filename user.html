@@ -2356,7 +2356,10 @@
         });
     </script>
 
-    <!-- Health Connect Integration Script (Google Fit + Apple Health via Terra) -->
+    <!-- Health Auto Export Service (for Apple Health) -->
+    <script src="js/health-auto-export-service.js"></script>
+    
+    <!-- Health Connect Integration Script (Google Fit + Apple Health via Health Auto Export) -->
     <script type="module">
         import { healthConnectService } from './js/health-connect-service.js';
         import { terraHealthService } from './js/terra-health-service.js';
@@ -2443,7 +2446,7 @@
             }
         });
 
-        // Connect Apple Health (iOS via Terra)
+        // Connect Apple Health (iOS via Health Auto Export app)
         connectAppleHealthBtn.addEventListener('click', async () => {
             // Check for conflict with Google Fit
             const googleFitConnected = await terraHealthService.isGoogleFitConnected();
@@ -2453,23 +2456,16 @@
             }
 
             try {
-                connectAppleHealthBtn.disabled = true;
-                connectAppleHealthBtn.innerHTML = '⏳ Connessione...';
-
-                // Load Terra config first
-                await terraHealthService.loadConfig();
+                // Show Health Auto Export setup modal
+                await healthAutoExportService.showSetupModal();
                 
-                // Open Terra widget for Apple Health
-                await terraHealthService.connectAppleHealth();
-                
-                // Note: The actual connection verification happens in the modal
-                // that terraHealthService.connectAppleHealth() shows
+                // After modal closes, check if configured
+                setTimeout(async () => {
+                    await updateHealthStatus();
+                }, 1000);
             } catch (error) {
-                console.error('Errore connessione Apple Health:', error);
+                console.error('Errore configurazione Apple Health:', error);
                 alert('❌ Errore: ' + error.message);
-            } finally {
-                connectAppleHealthBtn.disabled = false;
-                connectAppleHealthBtn.innerHTML = '<span style="font-size: 1.2rem;">🍎</span> Apple Health <small style="font-size: 0.65rem; opacity: 0.7;">(iOS)</small>';
             }
         });
 
@@ -2482,6 +2478,11 @@
                 let result;
                 if (currentProvider === 'google_fit') {
                     result = await healthConnectService.syncAllData();
+                } else if (currentProvider === 'apple_health_auto_export') {
+                    // Health Auto Export syncs automatically via webhook
+                    // Just verify connection and show latest data
+                    const isConnected = await healthAutoExportService.verifyConnection();
+                    result = { success: isConnected };
                 } else if (currentProvider && currentProvider.includes('terra')) {
                     await terraHealthService.loadUserConnection();
                     result = await terraHealthService.syncAllData();
@@ -2515,6 +2516,8 @@
 
                 if (currentProvider === 'google_fit') {
                     await healthConnectService.disconnect();
+                } else if (currentProvider === 'apple_health_auto_export') {
+                    await healthAutoExportService.disconnect();
                 } else if (currentProvider && currentProvider.includes('terra')) {
                     await terraHealthService.loadUserConnection();
                     await terraHealthService.disconnect();

@@ -465,12 +465,8 @@
             <div class="card" style="margin-bottom: var(--spacing-md);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
                     <h3 style="margin: 0;">Progressione <span class="text-primary">Forza</span></h3>
-                    <select id="strengthExerciseSelect" style="background: var(--color-surface); border: 1px solid var(--color-border); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem;">
-                        <option value="panca">Panca Piana</option>
-                        <option value="squat">Squat</option>
-                        <option value="stacco">Stacco</option>
-                        <option value="military">Military Press</option>
-                        <option value="rematore">Rematore</option>
+                    <select id="strengthExerciseSelect" style="background: var(--color-surface); border: 1px solid var(--color-border); color: white; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; max-width: 200px;">
+                        <!-- Populated dynamically from actual exercises -->
                     </select>
                 </div>
                 <div id="strengthProgressChart"></div>
@@ -757,28 +753,77 @@
                 if (muscleBalance.imbalances.length > 0) {
                     const imbalanceText = muscleBalance.imbalances.map(i => {
                         const label = ChartRenderer.translateMuscle ? ChartRenderer.translateMuscle(i.muscle) : i.muscle;
-                        return i.type === 'undertrained' 
-                            ? `<span style="color: #ff6b6b;">⚠️ ${label}</span> poco allenato (${i.value}%)`
-                            : `<span style="color: #ffcc00;">⚡ ${label}</span> molto allenato (${i.value}%)`;
-                    }).join(' • ');
+                        const icon = i.type === 'undertrained' ? '⚠️' : '⚡';
+                        const color = i.type === 'undertrained' ? '#ff6b6b' : '#ffcc00';
+                        const desc = i.type === 'undertrained' ? 'poco allenato' : 'molto allenato';
+                        return `
+                            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 20px; margin: 4px;">
+                                <span>${icon}</span>
+                                <span style="color: ${color}; font-weight: 600;">${label}</span>
+                                <span style="color: var(--color-text-muted); font-size: 0.8rem;">${desc} (${i.value}%)</span>
+                            </div>
+                        `;
+                    }).join('');
                     document.getElementById('muscleImbalances').innerHTML = `
-                        <div class="insight-box">
-                            <span class="icon">🎯</span>
-                            <p>${imbalanceText}</p>
+                        <div class="insight-box" style="padding: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem;">
+                                <span class="icon" style="font-size: 1.2rem;">🎯</span>
+                                <strong style="font-size: 0.9rem;">Aree da Bilanciare</strong>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                                ${imbalanceText}
+                            </div>
                         </div>
                     `;
                 } else {
                     document.getElementById('muscleImbalances').innerHTML = `
-                        <div class="insight-box">
-                            <span class="icon">✅</span>
-                            <p>Ottimo bilanciamento muscolare! Continua così.</p>
+                        <div class="insight-box" style="padding: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="icon" style="font-size: 1.2rem;">✅</span>
+                                <div>
+                                    <strong style="display: block; font-size: 0.9rem;">Ottimo Bilanciamento!</strong>
+                                    <span style="font-size: 0.8rem; color: var(--color-text-muted);">La distribuzione del volume è equilibrata tra i gruppi muscolari.</span>
+                                </div>
+                            </div>
                         </div>
                     `;
                 }
 
-                // 5. Strength Progression
+                // 5. Strength Progression - Popola select con esercizi reali
+                const uniqueExercises = advancedMetrics.getUniqueExercises(1);
+                const strengthSelect = document.getElementById('strengthExerciseSelect');
+                
+                if (uniqueExercises.length > 0) {
+                    strengthSelect.innerHTML = uniqueExercises.slice(0, 15).map((ex, i) => 
+                        `<option value="${ex.name}" ${i === 0 ? 'selected' : ''}>${ex.name} (${ex.maxRM}kg)</option>`
+                    ).join('');
+                } else {
+                    strengthSelect.innerHTML = '<option value="">Nessun esercizio registrato</option>';
+                }
+
                 const renderStrengthChart = (exercise) => {
+                    if (!exercise) {
+                        document.getElementById('strengthProgressChart').innerHTML = `
+                            <p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">
+                                Registra almeno un allenamento per vedere la progressione.
+                            </p>
+                        `;
+                        document.getElementById('strengthProgressStats').innerHTML = '';
+                        return;
+                    }
+                    
                     const progression = advancedMetrics.calculateStrengthProgression(exercise, 3);
+                    
+                    if (progression.exerciseNotFound || progression.dataPoints.length === 0) {
+                        document.getElementById('strengthProgressChart').innerHTML = `
+                            <p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">
+                                Nessun dato per "${exercise}". Registra questo esercizio per vedere la progressione.
+                            </p>
+                        `;
+                        document.getElementById('strengthProgressStats').innerHTML = '';
+                        return;
+                    }
+                    
                     ChartRenderer.renderLineChart('strengthProgressChart', progression.dataPoints, {
                         width: 400,
                         height: 180,
@@ -808,7 +853,10 @@
                     `;
                 };
                 
-                renderStrengthChart('panca');
+                // Render con il primo esercizio reale o vuoto
+                const firstExercise = uniqueExercises.length > 0 ? uniqueExercises[0].name : '';
+                renderStrengthChart(firstExercise);
+                
                 document.getElementById('strengthExerciseSelect').addEventListener('change', (e) => {
                     renderStrengthChart(e.target.value);
                 });
@@ -1344,24 +1392,61 @@
             const renderTrendMetrics = () => {
                 if (!trendMetricsList) return;
                 trendMetricsList.innerHTML = '';
-                trendResult.metrics.forEach(metric => {
+                
+                // Filtra metriche senza dati
+                const validMetrics = trendResult.metrics.filter(m => m.status !== 'no_data');
+                
+                if (validMetrics.length === 0) {
+                    trendMetricsList.innerHTML = `
+                        <p style="color: var(--color-text-muted); text-align: center; padding: 1rem;">
+                            Registra almeno un allenamento per vedere i trend.
+                        </p>
+                    `;
+                    return;
+                }
+                
+                validMetrics.forEach(metric => {
                     const row = document.createElement('div');
                     row.style.cssText = 'display:flex; justify-content: space-between; align-items:center; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:0.75rem;';
-                    const statusColor = metric.status === 'improving' ? '#00ffb3'
-                        : metric.status === 'declining' ? '#ff6b6b'
-                            : '#ccc';
+                    
+                    // Determina colore e icona in base allo stato
+                    let statusColor, statusIcon, statusText;
+                    switch (metric.status) {
+                        case 'improving':
+                            statusColor = '#00ffb3';
+                            statusIcon = '↑';
+                            statusText = metric.summary;
+                            break;
+                        case 'declining':
+                            statusColor = '#ff6b6b';
+                            statusIcon = '↓';
+                            statusText = metric.summary;
+                            break;
+                        case 'new':
+                            statusColor = '#00f3ff';
+                            statusIcon = '✨';
+                            statusText = 'Nuovo';
+                            break;
+                        default:
+                            statusColor = '#ccc';
+                            statusIcon = '→';
+                            statusText = metric.summary || 'Stabile';
+                    }
                     
                     // Format current value with proper unit
                     const formattedValue = metric.formatter 
                         ? metric.formatter(metric.current, { unit: unitServiceAvailable && unitService.getSystem() === 'imperial' ? 'imperial' : 'metric', profile })
                         : metric.current.toFixed(1);
                     
+                    // Non mostrare valori 0 come dato reale
+                    const displayValue = metric.current > 0 ? formattedValue : 'N/D';
+                    
                     row.innerHTML = `
                         <div>
                             <strong>${metric.label}</strong>
-                            <div style="font-size:0.8rem; color: var(--color-text-muted);">${formattedValue} ${metric.summary}</div>
+                            <div style="font-size:0.8rem; color: var(--color-text-muted);">${displayValue} ${statusText}</div>
                         </div>
-                        <span style="color:${statusColor}; font-weight:600;">${metric.status === 'improving' ? '↑' : metric.status === 'declining' ? '↓' : '→'}</span>
+                        <span style="color:${statusColor}; font-weight:600; font-size: 1.2rem;">${statusIcon}</span>
                     `;
                     trendMetricsList.appendChild(row);
                 });

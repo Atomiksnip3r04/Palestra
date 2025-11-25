@@ -90,6 +90,26 @@ const evalTrendDirection = (metricId, current, previous, context = {}) => {
     const delta = current - previous;
     const pct = percentChange(current, previous);
 
+    // Se non ci sono dati sufficienti, ritorna "no_data"
+    if (current === 0 && previous === 0) {
+        return {
+            status: 'no_data',
+            sentiment: 'neutral',
+            delta: 0,
+            pct: 0
+        };
+    }
+
+    // Se c'è solo il valore corrente (primo periodo), mostra come "new"
+    if (previous === 0 && current > 0) {
+        return {
+            status: 'new',
+            sentiment: 'neutral',
+            delta: current,
+            pct: 0
+        };
+    }
+
     if (metricId === 'bodyWeight') {
         const goalDirection = getGoalDirection(context.profile);
         if (goalDirection === 'neutral') {

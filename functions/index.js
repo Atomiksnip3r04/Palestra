@@ -515,6 +515,324 @@ exports.deauthTerraUser = functions.https.onCall(async (data, context) => {
   }
 });
 
+// ============================================
+// HEALTH AUTO EXPORT INTEGRATION (iOS)
+// ============================================
+
+/**
+ * Webhook endpoint for Health Auto Export app
+ * Receives health data from iOS devices via the Health Auto Export app
+ * 
+ * Setup in Health Auto Export app:
+ * 1. Go to Automations > Create new
+ * 2. Set destination: REST API
+ * 3. URL: https://<region>-<project>.cloudfunctions.net/healthAutoExportWebhook
+ * 4. Method: POST
+ * 5. Headers: x-user-id: <firebase_user_id>, x-api-key: <your_secret_key>
+ * 6. Format: JSON
+ */
+exports.healthAutoExportWebhook = functions.https.onRequest(async (req, res) => {
+  // Enable CORS
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, x-user-id, x-api-key');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+  
+  if (req.method !== 'POST') {
+    res.status(405).send('Method not allowed');
+    return;
+  }
+
+  try {
+    // Get user ID from header or body
+    const userId = req.headers['x-user-id'] || req.body?.userId;
+    const apiKey = req.headers['x-api-key'];
+    
+    // Validate API key (optional - configure in Firestore config/healthAutoExport)
+    const configDoc = await admin.firestore().collection('config').doc('healthAutoExport').get();
+    const config = configDoc.exists ? configDoc.data() : {};
+    
+    if (config.apiKey && apiKey !== config.apiKey) {
+      console.warn('Health Auto Export: Invalid API key');
+      res.status(401).send('Unauthorized');
+      return;
+    }
+    
+    if (!userId) {
+      console.warn('Health Auto Export: Missing user ID');
+      res.status(400).send('Missing x-user-id header or userId in body');
+      return;
+    }
+
+    // Verify user exists
+    const userDoc = await admin.firestore().collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      console.warn(`Health Auto Export: User ${userId} not found`);
+      res.status(404).send('User not found');
+      return;
+    }
+
+    const payload = req.body;
+    console.log('Health Auto Export webhook received:', {
+      userId,
+      dataKeys: Object.keys(payload?.data || payload?.metrics || payload || {}),
+      timestamp: new Date().toISOString()
+    });
+
+    // Process the health data
+    const healthData = await processHealthAutoExportData(payload);
+    
+    // Save to Firestore
+    const today = new Date().toISOString().split('T')[0];
+    await admin.firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('health')
+      .doc(today)
+      .set({
+        ...healthData,
+        appleHealthLastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+        source: 'apple_health_auto_export'
+      }, { merge: true });
+
+    // Update user's health connect status
+    await admin.firestore()
+      .collection('users')
+      .doc(userId)
+      .set({
+        appleHealthEnabled: true,
+        appleHealthLastSync: admin.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+    console.log(`Health Auto Export: Data saved for user ${userId}`);
+    
+    res.status(200).json({ 
+      success: true, 
+      message: 'Health data received and saved',
+      processed: Object.keys(healthData)
+    });
+  } catch (error) {
+    console.error('Health Auto Export webhook error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * Process Health Auto Export data into standardized format
+ * Supports various export formats from the app
+ */
+async function processHealthAutoExportData(payload) {
+  const result = {};
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '');
+  
+  // Health Auto Export can send data in different formats
+  const data = payload?.data || payload?.metrics || payload;
+  
+  // Process Steps
+  if (data?.steps || data?.stepCount) {
+    const steps = Array.isArray(data.steps) ? data.steps : [data.steps || data.stepCount];
+    const totalSteps = steps.reduce((sum, s) => {
+      const value = typeof s === 'object' ? (s.value || s.qty || s.count || 0) : s;
+      return sum + (parseInt(value) || 0);
+    }, 0);
+    result.steps = `S|${totalSteps}|${today}|steps`;
+    result.stepsRaw = totalSteps;
+  }
+  
+  // Process Heart Rate
+  if (data?.heartRate || data?.heart_rate) {
+    const hrData = data.heartRate || data.heart_rate;
+    const hrArray = Array.isArray(hrData) ? hrData : [hrData];
+    const hrValues = hrArray.map(hr => ({
+      value: typeof hr === 'object' ? (hr.value || hr.avg || hr.bpm) : hr,
+      date: hr?.date || hr?.startDate || new Date().toISOString()
+    })).filter(hr => hr.value);
+    
+    if (hrValues.length > 0) {
+      const avgHr = Math.round(hrValues.reduce((sum, hr) => sum + hr.value, 0) / hrValues.length);
+      const minHr = Math.min(...hrValues.map(hr => hr.value));
+      const maxHr = Math.max(...hrValues.map(hr => hr.value));
+      result.heartRate = `HR|${avgHr}|${minHr}|${maxHr}|${today}|bpm`;
+      result.heartRateRaw = { avg: avgHr, min: minHr, max: maxHr, samples: hrValues.length };
+    }
+  }
+  
+  // Process Sleep
+  if (data?.sleep || data?.sleepAnalysis) {
+    const sleepData = data.sleep || data.sleepAnalysis;
+    const sleepArray = Array.isArray(sleepData) ? sleepData : [sleepData];
+    
+    let totalSleepMinutes = 0;
+    let deepSleepMinutes = 0;
+    let remSleepMinutes = 0;
+    
+    sleepArray.forEach(s => {
+      if (typeof s === 'object') {
+        // Duration in hours or minutes
+        const duration = s.value || s.duration || s.hours || 0;
+        const durationMinutes = duration > 24 ? duration : duration * 60; // Assume hours if < 24
+        
+        if (s.type === 'deep' || s.sleepType === 'deep') {
+          deepSleepMinutes += durationMinutes;
+        } else if (s.type === 'rem' || s.sleepType === 'rem') {
+          remSleepMinutes += durationMinutes;
+        }
+        totalSleepMinutes += durationMinutes;
+      } else {
+        totalSleepMinutes += (s > 24 ? s : s * 60);
+      }
+    });
+    
+    if (totalSleepMinutes > 0) {
+      const sleepHours = (totalSleepMinutes / 60).toFixed(1);
+      result.sleep = `SL|${sleepHours}|${Math.round(deepSleepMinutes)}|${Math.round(remSleepMinutes)}|${today}|hours`;
+      result.sleepRaw = { 
+        totalHours: parseFloat(sleepHours), 
+        deepMinutes: Math.round(deepSleepMinutes),
+        remMinutes: Math.round(remSleepMinutes)
+      };
+    }
+  }
+  
+  // Process Active Energy / Calories
+  if (data?.activeEnergy || data?.activeEnergyBurned || data?.calories) {
+    const calories = data.activeEnergy || data.activeEnergyBurned || data.calories;
+    const calArray = Array.isArray(calories) ? calories : [calories];
+    const totalCal = calArray.reduce((sum, c) => {
+      const value = typeof c === 'object' ? (c.value || c.qty || 0) : c;
+      return sum + (parseFloat(value) || 0);
+    }, 0);
+    result.activeCalories = `AC|${Math.round(totalCal)}|${today}|kcal`;
+    result.activeCaloriesRaw = Math.round(totalCal);
+  }
+  
+  // Process Distance
+  if (data?.distance || data?.distanceWalkingRunning) {
+    const distance = data.distance || data.distanceWalkingRunning;
+    const distArray = Array.isArray(distance) ? distance : [distance];
+    const totalDist = distArray.reduce((sum, d) => {
+      const value = typeof d === 'object' ? (d.value || d.qty || 0) : d;
+      return sum + (parseFloat(value) || 0);
+    }, 0);
+    // Assume km, convert if needed
+    const distKm = totalDist > 100 ? totalDist / 1000 : totalDist;
+    result.distance = `D|${distKm.toFixed(2)}|${today}|km`;
+    result.distanceRaw = distKm;
+  }
+  
+  // Process Workouts
+  if (data?.workouts || data?.workout) {
+    const workouts = data.workouts || data.workout;
+    const workoutArray = Array.isArray(workouts) ? workouts : [workouts];
+    result.workouts = workoutArray.map(w => ({
+      type: w.type || w.workoutType || w.activityType || 'unknown',
+      duration: w.duration || w.totalTime || 0,
+      calories: w.calories || w.activeEnergy || w.energyBurned || 0,
+      distance: w.distance || 0,
+      startDate: w.startDate || w.start || null,
+      endDate: w.endDate || w.end || null
+    }));
+  }
+  
+  // Process HRV (Heart Rate Variability)
+  if (data?.hrv || data?.heartRateVariability) {
+    const hrvData = data.hrv || data.heartRateVariability;
+    const hrvArray = Array.isArray(hrvData) ? hrvData : [hrvData];
+    const avgHrv = hrvArray.reduce((sum, h) => {
+      const value = typeof h === 'object' ? (h.value || h.sdnn || 0) : h;
+      return sum + (parseFloat(value) || 0);
+    }, 0) / hrvArray.length;
+    result.hrv = `HRV|${avgHrv.toFixed(1)}|${today}|ms`;
+    result.hrvRaw = avgHrv;
+  }
+  
+  // Process Resting Heart Rate
+  if (data?.restingHeartRate || data?.resting_heart_rate) {
+    const rhr = data.restingHeartRate || data.resting_heart_rate;
+    const rhrValue = typeof rhr === 'object' ? (rhr.value || rhr.avg) : rhr;
+    result.restingHeartRate = `RHR|${Math.round(rhrValue)}|${today}|bpm`;
+    result.restingHeartRateRaw = Math.round(rhrValue);
+  }
+  
+  // Process Blood Oxygen (SpO2)
+  if (data?.bloodOxygen || data?.oxygenSaturation) {
+    const spo2 = data.bloodOxygen || data.oxygenSaturation;
+    const spo2Array = Array.isArray(spo2) ? spo2 : [spo2];
+    const avgSpo2 = spo2Array.reduce((sum, s) => {
+      const value = typeof s === 'object' ? (s.value || s.avg || 0) : s;
+      return sum + (parseFloat(value) || 0);
+    }, 0) / spo2Array.length;
+    result.bloodOxygen = `SPO2|${avgSpo2.toFixed(1)}|${today}|%`;
+    result.bloodOxygenRaw = avgSpo2;
+  }
+  
+  // Process Weight
+  if (data?.weight || data?.bodyMass) {
+    const weight = data.weight || data.bodyMass;
+    const weightValue = typeof weight === 'object' ? (weight.value || weight.qty) : weight;
+    if (weightValue) {
+      result.weight = `W|${parseFloat(weightValue).toFixed(1)}|${today}|kg`;
+      result.weightRaw = parseFloat(weightValue);
+    }
+  }
+  
+  // Store raw payload for debugging
+  result.rawPayloadKeys = Object.keys(data || {});
+  
+  return result;
+}
+
+/**
+ * Get Health Auto Export setup instructions for a user
+ */
+exports.getHealthAutoExportSetup = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const projectId = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || 'your-project-id';
+  const region = 'us-central1'; // Adjust if using different region
+  
+  // Generate a simple API key for this user (or use a shared one)
+  const configDoc = await admin.firestore().collection('config').doc('healthAutoExport').get();
+  let apiKey = configDoc.exists ? configDoc.data().apiKey : null;
+  
+  if (!apiKey) {
+    // Generate a random API key
+    apiKey = require('crypto').randomBytes(32).toString('hex');
+    await admin.firestore().collection('config').doc('healthAutoExport').set({ apiKey });
+  }
+
+  return {
+    success: true,
+    setup: {
+      webhookUrl: `https://${region}-${projectId}.cloudfunctions.net/healthAutoExportWebhook`,
+      userId: context.auth.uid,
+      apiKey: apiKey,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': context.auth.uid,
+        'x-api-key': apiKey
+      },
+      instructions: [
+        '1. Scarica "Health Auto Export" dall\'App Store (€2.99)',
+        '2. Apri l\'app e concedi accesso a Apple Health',
+        '3. Vai su "Automations" > "Create new"',
+        '4. Seleziona i dati da esportare (steps, heart rate, sleep, etc.)',
+        '5. Imposta "Destination": REST API',
+        '6. Inserisci l\'URL del webhook',
+        '7. Aggiungi gli headers x-user-id e x-api-key',
+        '8. Imposta la frequenza (consigliato: ogni ora o ogni giorno)',
+        '9. Salva e attiva l\'automazione'
+      ]
+    }
+  };
+});
+
 /**
  * Terra Webhook handler - receives data updates from Terra
  * This is called by Terra when new data is available

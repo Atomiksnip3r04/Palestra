@@ -239,19 +239,67 @@ export class AdvancedMetricsEngine {
     }
 
     /**
-     * 4. STRENGTH PROGRESSION
+     * 4. GET UNIQUE EXERCISES FROM LOGS
+     * Estrae tutti gli esercizi unici dai log con almeno 2 occorrenze
+     */
+    getUniqueExercises(minOccurrences = 2) {
+        const exerciseCounts = {};
+        const exerciseMaxRM = {};
+
+        this.logs.forEach(log => {
+            (log.exercises || []).forEach(ex => {
+                const name = (ex.name || '').trim();
+                if (!name) return;
+
+                // Conta occorrenze
+                exerciseCounts[name] = (exerciseCounts[name] || 0) + 1;
+
+                // Calcola max 1RM per questo esercizio
+                (ex.sets || []).forEach(set => {
+                    const w = parseFloat(set.weight) || 0;
+                    const r = parseFloat(set.reps) || 0;
+                    if (w > 0 && r > 0) {
+                        const estimate = this.estimate1RM(w, r);
+                        if (!exerciseMaxRM[name] || estimate > exerciseMaxRM[name]) {
+                            exerciseMaxRM[name] = estimate;
+                        }
+                    }
+                });
+            });
+        });
+
+        // Filtra esercizi con almeno minOccurrences e ordina per 1RM
+        return Object.entries(exerciseCounts)
+            .filter(([_, count]) => count >= minOccurrences)
+            .map(([name, count]) => ({
+                name,
+                count,
+                maxRM: Math.round(exerciseMaxRM[name] || 0)
+            }))
+            .sort((a, b) => b.maxRM - a.maxRM);
+    }
+
+    /**
+     * 5. STRENGTH PROGRESSION
      * Traccia progressione 1RM nel tempo per esercizi principali
+     * SOLO per esercizi che esistono realmente nei log
      */
     calculateStrengthProgression(exerciseName, months = 3) {
         const cutoff = Date.now() - (months * 30 * DAY_MS);
         const relevantLogs = this.logs.filter(log => new Date(log.date).getTime() >= cutoff);
 
         const dataPoints = [];
-        const searchTerm = exerciseName.toLowerCase();
+        const searchTerm = exerciseName.toLowerCase().trim();
+
+        // Verifica che l'esercizio esista nei log
+        let exerciseFound = false;
 
         relevantLogs.forEach(log => {
             (log.exercises || []).forEach(ex => {
-                if ((ex.name || '').toLowerCase().includes(searchTerm)) {
+                const exName = (ex.name || '').toLowerCase().trim();
+                // Match esatto o contenuto
+                if (exName === searchTerm || exName.includes(searchTerm)) {
+                    exerciseFound = true;
                     let maxEstimate = 0;
                     (ex.sets || []).forEach(set => {
                         const w = parseFloat(set.weight) || 0;
@@ -265,12 +313,26 @@ export class AdvancedMetricsEngine {
                         dataPoints.push({
                             date: log.date.split('T')[0],
                             value: Math.round(maxEstimate),
-                            timestamp: new Date(log.date).getTime()
+                            timestamp: new Date(log.date).getTime(),
+                            exerciseName: ex.name // Nome originale
                         });
                     }
                 }
             });
         });
+
+        // Se l'esercizio non esiste, ritorna stato vuoto
+        if (!exerciseFound) {
+            return {
+                dataPoints: [],
+                current: 0,
+                initial: 0,
+                change: 0,
+                changePercent: 0,
+                trend: 'no_data',
+                exerciseNotFound: true
+            };
+        }
 
         // Ordina per data
         dataPoints.sort((a, b) => a.timestamp - b.timestamp);
