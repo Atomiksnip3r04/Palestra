@@ -532,8 +532,7 @@
                             </div>
                             <p
                                 style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1rem; line-height: 1.4;">
-                                Sincronizza automaticamente i tuoi dati fitness da Google Fit per analisi AI più
-                                complete.
+                                Sincronizza automaticamente i tuoi dati fitness per analisi AI più complete.
                             </p>
 
                             <div id="healthConnectStatus"
@@ -548,18 +547,37 @@
                                 </small>
                             </div>
 
-                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                                <button id="connectHealthBtn" class="btn btn-primary btn-compact"
-                                    style="display: flex; align-items: center; gap: 6px;">
-                                    <span>🔗</span> Connetti Google Fit
-                                </button>
-                                <button id="syncHealthBtn" class="btn btn-outline btn-compact" style="display: none;">
-                                    <span>🔄</span> Sincronizza Ora
-                                </button>
-                                <button id="disconnectHealthBtn" class="btn btn-outline btn-compact"
-                                    style="display: none; color: #ef4444; border-color: #ef4444;">
-                                    <span>❌</span> Disconnetti
-                                </button>
+                            <!-- Provider Selection (shown when not connected) -->
+                            <div id="healthProviderSelection" style="margin-bottom: 1rem;">
+                                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">
+                                    Scegli il tuo provider:
+                                </p>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button id="connectGoogleFitBtn" class="btn btn-outline btn-compact"
+                                        style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px; justify-content: center;">
+                                        <span style="font-size: 1.2rem;">🤖</span> Google Fit
+                                        <small style="font-size: 0.65rem; opacity: 0.7;">(Android)</small>
+                                    </button>
+                                    <button id="connectAppleHealthBtn" class="btn btn-outline btn-compact"
+                                        style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px; justify-content: center;">
+                                        <span style="font-size: 1.2rem;">🍎</span> Apple Health
+                                        <small style="font-size: 0.65rem; opacity: 0.7;">(iOS)</small>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Connected Actions (shown when connected) -->
+                            <div id="healthConnectedActions" style="display: none;">
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <button id="syncHealthBtn" class="btn btn-primary btn-compact"
+                                        style="display: flex; align-items: center; gap: 6px;">
+                                        <span>🔄</span> Sincronizza Ora
+                                    </button>
+                                    <button id="disconnectHealthBtn" class="btn btn-outline btn-compact"
+                                        style="color: #ef4444; border-color: #ef4444;">
+                                        <span>❌</span> Disconnetti
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -2334,100 +2352,148 @@
         });
     </script>
 
-    <!-- Health Connect Integration Script -->
+    <!-- Health Connect Integration Script (Google Fit + Apple Health via Terra) -->
     <script type="module">
         import { healthConnectService } from './js/health-connect-service.js';
+        import { terraHealthService } from './js/terra-health-service.js';
         import { firestoreService } from './js/firestore-service.js';
 
-        const connectBtn = document.getElementById('connectHealthBtn');
+        // UI Elements
+        const providerSelection = document.getElementById('healthProviderSelection');
+        const connectedActions = document.getElementById('healthConnectedActions');
+        const connectGoogleFitBtn = document.getElementById('connectGoogleFitBtn');
+        const connectAppleHealthBtn = document.getElementById('connectAppleHealthBtn');
         const syncBtn = document.getElementById('syncHealthBtn');
         const disconnectBtn = document.getElementById('disconnectHealthBtn');
         const statusText = document.getElementById('healthStatusText');
         const lastSyncEl = document.getElementById('healthLastSync');
         const lastSyncTime = document.getElementById('lastSyncTime');
 
-        // Carica status
-        async function updateStatus() {
+        // Current connected provider
+        let currentProvider = null;
+
+        // Update UI based on connection status
+        async function updateHealthStatus() {
             try {
-                // Aspetta che il servizio carichi i token
-                const status = await healthConnectService.getStatus();
+                // Check which provider is connected
+                currentProvider = await firestoreService.getConnectedHealthProvider();
+                console.log('Current health provider:', currentProvider);
 
-                console.log('Health Connect Status:', status);
-
-                if (status.isConnected && status.tokenValid) {
-                    statusText.textContent = '✅ Connesso a Google Fit';
+                if (currentProvider) {
+                    // Connected to a provider
+                    const providerName = currentProvider === 'google_fit' ? '🤖 Google Fit' : 
+                                        currentProvider.includes('apple') ? '🍎 Apple Health' : 
+                                        '🏥 ' + currentProvider;
+                    
+                    statusText.textContent = `✅ Connesso a ${providerName}`;
                     statusText.style.color = '#10b981';
-                    connectBtn.style.display = 'none';
-                    syncBtn.style.display = 'flex';
-                    disconnectBtn.style.display = 'flex';
+                    
+                    providerSelection.style.display = 'none';
+                    connectedActions.style.display = 'block';
 
-                    // Mostra ultimo sync
+                    // Show last sync time
                     const lastSync = await firestoreService.getLastHealthSync();
                     if (lastSync && lastSync.syncTimestamp) {
                         lastSyncEl.style.display = 'block';
                         lastSyncTime.textContent = new Date(lastSync.syncTimestamp).toLocaleString('it-IT');
                     }
-                } else if (status.hasToken && !status.tokenValid) {
-                    // Token scaduto
-                    statusText.textContent = '⚠️ Token scaduto - Riconnetti';
-                    statusText.style.color = '#f59e0b';
-                    connectBtn.style.display = 'flex';
-                    connectBtn.innerHTML = '<span>🔄</span> Riconnetti Google Fit';
-                    syncBtn.style.display = 'none';
-                    disconnectBtn.style.display = 'flex';
-                    lastSyncEl.style.display = 'none';
                 } else {
+                    // Not connected
                     statusText.textContent = 'Non connesso';
                     statusText.style.color = 'var(--color-text-muted)';
-                    connectBtn.style.display = 'flex';
-                    connectBtn.innerHTML = '<span>🔗</span> Connetti Google Fit';
-                    syncBtn.style.display = 'none';
-                    disconnectBtn.style.display = 'none';
+                    
+                    providerSelection.style.display = 'block';
+                    connectedActions.style.display = 'none';
                     lastSyncEl.style.display = 'none';
                 }
             } catch (error) {
-                console.error('Error updating status:', error);
+                console.error('Error updating health status:', error);
                 statusText.textContent = '❌ Errore caricamento stato';
                 statusText.style.color = '#ef4444';
             }
         }
 
-        // Connect
-        connectBtn.addEventListener('click', async () => {
+        // Connect Google Fit (Android)
+        connectGoogleFitBtn.addEventListener('click', async () => {
+            // Check for conflict with Terra
+            const terraData = await firestoreService.getTerraUserData();
+            if (terraData && terraData.userId) {
+                alert('⚠️ Sei già connesso ad Apple Health.\n\nPer usare Google Fit, devi prima disconnetterti da Apple Health.');
+                return;
+            }
+
             try {
-                connectBtn.disabled = true;
-                connectBtn.innerHTML = '⏳ Connessione...';
+                connectGoogleFitBtn.disabled = true;
+                connectGoogleFitBtn.innerHTML = '⏳ Connessione...';
 
                 await healthConnectService.connect();
 
-                alert('✅ Connesso con successo! I tuoi dati verranno sincronizzati automaticamente.');
-                await updateStatus();
+                alert('✅ Connesso a Google Fit!\nI tuoi dati verranno sincronizzati automaticamente.');
+                await updateHealthStatus();
             } catch (error) {
-                console.error('Errore connessione:', error);
-                alert('❌ Errore durante la connessione: ' + error.message);
+                console.error('Errore connessione Google Fit:', error);
+                alert('❌ Errore: ' + error.message);
             } finally {
-                connectBtn.disabled = false;
-                connectBtn.innerHTML = '<span>🔗</span> Connetti Google Fit';
+                connectGoogleFitBtn.disabled = false;
+                connectGoogleFitBtn.innerHTML = '<span style="font-size: 1.2rem;">🤖</span> Google Fit <small style="font-size: 0.65rem; opacity: 0.7;">(Android)</small>';
             }
         });
 
-        // Sync
+        // Connect Apple Health (iOS via Terra)
+        connectAppleHealthBtn.addEventListener('click', async () => {
+            // Check for conflict with Google Fit
+            const googleFitConnected = await terraHealthService.isGoogleFitConnected();
+            if (googleFitConnected) {
+                alert('⚠️ Sei già connesso a Google Fit.\n\nPer usare Apple Health, devi prima disconnetterti da Google Fit.');
+                return;
+            }
+
+            try {
+                connectAppleHealthBtn.disabled = true;
+                connectAppleHealthBtn.innerHTML = '⏳ Connessione...';
+
+                // Load Terra config first
+                await terraHealthService.loadConfig();
+                
+                // Open Terra widget for Apple Health
+                await terraHealthService.connectAppleHealth();
+                
+                // Note: The actual connection verification happens in the modal
+                // that terraHealthService.connectAppleHealth() shows
+            } catch (error) {
+                console.error('Errore connessione Apple Health:', error);
+                alert('❌ Errore: ' + error.message);
+            } finally {
+                connectAppleHealthBtn.disabled = false;
+                connectAppleHealthBtn.innerHTML = '<span style="font-size: 1.2rem;">🍎</span> Apple Health <small style="font-size: 0.65rem; opacity: 0.7;">(iOS)</small>';
+            }
+        });
+
+        // Sync data
         syncBtn.addEventListener('click', async () => {
             try {
                 syncBtn.disabled = true;
                 syncBtn.innerHTML = '⏳ Sincronizzazione...';
 
-                const result = await healthConnectService.syncAllData();
-
-                if (result.success) {
-                    alert('✅ Dati sincronizzati con successo!');
-                    await updateStatus();
+                let result;
+                if (currentProvider === 'google_fit') {
+                    result = await healthConnectService.syncAllData();
+                } else if (currentProvider && currentProvider.includes('terra')) {
+                    await terraHealthService.loadUserConnection();
+                    result = await terraHealthService.syncAllData();
                 } else {
-                    alert('❌ Errore: ' + result.error);
+                    throw new Error('Nessun provider connesso');
+                }
+
+                if (result && result.success) {
+                    alert('✅ Dati sincronizzati con successo!');
+                    await updateHealthStatus();
+                } else {
+                    alert('❌ Errore: ' + (result?.error || 'Errore sconosciuto'));
                 }
             } catch (error) {
                 console.error('Errore sync:', error);
-                alert('❌ Errore durante la sincronizzazione: ' + error.message);
+                alert('❌ Errore: ' + error.message);
             } finally {
                 syncBtn.disabled = false;
                 syncBtn.innerHTML = '<span>🔄</span> Sincronizza Ora';
@@ -2436,19 +2502,67 @@
 
         // Disconnect
         disconnectBtn.addEventListener('click', async () => {
-            if (!confirm('Sei sicuro di voler disconnettere Google Fit?')) return;
+            const providerName = currentProvider === 'google_fit' ? 'Google Fit' : 'Apple Health';
+            if (!confirm(`Sei sicuro di voler disconnettere ${providerName}?`)) return;
 
             try {
-                await healthConnectService.disconnect();
+                disconnectBtn.disabled = true;
+                disconnectBtn.innerHTML = '⏳...';
+
+                if (currentProvider === 'google_fit') {
+                    await healthConnectService.disconnect();
+                } else if (currentProvider && currentProvider.includes('terra')) {
+                    await terraHealthService.loadUserConnection();
+                    await terraHealthService.disconnect();
+                }
+
                 alert('✅ Disconnesso con successo');
-                await updateStatus();
+                await updateHealthStatus();
             } catch (error) {
                 console.error('Errore disconnect:', error);
                 alert('❌ Errore: ' + error.message);
+            } finally {
+                disconnectBtn.disabled = false;
+                disconnectBtn.innerHTML = '<span>❌</span> Disconnetti';
             }
         });
 
-        // Carica status iniziale quando la pagina è pronta
+        // Listen for Terra connection events
+        window.addEventListener('terraConnected', async (e) => {
+            console.log('Terra connected event:', e.detail);
+            await updateHealthStatus();
+        });
+
+        // Check URL for Terra callback
+        async function checkTerraCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const terraStatus = urlParams.get('terra');
+            
+            if (terraStatus === 'success') {
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                // Refresh status
+                await updateHealthStatus();
+            } else if (terraStatus === 'error') {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                alert('❌ Errore durante la connessione ad Apple Health. Riprova.');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkTerraCallback();
+            await updateHealthStatus();
+        });
+
+        // Also update on page focus (in case user completed auth in another tab)
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                updateHealthStatus();
+            }
+        });
+
+        // Legacy: Keep old function name for compatibility
         document.addEventListener('DOMContentLoaded', () => {
             // Aspetta un momento per assicurarsi che l'autenticazione sia completa
             setTimeout(() => updateStatus(), 500);

@@ -25,7 +25,11 @@ class HealthTOONEncoder {
             BMI: 'BMI',
             PROTEIN: 'P',
             CARBS: 'CH',
-            FATS: 'F'
+            FATS: 'F',
+            // Terra-specific types
+            VO2MAX: 'VO2',
+            RESTING_HR: 'RHR',
+            RESP_RATE: 'RR'
         };
 
         // Reverse mapping per decode
@@ -319,6 +323,81 @@ class HealthTOONEncoder {
         if (googleFitData.oxygenSaturation) {
             toonData.oxygenSaturation = this.encode('OXYGEN_SATURATION', googleFitData.oxygenSaturation, timestamp, '%');
         }
+        
+        return toonData;
+    }
+
+    /**
+     * Converte dati Terra API in formato TOON
+     * @param {object} terraData - Dati processati da Terra API
+     * @returns {object} Dati in formato TOON
+     */
+    fromTerra(terraData) {
+        const toonData = {};
+        const timestamp = new Date();
+        
+        // Dati base
+        if (terraData.steps) {
+            toonData.steps = this.encode('STEPS', terraData.steps, timestamp, 'steps');
+        }
+        
+        if (terraData.heartRate) {
+            toonData.heartRate = this.encode('HEART_RATE', terraData.heartRate, timestamp, 'bpm');
+        }
+        
+        if (terraData.weight) {
+            toonData.weight = this.encode('WEIGHT', terraData.weight, timestamp, 'kg');
+        }
+        
+        if (terraData.sleep) {
+            toonData.sleep = this.encode('SLEEP', terraData.sleep, timestamp, 'hours');
+        }
+        
+        if (terraData.calories) {
+            toonData.calories = this.encode('CALORIES', terraData.calories, timestamp, 'kcal');
+        }
+        
+        if (terraData.distance) {
+            // Terra restituisce in metri, convertiamo in km
+            toonData.distance = this.encode('DISTANCE', terraData.distance / 1000, timestamp, 'km');
+        }
+        
+        // Dati avanzati Terra
+        if (terraData.activeMinutes) {
+            toonData.activeMinutes = this.encode('ACTIVE_MINUTES', terraData.activeMinutes, timestamp, 'min');
+        }
+        
+        if (terraData.hrv) {
+            toonData.hrv = this.encode('HRV', terraData.hrv, timestamp, 'ms');
+        }
+        
+        if (terraData.bodyFat) {
+            toonData.bodyFat = this.encode('BODY_FAT', terraData.bodyFat, timestamp, '%');
+        }
+        
+        if (terraData.height) {
+            toonData.height = this.encode('HEIGHT', terraData.height, timestamp, 'cm');
+        }
+        
+        if (terraData.restingHeartRate) {
+            toonData.restingHeartRate = this.encode('HEART_RATE', terraData.restingHeartRate, timestamp, 'bpm');
+        }
+        
+        if (terraData.vo2Max) {
+            toonData.vo2Max = this.encode('VO2MAX', terraData.vo2Max, timestamp, 'ml/kg/min');
+        }
+        
+        if (terraData.oxygenSaturation) {
+            toonData.oxygenSaturation = this.encode('OXYGEN_SATURATION', terraData.oxygenSaturation, timestamp, '%');
+        }
+        
+        if (terraData.respiratoryRate) {
+            toonData.respiratoryRate = this.encode('RESP_RATE', terraData.respiratoryRate, timestamp, 'breaths/min');
+        }
+        
+        // Metadata
+        toonData.syncTimestamp = terraData.syncTimestamp || Date.now();
+        toonData.source = terraData.source || 'terra';
         
         return toonData;
     }

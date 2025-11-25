@@ -528,7 +528,7 @@ export class FirestoreService {
                 }
             });
 
-            // Get health data from Google Fit (last 7 days)
+            // Get health data from Google Fit or Terra/Apple Health (last 7 days)
             let healthData = null;
             try {
                 const healthRecords = await this.getHealthData(7);
@@ -546,15 +546,35 @@ export class FirestoreService {
                     };
 
                     healthData = {
+                        // Base metrics (available from both Google Fit and Terra)
                         steps: decodeTOON(latestHealth.steps),
                         heartRate: decodeTOON(latestHealth.heartRate),
                         weight: decodeTOON(latestHealth.weight),
                         calories: decodeTOON(latestHealth.calories),
                         distance: decodeTOON(latestHealth.distance),
                         sleep: decodeTOON(latestHealth.sleep),
+                        
+                        // Advanced metrics (may be available from Terra/Apple Health)
+                        activeMinutes: decodeTOON(latestHealth.activeMinutes),
+                        hrv: decodeTOON(latestHealth.hrv),
+                        bodyFat: decodeTOON(latestHealth.bodyFat),
+                        height: decodeTOON(latestHealth.height),
+                        restingHeartRate: decodeTOON(latestHealth.restingHeartRate),
+                        vo2Max: decodeTOON(latestHealth.vo2Max),
+                        oxygenSaturation: decodeTOON(latestHealth.oxygenSaturation),
+                        respiratoryRate: decodeTOON(latestHealth.respiratoryRate),
+                        
+                        // Metadata
                         syncTimestamp: latestHealth.syncTimestamp || null,
-                        source: latestHealth.source || 'google_fit'
+                        source: latestHealth.source || 'unknown'
                     };
+                    
+                    // Remove null values to keep payload clean
+                    Object.keys(healthData).forEach(key => {
+                        if (healthData[key] === null || healthData[key] === undefined) {
+                            delete healthData[key];
+                        }
+                    });
                 }
             } catch (error) {
                 console.warn('Could not load health data for AI:', error);
@@ -896,6 +916,147 @@ export class FirestoreService {
             return null;
         } catch (error) {
             console.error('Error getting last health sync:', error);
+            return null;
+        }
+    }
+
+    // --- TERRA API INTEGRATION (Apple Health) ---
+
+    /**
+     * Get Terra API configuration
+     */
+    async getTerraConfig() {
+        try {
+            const docSnap = await getDoc(doc(db, 'config', 'terra'));
+            if (docSnap.exists()) {
+                return docSnap.data();
+            }
+            return null;
+        } catch (error) {
+            console.warn('Terra config not found:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Set Terra API configuration (Admin only)
+     */
+    async setTerraConfig(devId, apiKey) {
+        try {
+            await setDoc(doc(db, 'config', 'terra'), {
+                devId: devId,
+                apiKey: apiKey,
+                updatedAt: serverTimestamp()
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting Terra config:', error);
+            return { success: false, message: error.message };
+        }
+    }
+
+    /**
+     * Save Terra user connection data
+     */
+    async saveTerraUserData(terraData) {
+        const user = auth.currentUser;
+        if (!user) throw new Error('User not authenticated');
+
+        try {
+            const terraRef = doc(db, 'users', user.uid, 'private', 'terraConnection');
+            await setDoc(terraRef, {
+                ...terraData,
+                updatedAt: serverTimestamp()
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Error saving Terra user data:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get Terra user connection data
+     */
+    async getTerraUserData() {
+        const user = auth.currentUser;
+        if (!user) return null;
+
+        try {
+            const terraRef = doc(db, 'users', user.uid, 'private', 'terraConnection');
+            const docSnap = await getDoc(terraRef);
+
+            if (docSnap.exists()) {
+                return docSnap.data();
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting Terra user data:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Remove Terra user connection
+     */
+    async removeTerraUserData() {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+            const terraRef = doc(db, 'users', user.uid, 'private', 'terraConnection');
+            await deleteDoc(terraRef);
+            return { success: true };
+        } catch (error) {
+            console.error('Error removing Terra user data:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update Terra last sync timestamp
+     */
+    async updateTerraLastSync(timestamp) {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        try {
+            const terraRef = doc(db, 'users', user.uid, 'private', 'terraConnection');
+            await updateDoc(terraRef, {
+                lastSync: timestamp,
+                updatedAt: serverTimestamp()
+            });
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating Terra last sync:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Check which health provider is connected
+     * Returns: 'google_fit', 'terra_apple', 'terra_samsung', or null
+     */
+    async getConnectedHealthProvider() {
+        const user = auth.currentUser;
+        if (!user) return null;
+
+        try {
+            // Check Google Fit first
+            const healthToken = await this.getHealthToken();
+            if (healthToken && healthToken.accessToken) {
+                return 'google_fit';
+            }
+
+            // Check Terra
+            const terraData = await this.getTerraUserData();
+            if (terraData && terraData.userId) {
+                return `terra_${(terraData.provider || 'unknown').toLowerCase()}`;
+            }
+
+            return null;
+        } catch (error) {
+            console.error('Error checking health provider:', error);
             return null;
         }
     }
