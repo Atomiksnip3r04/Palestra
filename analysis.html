@@ -416,12 +416,12 @@
                     <div class="stat-label">Volume Totale</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-val" id="bestBench">0</div>
-                    <div class="stat-label">Best Bench (1RM)</div>
+                    <div class="stat-val" id="topLift1Value">-</div>
+                    <div class="stat-label" id="topLift1Label">Top Lift #1</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-val" id="bestSquat">0</div>
-                    <div class="stat-label">Best Squat (1RM)</div>
+                    <div class="stat-val" id="topLift2Value">-</div>
+                    <div class="stat-label" id="topLift2Label">Top Lift #2</div>
                 </div>
             </div>
 
@@ -1834,26 +1834,43 @@
                 });
             });
 
-            // Update Stats Cards for specific lifts
-            function updateStatCard(id, key) {
-                const el = document.getElementById(id);
-                let max = 0;
-                // Simple fuzzy match
-                for (const [name, data] of Object.entries(prs)) {
-                    if (name.includes(key)) {
-                        if (data['1rm'] > max) max = data['1rm'];
-                    }
-                }
-
-                if (unitService) {
-                    el.textContent = unitService.formatWeight(max);
+            // Update Stats Cards with TOP 2 actual lifts from user's data
+            function updateTopLiftsCards() {
+                // Ordina i PR per 1RM decrescente
+                const sortedPRs = Object.entries(prs)
+                    .filter(([_, data]) => data['1rm'] > 0)
+                    .sort((a, b) => b[1]['1rm'] - a[1]['1rm']);
+                
+                // Top Lift #1
+                if (sortedPRs.length >= 1) {
+                    const [name, data] = sortedPRs[0];
+                    const displayName = name.length > 15 ? name.substring(0, 12) + '...' : name;
+                    document.getElementById('topLift1Value').textContent = unitService 
+                        ? unitService.formatWeight(data['1rm']) 
+                        : Math.round(data['1rm']) + ' kg';
+                    document.getElementById('topLift1Label').textContent = displayName;
+                    document.getElementById('topLift1Label').title = name; // Tooltip con nome completo
                 } else {
-                    el.textContent = Math.round(max) + ' kg';
+                    document.getElementById('topLift1Value').textContent = '-';
+                    document.getElementById('topLift1Label').textContent = 'Nessun PR';
+                }
+                
+                // Top Lift #2
+                if (sortedPRs.length >= 2) {
+                    const [name, data] = sortedPRs[1];
+                    const displayName = name.length > 15 ? name.substring(0, 12) + '...' : name;
+                    document.getElementById('topLift2Value').textContent = unitService 
+                        ? unitService.formatWeight(data['1rm']) 
+                        : Math.round(data['1rm']) + ' kg';
+                    document.getElementById('topLift2Label').textContent = displayName;
+                    document.getElementById('topLift2Label').title = name;
+                } else {
+                    document.getElementById('topLift2Value').textContent = '-';
+                    document.getElementById('topLift2Label').textContent = 'Nessun PR';
                 }
             }
 
-            updateStatCard('bestBench', 'panca');
-            updateStatCard('bestSquat', 'squat');
+            updateTopLiftsCards();
 
             // Update Table Logic with Selector
             const prTableBody = document.getElementById('prTableBody');
