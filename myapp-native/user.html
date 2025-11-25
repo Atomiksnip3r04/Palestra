@@ -980,11 +980,12 @@
                                 console.warn('Could not auto-refresh Google Fit token:', healthError.message);
                             }
                             
-                            // Merge AI history: if local has items not in cloud, sync back
-                            const localAiHistory = JSON.parse(localStorage.getItem('ironflow_ai_plan_history') || '[]');
+                            // AI history is now automatically merged in loadFromCloud()
+                            // Sync back to cloud to ensure both platforms have the merged history
+                            const mergedAiHistory = JSON.parse(localStorage.getItem('ironflow_ai_plan_history') || '[]');
                             const cloudAiHistory = loadResult.data.aiPlanHistory || [];
-                            if (localAiHistory.length > cloudAiHistory.length) {
-                                console.log('📚 Local AI history has more items, syncing to cloud...');
+                            if (mergedAiHistory.length !== cloudAiHistory.length) {
+                                console.log('📚 AI history merged, syncing back to cloud...');
                                 await firestoreService.syncToCloud();
                             }
                         }

@@ -159,7 +159,13 @@ export class FirestoreService {
                 if (data.profile) localStorage.setItem('ironflow_profile', JSON.stringify(data.profile));
                 if (data.bodyStats) localStorage.setItem('ironflow_body_stats', JSON.stringify(data.bodyStats));
                 if (data.photos) localStorage.setItem('ironflow_photos', JSON.stringify(data.photos)); // Load photos
-                if (data.aiPlanHistory) localStorage.setItem('ironflow_ai_plan_history', JSON.stringify(data.aiPlanHistory)); // Load AI history
+                
+                // Merge AI Plan History: combine local and cloud, remove duplicates, sort by date
+                const cloudAiHistory = data.aiPlanHistory || [];
+                const localAiHistory = JSON.parse(localStorage.getItem('ironflow_ai_plan_history') || '[]');
+                const mergedAiHistory = this.mergeAiPlanHistory(localAiHistory, cloudAiHistory);
+                localStorage.setItem('ironflow_ai_plan_history', JSON.stringify(mergedAiHistory));
+                data.aiPlanHistory = mergedAiHistory; // Update data object for return
 
                 return { success: true, data };
             } else {
@@ -169,6 +175,33 @@ export class FirestoreService {
             console.error("Error loading from Firestore:", error);
             return { success: false, message: error.message };
         }
+    }
+
+    // Merge AI Plan History from local and cloud
+    // Combines both arrays, removes duplicates based on createdAt timestamp, sorts by date (newest first)
+    mergeAiPlanHistory(localHistory, cloudHistory) {
+        const combined = [...(localHistory || []), ...(cloudHistory || [])];
+        
+        // Create a map to deduplicate by createdAt timestamp
+        const uniqueMap = new Map();
+        combined.forEach(plan => {
+            const key = plan.createdAt || plan.suggestion + '_' + (plan.focus || '').substring(0, 50);
+            if (!uniqueMap.has(key)) {
+                uniqueMap.set(key, plan);
+            }
+        });
+        
+        // Convert back to array and sort by createdAt (newest first)
+        const merged = Array.from(uniqueMap.values())
+            .sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0);
+                const dateB = new Date(b.createdAt || 0);
+                return dateB - dateA;
+            })
+            .slice(0, 30); // Keep max 30 items
+        
+        console.log(`📚 AI History merged: ${localHistory?.length || 0} local + ${cloudHistory?.length || 0} cloud = ${merged.length} unique`);
+        return merged;
     }
 
     // Set ImgBB API Key
