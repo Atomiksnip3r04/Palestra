@@ -1107,10 +1107,16 @@
                     div.onmouseout = () => div.style.borderColor = 'transparent';
 
                     div.addEventListener('click', () => {
+                        console.log('📋 Caricamento storico AI - entry:', entry);
+                        console.log('📋 entry.text length:', entry.text ? entry.text.length : 'undefined');
                         closeModal(historyModal);
                         openModal(aiModal);
-                        aiContent.innerHTML = marked.parse(entry.text);
-                        processTables(aiContent);
+                        if (entry.text && entry.text.length > 0) {
+                            aiContent.innerHTML = marked.parse(entry.text);
+                            processTables(aiContent);
+                        } else {
+                            aiContent.innerHTML = '<p style="color: #ff4444;">Errore: il testo dell\'analisi non è stato salvato correttamente.</p>';
+                        }
                     });
 
                     historyList.appendChild(div);
