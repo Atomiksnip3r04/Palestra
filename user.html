@@ -2707,12 +2707,12 @@
         // Legacy: Keep old function name for compatibility
         document.addEventListener('DOMContentLoaded', () => {
             // Aspetta un momento per assicurarsi che l'autenticazione sia completa
-            setTimeout(() => updateStatus(), 500);
+            setTimeout(() => updateHealthStatus(), 500);
         });
 
         // Aggiorna status anche se già caricato
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            setTimeout(() => updateStatus(), 500);
+            setTimeout(() => updateHealthStatus(), 500);
         }
 
         // Ascolta i cambiamenti di autenticazione per aggiornare lo stato
@@ -2720,7 +2720,7 @@
             authService.subscribe((user) => {
                 if (user) {
                     // Utente autenticato, aggiorna lo stato dopo un breve delay
-                    setTimeout(() => updateStatus(), 1000);
+                    setTimeout(() => updateHealthStatus(), 1000);
                 }
             });
         });
