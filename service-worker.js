@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ironflow-v3';
+const CACHE_NAME = 'ironflow-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -47,6 +47,9 @@ self.addEventListener('fetch', (event) => {
   
   // Solo richieste GET
   if (event.request.method !== 'GET') return;
+  
+  // Ignora richieste chrome-extension e altri schemi non supportati
+  if (!url.protocol.startsWith('http')) return;
   
   // Network-first per file dinamici (HTML, JS, CSS)
   if (url.pathname.endsWith('.html') || 
