@@ -615,11 +615,11 @@ export class AdvancedMetricsEngine {
 
     /**
      * 9. PERSONAL BESTS TIMELINE
-     * Timeline dei PR raggiunti
+     * Timeline dei PR raggiunti - USA PESO REALE MASSIMO (non stimato)
      */
     getPersonalBestsTimeline(months = 6) {
         const cutoff = Date.now() - (months * 30 * DAY_MS);
-        const prs = {};
+        const prs = {}; // Traccia il peso reale massimo per esercizio
         const timeline = [];
 
         // Ordina log per data
@@ -634,17 +634,17 @@ export class AdvancedMetricsEngine {
                     const w = parseFloat(set.weight) || 0;
                     const r = parseFloat(set.reps) || 0;
                     if (w > 0 && r > 0) {
-                        const estimate = this.estimate1RM(w, r);
-                        if (!prs[name] || estimate > prs[name]) {
-                            // Nuovo PR!
+                        // Usa il PESO REALE invece della stima 1RM
+                        if (!prs[name] || w > prs[name]) {
+                            // Nuovo PR con peso reale!
                             const isNewPR = prs[name] !== undefined;
-                            prs[name] = estimate;
+                            prs[name] = w;
                             
                             if (isNewPR) {
                                 timeline.push({
                                     date: log.date.split('T')[0],
                                     exercise: ex.name,
-                                    value: Math.round(estimate),
+                                    value: Math.round(w), // PESO REALE
                                     weight: w,
                                     reps: r
                                 });
@@ -660,7 +660,7 @@ export class AdvancedMetricsEngine {
             totalPRs: timeline.length,
             currentPRs: Object.entries(prs).map(([name, value]) => ({
                 exercise: name,
-                value: Math.round(value)
+                value: Math.round(value) // PESO REALE
             })).sort((a, b) => b.value - a.value).slice(0, 10)
         };
     }
