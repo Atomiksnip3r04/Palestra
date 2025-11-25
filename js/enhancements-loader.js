@@ -46,7 +46,65 @@ async function init() {
     // Intercept AI Generation Button
     setupAIGenerationInterception();
 
+    // Setup Media Session Integration (Timer & Audio)
+    setupMediaSessionIntegration();
+
     console.log('✅ All enhancements loaded');
+}
+
+// Setup Media Session Integration (Timer Observer & Audio Trigger)
+function setupMediaSessionIntegration() {
+    // 1. Audio Trigger on Start (Delegated)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.start-workout');
+        if (btn) {
+            // Get workout name if possible
+            const workoutName = btn.closest('.workout-list-item')?.querySelector('strong')?.textContent.replace('AI', '').trim() || 'Allenamento';
+
+            // Start Media Session (Audio Loop)
+            mediaSessionManager.startWorkout(workoutName);
+            console.log('🎵 Media Session started via user interaction');
+        }
+    });
+
+    // 2. Timer Observer (Sync DOM timer to Lockscreen)
+    const timerElement = document.getElementById('focusTimer');
+    if (timerElement) {
+        const observer = new MutationObserver((mutations) => {
+            const text = timerElement.textContent; // "01:30"
+            if (text && text.includes(':')) {
+                const [min, sec] = text.split(':').map(Number);
+                const totalSeconds = (min * 60) + sec;
+
+                // Only update if valid number
+                if (!isNaN(totalSeconds)) {
+                    mediaSessionManager.updateTimer(totalSeconds);
+                }
+            }
+        });
+        observer.observe(timerElement, { childList: true, characterData: true, subtree: true });
+        console.log('⏱️ Timer observer attached');
+    } else {
+        console.warn('⚠️ focusTimer element not found for observer');
+    }
+
+    // 3. Exercise Name Observer (Sync Title)
+    const exerciseElement = document.getElementById('focusExerciseName');
+    if (exerciseElement) {
+        const observer = new MutationObserver(() => {
+            const name = exerciseElement.textContent;
+            // Try to get set info if available
+            const setCounter = document.getElementById('focusSetCounter');
+            const setInfo = setCounter ? setCounter.textContent : '';
+            // Parse "Set 1/3" if possible, otherwise pass raw
+            const match = setInfo.match(/Set (\d+)\/(\d+)/);
+            const current = match ? match[1] : 1;
+            const total = match ? match[2] : 3;
+
+            mediaSessionManager.updateExercise(name, current, total);
+        });
+        observer.observe(exerciseElement, { childList: true, characterData: true, subtree: true });
+    }
 }
 
 // Inject AI targeting chips HTML and Custom Text Input
