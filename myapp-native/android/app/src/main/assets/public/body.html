@@ -260,7 +260,7 @@
                 </div>
             </header>
 
-            <section class="section" style="padding-top: 120px;">
+            <section class="section" style="padding-top: 160px;">
                 <div class="container">
                     <h1 style="margin-bottom: var(--spacing-md);">Misure & <span class="text-primary">Progressi</span>
                     </h1>
@@ -633,6 +633,7 @@
                             {
                                 icon: '👟',
                                 label: 'Passi',
+                                sublabel: 'media/giorno',
                                 value: data?.steps,
                                 unit: 'passi',
                                 format: (v) => v?.toLocaleString('it-IT'),
@@ -641,6 +642,7 @@
                             {
                                 icon: '❤️',
                                 label: 'Frequenza Cardiaca',
+                                sublabel: 'oggi',
                                 value: data?.heartRate,
                                 unit: 'bpm',
                                 format: (v) => v,
@@ -649,6 +651,7 @@
                             {
                                 icon: '⚖️',
                                 label: 'Peso',
+                                sublabel: 'ultimo',
                                 value: data?.weight,
                                 unit: 'kg',
                                 format: (v) => v?.toFixed(1),
@@ -657,6 +660,7 @@
                             {
                                 icon: '🔥',
                                 label: 'Calorie',
+                                sublabel: 'media/giorno',
                                 value: data?.calories,
                                 unit: 'kcal',
                                 format: (v) => v?.toLocaleString('it-IT'),
@@ -665,6 +669,7 @@
                             {
                                 icon: '📏',
                                 label: 'Distanza',
+                                sublabel: 'media/giorno',
                                 value: data?.distance ? data.distance / 1000 : null, // Convert meters to km
                                 unit: 'km',
                                 format: (v) => v?.toFixed(2),
@@ -673,6 +678,7 @@
                             {
                                 icon: '😴',
                                 label: 'Sonno',
+                                sublabel: 'media/notte',
                                 value: data?.sleep,
                                 unit: 'ore',
                                 format: (v) => v?.toFixed(1),
@@ -681,6 +687,7 @@
                             {
                                 icon: '⏱️',
                                 label: 'Minuti Attivi',
+                                sublabel: 'media/giorno',
                                 value: data?.activeMinutes,
                                 unit: 'min',
                                 format: (v) => v,
@@ -760,11 +767,16 @@
                                     ${trendIcon} ${trendText}% vs precedente
                                 </div>`;
                             }
+                            
+                            // Mostra sublabel se presente (es. "media/giorno")
+                            const sublabelHtml = card.sublabel ? 
+                                `<div style="font-size: 0.65rem; color: var(--color-text-muted); margin-top: -2px;">${card.sublabel}</div>` : '';
 
                             return `
                                 <div class="health-card ${unavailableClass}">
                                     <span class="health-card-icon">${card.icon}</span>
                                     <div class="health-card-label">${card.label}</div>
+                                    ${sublabelHtml}
                                     <div class="health-card-value">
                                         ${displayValue}
                                         <span class="health-card-unit">${isAvailable ? card.unit : ''}</span>

@@ -1,12 +1,17 @@
 # Google Fit - Spiegazione Dettagliata dei Calcoli
 
-## Data: 24 Novembre 2025
+## Data: 28 Novembre 2025 (Aggiornato)
 
 Questo documento spiega in dettaglio come vengono calcolati tutti i dati prelevati da Google Fit.
 
+> **IMPORTANTE - Aggiornamento 28 Nov 2025**: I calcoli sono stati corretti per mostrare **MEDIE GIORNALIERE** invece di totali settimanali. Questo risolve il problema dei valori che diminuivano col passare dei giorni.
+
 ---
 
-## 1. PASSI (Steps)
+## 1. PASSI (Steps) - MEDIA GIORNALIERA
+
+### Logica Corretta (Aggiornata)
+I passi vengono ora calcolati come **MEDIA GIORNALIERA** degli ultimi 7 giorni, non come totale settimanale.
 
 ### Dati Ricevuti da Google Fit
 ```javascript
@@ -17,50 +22,56 @@ Questo documento spiega in dettaglio come vengono calcolati tutti i dati preleva
       "endTimeNanos": "1700000600000000000",
       "value": [{ "intVal": 150 }]  // 150 passi in questo intervallo
     },
-    {
-      "startTimeNanos": "1700000600000000000",
-      "endTimeNanos": "1700001200000000000",
-      "value": [{ "intVal": 200 }]  // 200 passi in questo intervallo
-    }
     // ... altri intervalli
   ]
 }
 ```
 
-### Calcolo
+### Calcolo CORRETTO
 ```javascript
-// 1. Creo una Map per evitare duplicati (stesso intervallo da più fonti)
-const stepsByTimestamp = new Map();
+// 1. Raggruppa i passi per GIORNO
+const stepsByDay = {};
 
-// 2. Per ogni data point
 data.point.forEach(point => {
-    const steps = point.value[0].intVal;  // Es: 150
-    const startNanos = point.startTimeNanos;  // Es: "1700000000000000000"
-    const endNanos = point.endTimeNanos;      // Es: "1700000600000000000"
+    const steps = point.value[0].intVal;
+    const endNanos = point.endTimeNanos;
     
-    // 3. Creo una chiave unica per questo intervallo
-    const key = `${startNanos}-${endNanos}`;  // Es: "1700000000000000000-1700000600000000000"
+    // Attribuisci al giorno corretto
+    const dayKey = new Date(parseInt(endNanos) / 1000000).toISOString().split('T')[0];
     
-    // 4. Se ho già dati per questo intervallo, prendo il valore più alto
-    if (stepsByTimestamp.has(key)) {
-        const existing = stepsByTimestamp.get(key);
-        stepsByTimestamp.set(key, Math.max(existing, steps));
-    } else {
-        stepsByTimestamp.set(key, steps);
+    if (!stepsByDay[dayKey]) {
+        stepsByDay[dayKey] = new Map(); // Map per evitare duplicati
     }
+    
+    const intervalKey = `${startNanos}-${endNanos}`;
+    stepsByDay[dayKey].set(intervalKey, Math.max(
+        stepsByDay[dayKey].get(intervalKey) || 0, 
+        steps
+    ));
 });
 
-// 5. Sommo tutti i passi unici
-const totalSteps = Array.from(stepsByTimestamp.values())
-    .reduce((sum, steps) => sum + steps, 0);
+// 2. Calcola totale per ogni giorno
+const dailyTotals = {};
+Object.entries(stepsByDay).forEach(([day, intervalsMap]) => {
+    dailyTotals[day] = Array.from(intervalsMap.values()).reduce((sum, s) => sum + s, 0);
+});
 
-// Esempio: [150, 200, 180, 220] = 750 passi totali
+// 3. Calcola MEDIA GIORNALIERA
+const daysWithData = Object.keys(dailyTotals).length;
+const totalSteps = Object.values(dailyTotals).reduce((sum, s) => sum + s, 0);
+const dailyAverage = Math.round(totalSteps / daysWithData);
+
+// Esempio:
+// Giorno 1: 8,500 passi
+// Giorno 2: 10,200 passi
+// Giorno 3: 7,800 passi
+// Media: (8500 + 10200 + 7800) / 3 = 8,833 passi/giorno
 ```
 
-### Perché questo metodo?
-- **Duplicati**: Google Fit può ricevere dati da più fonti (telefono, smartwatch)
-- **Accuratezza**: Prendiamo il valore più alto se ci sono stime multiple
-- **Unicità**: Ogni intervallo temporale viene contato una sola volta
+### Perché Media Giornaliera?
+- **Consistenza**: Il valore non diminuisce quando passa un giorno
+- **Confrontabilità**: Puoi confrontare con obiettivi giornalieri (es. 10,000 passi/giorno)
+- **Accuratezza**: Riflette la tua attività media reale
 
 ---
 
