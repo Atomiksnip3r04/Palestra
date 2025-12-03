@@ -39,7 +39,7 @@ class HealthConnectService {
         // App nativa Capacitor (Android)
         if (origin.includes('localhost') || origin.includes('capacitor')) {
             // Per app native, usa il redirect URI della webapp
-            return 'https://atomiksnip3r04.github.io/Palestra/auth-callback.html';
+            return 'https://massimilianociconte.github.io/Palestra/auth-callback.html';
         }
         // GitHub Pages
         if (origin.includes('github.io')) {

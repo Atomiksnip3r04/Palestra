@@ -701,29 +701,37 @@
 
             <!-- Active Inputs Area -->
             <div id="focusActiveArea" style="width: 100%; margin-bottom: 2rem;">
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <!-- Suggested Weight Banner -->
+                <div id="focusSuggestedWeight" style="display: none; background: linear-gradient(135deg, rgba(0,243,255,0.15), rgba(0,153,255,0.1)); border: 1px solid rgba(0,243,255,0.3); border-radius: var(--radius-md); padding: 0.6rem 1rem; margin-bottom: 1rem; text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span style="color: var(--color-text-muted); font-size: 0.75rem;">💡 Suggerito:</span>
+                        <span id="focusSuggestedValue" style="color: var(--color-primary); font-weight: bold; font-size: 1.1rem;">--</span>
+                        <span style="color: var(--color-text-muted); font-size: 0.7rem;" id="focusSuggestedBasis">(basato su storico)</span>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
                     <div
-                        style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
+                        style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
-                            style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">KG</label>
+                            style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">KG</label>
                         <input type="number" id="focusWeightInput"
-                            style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
+                            style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
                             value="">
                     </div>
                     <div
-                        style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
+                        style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
-                            style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">REPS</label>
+                            style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">REPS</label>
                         <input type="text" id="focusRepsInput"
-                            style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
+                            style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
                             value="">
                     </div>
                     <div
-                        style="background: var(--color-surface); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
+                        style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
-                            style="display: block; color: var(--color-text-muted); font-size: 0.8rem; margin-bottom: 0.5rem;">RPE</label>
+                            style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">RPE</label>
                         <input type="number" id="focusRpeInput" min="1" max="10" step="0.5"
-                            style="width: 100%; background: transparent; border: none; color: white; font-size: 2.5rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
+                            style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
                             value="" placeholder="1-10">
                     </div>
                 </div>
@@ -1456,6 +1464,9 @@
             const focusWorkoutTitle = document.getElementById('focusWorkoutTitle');
             const focusProgressBar = document.getElementById('focusProgressBar');
             const focusProgressText = document.getElementById('focusProgressText');
+            const focusSuggestedWeight = document.getElementById('focusSuggestedWeight');
+            const focusSuggestedValue = document.getElementById('focusSuggestedValue');
+            const focusSuggestedBasis = document.getElementById('focusSuggestedBasis');
             const wellnessModal = document.getElementById('wellnessPromptModal');
             const wellnessForm = document.getElementById('wellnessForm');
             const cancelWellnessBtn = document.getElementById('cancelWellnessBtn');
@@ -1479,6 +1490,77 @@
             let sessionLogSaved = false;
             let pendingFocusWorkout = null;
             let currentWellnessSnapshot = null;
+            
+            // --- WEIGHT SUGGESTION SYSTEM ---
+            let exerciseEstimates = {};
+            
+            const calculateHybrid1RM = (weight, reps) => {
+                if (reps === 1) return weight;
+                if (reps > 15) return null;
+                const epley = weight * (1 + reps / 30);
+                const brzycki = weight * (36 / (37 - reps));
+                const lombardi = weight * Math.pow(reps, 0.1);
+                const mayhew = weight * (100 / (52.2 + 41.9 * Math.exp(-0.055 * reps)));
+                const wathen = weight * (100 / (48.8 + 53.8 * Math.exp(-0.075 * reps)));
+                return (epley * 0.25 + brzycki * 0.25 + lombardi * 0.15 + mayhew * 0.15 + wathen * 0.2);
+            };
+            
+            const rmPercentages = {
+                1: 1.00, 2: 0.97, 3: 0.93, 4: 0.90, 5: 0.87,
+                6: 0.85, 7: 0.83, 8: 0.80, 9: 0.77, 10: 0.75,
+                11: 0.73, 12: 0.70, 13: 0.68, 14: 0.66, 15: 0.64
+            };
+            
+            const normalizeExerciseName = (name) => {
+                return (name || '').toLowerCase().trim()
+                    .replace(/\s+/g, ' ')
+                    .replace(/[àáâã]/g, 'a')
+                    .replace(/[èéêë]/g, 'e')
+                    .replace(/[ìíîï]/g, 'i')
+                    .replace(/[òóôõ]/g, 'o')
+                    .replace(/[ùúûü]/g, 'u');
+            };
+            
+            const loadExerciseEstimates = () => {
+                try {
+                    const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+                    exerciseEstimates = {};
+                    logs.forEach(log => {
+                        if (!log.exercises) return;
+                        log.exercises.forEach(ex => {
+                            const name = normalizeExerciseName(ex.name);
+                            if (!name || !ex.sets) return;
+                            ex.sets.forEach(set => {
+                                const w = parseFloat(set.weight);
+                                const r = parseInt(set.reps);
+                                if (w > 0 && r > 0 && r <= 15) {
+                                    const est1RM = calculateHybrid1RM(w, r);
+                                    if (est1RM && (!exerciseEstimates[name] || est1RM > exerciseEstimates[name].est1RM)) {
+                                        exerciseEstimates[name] = { est1RM, basedOn: `${w}kg x ${r}`, date: log.date };
+                                    }
+                                }
+                            });
+                        });
+                    });
+                } catch (e) { exerciseEstimates = {}; }
+            };
+            
+            const getSuggestedWeight = (exerciseName, targetReps) => {
+                const name = normalizeExerciseName(exerciseName);
+                const estimate = exerciseEstimates[name];
+                if (!estimate || !estimate.est1RM) return null;
+                let reps = parseInt(targetReps);
+                if (isNaN(reps)) {
+                    const match = String(targetReps).match(/(\d+)/);
+                    reps = match ? parseInt(match[1]) : null;
+                }
+                if (!reps || reps < 1 || reps > 15) return null;
+                const percentage = rmPercentages[reps] || 0.70;
+                const suggestedWeight = Math.round(estimate.est1RM * percentage * 2) / 2;
+                return { weight: suggestedWeight, basedOn: estimate.basedOn, est1RM: Math.round(estimate.est1RM) };
+            };
+            
+            loadExerciseEstimates();
 
             const DOMS_SELECTION_STORAGE_KEY = 'ironflow_last_doms_selection';
             const categoryOrder = ['push', 'pull', 'legs', 'core', 'other'];
@@ -1830,6 +1912,9 @@
             }
 
             function startFocusSession(workout) {
+                // Ricarica stime 1RM prima di iniziare
+                loadExerciseEstimates();
+                
                 const source = typeof workout === 'string'
                     ? findWorkoutById(workout)
                     : (workout?.id ? (findWorkoutById(workout.id) || workout) : workout);
@@ -2038,6 +2123,18 @@
                     focusRpeInput.value = '';
                 }
                 focusRpeInput.placeholder = '1-10';
+                
+                // Show suggested weight based on historical data
+                const targetReps = set.reps || set.target || ex.reps || targetLabel;
+                const suggestion = getSuggestedWeight(ex.name, targetReps);
+                
+                if (suggestion && focusSuggestedWeight) {
+                    focusSuggestedValue.textContent = `${suggestion.weight} kg`;
+                    focusSuggestedBasis.textContent = `(1RM: ~${suggestion.est1RM}kg da ${suggestion.basedOn})`;
+                    focusSuggestedWeight.style.display = 'block';
+                } else if (focusSuggestedWeight) {
+                    focusSuggestedWeight.style.display = 'none';
+                }
 
                 // Reset UI State
                 focusActiveArea.style.display = 'block';

@@ -21,7 +21,7 @@ export class WorkoutSharingHandler {
             let baseUrl;
             if (window.location.origin.includes('localhost') || window.location.origin.includes('capacitor')) {
                 // APK nativo o localhost - usa l'URL di produzione
-                baseUrl = 'https://atomiksnip3r04.github.io/Palestra/user.html';
+                baseUrl = 'https://massimilianociconte.github.io/Palestra/user.html';
             } else {
                 baseUrl = `${window.location.origin}${window.location.pathname}`;
             }
