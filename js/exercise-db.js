@@ -67,6 +67,82 @@ export const MUSCLE_GROUPS = {
     "glutes": { label: "Glutei", group: "legs" },
     "quads": { label: "Quadricipiti", group: "legs" },
     "hamstrings": { label: "Femorali", group: "legs" },
-    "calves": { label: "Polpacci", group: "legs" }
+    "calves": { label: "Polpacci", group: "legs" },
+    "neck": { label: "Collo", group: "other" }
 };
+
+// Bilateral dumbbell exercises - weight entered is per dumbbell, display/track total
+export const BILATERAL_DUMBBELL_EXERCISES = [
+    "curl manubri",
+    "dumbbell press",
+    "dumbbell bench press",
+    "dumbbell shoulder press",
+    "dumbbell row",
+    "dumbbell fly",
+    "dumbbell lateral raise",
+    "alzate laterali",
+    "alzate frontali",
+    "hammer curl",
+    "dumbbell curl",
+    "dumbbell tricep extension",
+    "dumbbell lunges",
+    "affondi manubri",
+    "goblet squat",
+    "dumbbell squat",
+    "dumbbell deadlift",
+    "dumbbell shrug",
+    "scrollate manubri",
+    "incline dumbbell press",
+    "panca inclinata manubri",
+    "decline dumbbell press",
+    "croci manubri",
+    "dumbbell pullover"
+];
+
+// Check if exercise is bilateral dumbbell
+export function isBilateralDumbbell(exerciseName) {
+    if (!exerciseName) return false;
+    const normalized = exerciseName.toLowerCase().trim();
+    
+    // Check explicit list
+    if (BILATERAL_DUMBBELL_EXERCISES.some(ex => normalized.includes(ex) || ex.includes(normalized))) {
+        return true;
+    }
+    
+    // Check if name contains "manubri" or "dumbbell" (common pattern)
+    if (normalized.includes('manubri') || normalized.includes('dumbbell')) {
+        // Exclude single-arm exercises
+        if (normalized.includes('singolo') || normalized.includes('single') || 
+            normalized.includes('unilateral') || normalized.includes('one arm')) {
+            return false;
+        }
+        return true;
+    }
+    
+    return false;
+}
+
+// Calculate total weight for bilateral dumbbell exercises
+export function calculateTotalWeight(exerciseName, singleDumbbellWeight) {
+    if (isBilateralDumbbell(exerciseName)) {
+        return singleDumbbellWeight * 2;
+    }
+    return singleDumbbellWeight;
+}
+
+// Get display weight (what user sees in UI)
+export function getDisplayWeight(exerciseName, storedWeight, showTotal = true) {
+    if (isBilateralDumbbell(exerciseName) && showTotal) {
+        return storedWeight; // Already stored as total
+    }
+    return storedWeight;
+}
+
+// Get input weight (what user enters - single dumbbell)
+export function getInputWeight(exerciseName, totalWeight) {
+    if (isBilateralDumbbell(exerciseName)) {
+        return totalWeight / 2;
+    }
+    return totalWeight;
+}
 

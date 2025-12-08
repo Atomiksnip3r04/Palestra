@@ -74,7 +74,7 @@ class ExportService {
     /**
      * Download come file Word (.doc) in formato RTF
      */
-    async downloadAsWord(content, filename, title = 'Report IronFlow') {
+    async downloadAsWord(content, filename, title = 'Report GymBro') {
         try {
             console.log('downloadAsWord chiamato - inizio generazione RTF');
             // Genera RTF dal contenuto HTML
@@ -85,128 +85,49 @@ class ExportService {
             const blob = new Blob([rtfContent], { type: 'application/rtf' });
             
             // Check if running in Capacitor (native app)
-            const isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+            const isCapacitor = typeof window.Capacitor !== 'undefined';
             
-            if (isCapacitor) {
-                console.log('Rilevato ambiente Capacitor nativo');
-                
-                // Su Android WebView, usa Web Share API con file (metodo più affidabile)
-                if (navigator.share) {
-                    try {
-                        const file = new File([blob], `${filename}.doc`, { type: 'application/msword' });
-                        
-                        // Verifica se possiamo condividere file
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                title: title,
-                                files: [file]
-                            });
-                            return { success: true, message: 'File condiviso!' };
-                        } else {
-                            // Prova comunque a condividere (alcuni browser supportano senza canShare)
-                            await navigator.share({
-                                title: title,
-                                files: [file]
-                            });
-                            return { success: true, message: 'File condiviso!' };
-                        }
-                    } catch (shareError) {
-                        console.warn('Web Share API fallito:', shareError);
-                        // Continua con i fallback
-                    }
-                }
-                
-                // Fallback: prova download diretto con blob URL
+            if (isCapacitor && window.Capacitor.isNativePlatform()) {
+                // Use Capacitor Filesystem plugin for native download
                 try {
-                    const url = URL.createObjectURL(blob);
+                    const { Filesystem, Directory } = await import('@capacitor/filesystem');
+                    const { Share } = await import('@capacitor/share');
                     
-                    // Crea un link invisibile e triggera il click
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `${filename}.doc`;
-                    a.style.display = 'none';
-                    document.body.appendChild(a);
-                    
-                    // Triggera il click
-                    a.click();
-                    
-                    // Cleanup dopo un delay
-                    setTimeout(() => {
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                    }, 1000);
-                    
-                    // Se siamo ancora qui dopo 500ms, mostra un modal con istruzioni
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                    
-                    // Mostra modal con opzioni alternative
-                    const overlay = document.createElement('div');
-                    overlay.id = 'download-overlay';
-                    overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;';
-                    
-                    // Converti in base64 per il link alternativo
+                    // Convert blob to base64
                     const reader = new FileReader();
-                    const base64Promise = new Promise((resolve) => {
-                        reader.onloadend = () => resolve(reader.result);
+                    const base64Promise = new Promise((resolve, reject) => {
+                        reader.onloadend = () => {
+                            const base64 = reader.result.split(',')[1];
+                            resolve(base64);
+                        };
+                        reader.onerror = reject;
                         reader.readAsDataURL(blob);
                     });
-                    const dataUrl = await base64Promise;
+                    const base64Data = await base64Promise;
                     
-                    overlay.innerHTML = `
-                        <div style="background: #1a1a2e; padding: 30px; border-radius: 16px; max-width: 90%; text-align: center; border: 1px solid rgba(0,243,255,0.3);">
-                            <h2 style="color: #00f3ff; margin: 0 0 15px;">📄 ${title}</h2>
-                            <p style="color: #ccc; margin-bottom: 20px;">Se il download non è partito automaticamente:</p>
-                            <a id="download-link-alt" href="${dataUrl}" download="${filename}.doc" 
-                               style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #00f3ff, #00a8b5); color: #000; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">
-                               📥 Scarica File
-                            </a>
-                            <p style="color: #888; font-size: 0.85em; margin: 10px 0;">
-                                Tieni premuto sul pulsante → "Scarica link" o "Salva link"
-                            </p>
-                            <button id="copy-content-btn" style="margin-top: 15px; padding: 12px 25px; background: rgba(0,243,255,0.2); border: 1px solid #00f3ff; color: #00f3ff; border-radius: 6px; cursor: pointer; font-size: 0.95em;">
-                                📋 Copia come Testo
-                            </button>
-                            <button id="close-download-overlay" style="margin-top: 10px; padding: 10px 30px; background: transparent; border: 1px solid #666; color: #999; border-radius: 6px; cursor: pointer; display: block; margin-left: auto; margin-right: auto;">
-                                Chiudi
-                            </button>
-                        </div>
-                    `;
-                    document.body.appendChild(overlay);
-                    
-                    // Copia come testo
-                    document.getElementById('copy-content-btn').addEventListener('click', async () => {
-                        try {
-                            const textContent = this.toPlainText(content);
-                            await navigator.clipboard.writeText(textContent);
-                            document.getElementById('copy-content-btn').textContent = '✅ Copiato!';
-                            setTimeout(() => overlay.remove(), 1500);
-                        } catch (e) {
-                            alert('Impossibile copiare. Prova con il pulsante di download.');
-                        }
+                    // Save to cache directory
+                    const savedFile = await Filesystem.writeFile({
+                        path: `${filename}.doc`,
+                        data: base64Data,
+                        directory: Directory.Cache
                     });
                     
-                    // Chiudi overlay
-                    document.getElementById('close-download-overlay').addEventListener('click', () => overlay.remove());
-                    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+                    // Share the file (this opens the native share dialog)
+                    await Share.share({
+                        title: title,
+                        text: 'Report GymBro',
+                        url: savedFile.uri,
+                        dialogTitle: 'Salva o condividi il report'
+                    });
                     
-                    return { success: true, message: 'Opzioni di download mostrate!' };
-                } catch (dataUrlError) {
-                    console.warn('Fallback download fallito:', dataUrlError);
+                    return { success: true, message: 'File pronto per il salvataggio!' };
+                } catch (capacitorError) {
+                    console.warn('Capacitor plugins not available, falling back to web download:', capacitorError);
+                    // Fall through to web download
                 }
-                
-                // Ultimo fallback: copia il contenuto come testo
-                try {
-                    const textContent = this.toPlainText(content);
-                    await navigator.clipboard.writeText(textContent);
-                    return { success: true, message: 'Contenuto copiato negli appunti (download file non supportato)' };
-                } catch (clipboardError) {
-                    console.warn('Anche clipboard fallito:', clipboardError);
-                }
-                
-                return { success: false, message: 'Download non supportato. Usa la condivisione testo.' };
             }
             
-            // Web download standard (funziona su browser desktop e mobile)
+            // Web download fallback
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -249,7 +170,7 @@ class ExportService {
         rtf += '\\viewkind4\\uc1\\pard\\sa200\\sl276\\slmult1\\lang1040\\f0\\fs22\n';
         
         // Title header
-        rtf += '\\qc\\b\\fs48 IRONFLOW\\b0\\fs22\\par\n';
+        rtf += '\\qc\\b\\fs48 GYMBRO\\b0\\fs22\\par\n';
         rtf += '\\qc\\cf2\\fs20 Report generato il ' + new Date().toLocaleDateString('it-IT', {
             day: 'numeric',
             month: 'long',
@@ -268,7 +189,7 @@ class ExportService {
         
         // Footer
         rtf += '\\par\\pard\\qc\\brdrb\\brdrs\\brdrw10\\brsp20\\par\n';
-        rtf += '\\cf2\\i Generato da IronFlow - Il tuo assistente di allenamento intelligente\\i0\\cf0\\par\n';
+        rtf += '\\cf2\\i Generato da GymBro - Il tuo assistente di allenamento intelligente\\i0\\cf0\\par\n';
         
         // Close RTF
         rtf += '}';
@@ -416,7 +337,7 @@ class ExportService {
         // Header con titolo
         elements.push(
             new Paragraph({
-                text: 'IRONFLOW',
+                text: 'GYMBRO',
                 heading: HeadingLevel.HEADING_1,
                 alignment: AlignmentType.CENTER,
                 spacing: { after: 200 }
@@ -467,7 +388,7 @@ class ExportService {
             new Paragraph({
                 children: [
                     new TextRun({
-                        text: 'Generato da IronFlow - Il tuo assistente di allenamento intelligente',
+                        text: 'Generato da GymBro - Il tuo assistente di allenamento intelligente',
                         size: 18,
                         color: '666666',
                         italics: true
@@ -780,7 +701,7 @@ class ExportService {
 </head>
 <body>
     <div class="header">
-        <h1>IRONFLOW</h1>
+        <h1>GYMBRO</h1>
         <p style="font-size: 10pt; color: #666666;">Report generato il ${new Date().toLocaleDateString('it-IT', { 
             day: 'numeric', 
             month: 'long', 
@@ -791,7 +712,7 @@ class ExportService {
     </div>
     ${content}
     <div class="footer">
-        <p>Generato da IronFlow - Il tuo assistente di allenamento intelligente</p>
+        <p>Generato da GymBro - Il tuo assistente di allenamento intelligente</p>
     </div>
 </body>
 </html>`;
@@ -1064,11 +985,11 @@ class ExportService {
                         result = await this.copyToClipboard(content, 'markdown');
                         break;
                     case 'download':
-                        const filename = `ironflow-report-${Date.now()}`;
+                        const filename = `gymbro-report-${Date.now()}`;
                         result = this.downloadAsFile(content, filename, 'markdown');
                         break;
                     case 'word':
-                        const wordFilename = `ironflow-report-${Date.now()}`;
+                        const wordFilename = `gymbro-report-${Date.now()}`;
                         result = await this.downloadAsWord(content, wordFilename, title);
                         break;
                     case 'share':

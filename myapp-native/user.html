@@ -662,6 +662,13 @@
                     <button type="button" id="clearSorenessSelection" class="link-btn"
                         style="font-size:0.75rem;">Azzera</button>
                 </div>
+                <label style="margin-top: 0.75rem;">Causa DOMS / Dolore (opzionale)
+                    <span style="display:block; font-size:0.75rem; color:var(--color-text-muted); margin-top:0.25rem;">
+                        Se il dolore è dovuto ad attività esterne (es. Padel, corsa, lavoro fisico), specificalo qui.
+                    </span>
+                    <input type="text" id="domsExternalCauseInput" class="input-compact" style="width:100%; margin-top:0.5rem;"
+                        placeholder="es. Partita di Padel ieri, Trasloco, Corsa 10km...">
+                </label>
                 <div style="display:flex; gap:0.75rem; margin-top:0.5rem;">
                     <button type="button" id="cancelWellnessBtn" class="btn btn-outline"
                         style="flex:1;">Annulla</button>
@@ -701,6 +708,14 @@
 
             <!-- Active Inputs Area -->
             <div id="focusActiveArea" style="width: 100%; margin-bottom: 2rem;">
+                <!-- Bilateral Dumbbell Indicator -->
+                <div id="focusBilateralIndicator" style="display: none; background: linear-gradient(135deg, rgba(156,39,176,0.15), rgba(103,58,183,0.1)); border: 1px solid rgba(156,39,176,0.3); border-radius: var(--radius-md); padding: 0.5rem 1rem; margin-bottom: 0.75rem; text-align: center;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span style="font-size: 1rem;">🏋️</span>
+                        <span style="color: #ce93d8; font-size: 0.8rem; font-weight: 500;">Manubri Bilaterali</span>
+                        <span style="color: var(--color-text-muted); font-size: 0.7rem;">• Inserisci peso singolo manubrio</span>
+                    </div>
+                </div>
                 <!-- Suggested Weight Banner -->
                 <div id="focusSuggestedWeight" style="display: none; background: linear-gradient(135deg, rgba(0,243,255,0.15), rgba(0,153,255,0.1)); border: 1px solid rgba(0,243,255,0.3); border-radius: var(--radius-md); padding: 0.6rem 1rem; margin-bottom: 1rem; text-align: center;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
@@ -712,7 +727,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1.5rem;">
                     <div
                         style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
-                        <label
+                        <label id="focusWeightLabel"
                             style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">KG</label>
                         <input type="number" id="focusWeightInput"
                             style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
@@ -762,6 +777,18 @@
                 <!-- Previous sets show here -->
             </div>
 
+        </div>
+
+        <!-- Next Exercise Preview -->
+        <div id="nextExercisePreview" style="display: none; margin-top: 1rem; width: 100%; padding: 0.75rem; background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.15); border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.7rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Prossimo</span>
+                <span style="flex: 1; height: 1px; background: rgba(255,255,255,0.1);"></span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+                <span id="nextExerciseName" style="font-size: 0.95rem; color: var(--color-primary); font-weight: 500;">—</span>
+                <span id="nextExerciseSets" style="font-size: 0.75rem; color: var(--color-text-muted);">— serie</span>
+            </div>
         </div>
 
         <!-- Bottom Progress -->
@@ -850,7 +877,7 @@
         import { authService } from './js/auth-service.js';
         import { firestoreService } from './js/firestore-service.js';
         import { aiService } from './js/ai-service.js';
-        import { MUSCLE_GROUPS } from './js/exercise-db.js';
+        import { MUSCLE_GROUPS, isBilateralDumbbell, calculateTotalWeight } from './js/exercise-db.js';
         import { notificationManager } from './js/notification-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1492,8 +1519,10 @@
             let currentWellnessSnapshot = null;
             
             // --- WEIGHT SUGGESTION SYSTEM ---
+            // Cache delle stime 1RM calcolate dai log storici
             let exerciseEstimates = {};
             
+            // Formula ibrida per calcolare 1RM (stessa usata in analysis.html)
             const calculateHybrid1RM = (weight, reps) => {
                 if (reps === 1) return weight;
                 if (reps > 15) return null;
@@ -1505,12 +1534,14 @@
                 return (epley * 0.25 + brzycki * 0.25 + lombardi * 0.15 + mayhew * 0.15 + wathen * 0.2);
             };
             
+            // Percentuali NSCA per convertire 1RM in peso per X reps
             const rmPercentages = {
                 1: 1.00, 2: 0.97, 3: 0.93, 4: 0.90, 5: 0.87,
                 6: 0.85, 7: 0.83, 8: 0.80, 9: 0.77, 10: 0.75,
                 11: 0.73, 12: 0.70, 13: 0.68, 14: 0.66, 15: 0.64
             };
             
+            // Normalizza nome esercizio per matching
             const normalizeExerciseName = (name) => {
                 return (name || '').toLowerCase().trim()
                     .replace(/\s+/g, ' ')
@@ -1521,45 +1552,69 @@
                     .replace(/[ùúûü]/g, 'u');
             };
             
+            // Carica stime 1RM dai log storici
             const loadExerciseEstimates = () => {
                 try {
                     const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
                     exerciseEstimates = {};
+                    
                     logs.forEach(log => {
                         if (!log.exercises) return;
                         log.exercises.forEach(ex => {
                             const name = normalizeExerciseName(ex.name);
                             if (!name || !ex.sets) return;
+                            
                             ex.sets.forEach(set => {
                                 const w = parseFloat(set.weight);
                                 const r = parseInt(set.reps);
                                 if (w > 0 && r > 0 && r <= 15) {
                                     const est1RM = calculateHybrid1RM(w, r);
                                     if (est1RM && (!exerciseEstimates[name] || est1RM > exerciseEstimates[name].est1RM)) {
-                                        exerciseEstimates[name] = { est1RM, basedOn: `${w}kg x ${r}`, date: log.date };
+                                        exerciseEstimates[name] = {
+                                            est1RM: est1RM,
+                                            basedOn: `${w}kg x ${r}`,
+                                            date: log.date
+                                        };
                                     }
                                 }
                             });
                         });
                     });
-                } catch (e) { exerciseEstimates = {}; }
+                    
+                    console.log('📊 Stime caricate:', Object.keys(exerciseEstimates).length, 'esercizi');
+                } catch (e) {
+                    console.warn('Errore caricamento stime:', e);
+                    exerciseEstimates = {};
+                }
             };
             
+            // Calcola peso suggerito per esercizio e reps target
             const getSuggestedWeight = (exerciseName, targetReps) => {
                 const name = normalizeExerciseName(exerciseName);
                 const estimate = exerciseEstimates[name];
+                
                 if (!estimate || !estimate.est1RM) return null;
+                
+                // Parsa le reps target (gestisce range come "8-12")
                 let reps = parseInt(targetReps);
                 if (isNaN(reps)) {
                     const match = String(targetReps).match(/(\d+)/);
                     reps = match ? parseInt(match[1]) : null;
                 }
+                
                 if (!reps || reps < 1 || reps > 15) return null;
+                
                 const percentage = rmPercentages[reps] || 0.70;
-                const suggestedWeight = Math.round(estimate.est1RM * percentage * 2) / 2;
-                return { weight: suggestedWeight, basedOn: estimate.basedOn, est1RM: Math.round(estimate.est1RM) };
+                const suggestedWeight = Math.round(estimate.est1RM * percentage * 2) / 2; // Arrotonda a 0.5kg
+                
+                return {
+                    weight: suggestedWeight,
+                    basedOn: estimate.basedOn,
+                    est1RM: Math.round(estimate.est1RM)
+                };
             };
             
+            // Carica stime all'avvio
             loadExerciseEstimates();
 
             const DOMS_SELECTION_STORAGE_KEY = 'ironflow_last_doms_selection';
@@ -1912,7 +1967,7 @@
             }
 
             function startFocusSession(workout) {
-                // Ricarica stime 1RM prima di iniziare
+                // Ricarica stime 1RM prima di iniziare (per avere dati aggiornati)
                 loadExerciseEstimates();
                 
                 const source = typeof workout === 'string'
@@ -1955,6 +2010,9 @@
                 e.preventDefault();
                 const recordedAt = new Date().toISOString();
                 const muscleSelection = Array.from(selectedSorenessMuscles);
+                const externalCauseInput = document.getElementById('domsExternalCauseInput');
+                const externalCause = externalCauseInput ? externalCauseInput.value.trim() : '';
+                
                 currentWellnessSnapshot = {
                     sleepQuality: parseInt(sleepQualityInput.value, 10),
                     energyLevel: parseInt(energyLevelInput.value, 10),
@@ -1962,10 +2020,16 @@
                     sorenessLevel: parseInt(sorenessLevelInput.value, 10),
                     recordedAt,
                     sorenessMuscles: muscleSelection,
-                    sorenessLabels: muscleSelection.map(id => muscleLabelMap[id] || id)
+                    sorenessLabels: muscleSelection.map(id => muscleLabelMap[id] || id),
+                    externalCause: externalCause || undefined // Only include if provided
                 };
+                
+                // Clear external cause input for next session
+                if (externalCauseInput) externalCauseInput.value = '';
+                
                 console.log('[Wellness] Snapshot created:', currentWellnessSnapshot);
                 console.log('[Wellness] Selected DOMS muscles:', muscleSelection);
+                if (externalCause) console.log('[Wellness] External cause:', externalCause);
                 wellnessModal.style.display = 'none';
                 if (pendingFocusWorkout) {
                     startFocusSession(pendingFocusWorkout);
@@ -2018,19 +2082,25 @@
                     const repsInputRaw = focusRepsInput.value.trim();
                     const rpeInputRaw = focusRpeInput.value.trim();
 
-                    const loggedWeight = weightInputRaw === '' ? 0 : parseFloat(weightInputRaw) || 0;
+                    let loggedWeight = weightInputRaw === '' ? 0 : parseFloat(weightInputRaw) || 0;
                     const loggedReps = repsInputRaw || activeSet?.target || activeSet?.reps || '';
                     const loggedRpe = rpeInputRaw ? parseFloat(rpeInputRaw) : 0;
+                    
+                    // Check if bilateral dumbbell - store total weight
+                    const isBilateral = isBilateralDumbbell(activeExercise?.name);
+                    const totalWeight = isBilateral ? calculateTotalWeight(activeExercise?.name, loggedWeight) : loggedWeight;
 
                     if (activeSet) {
-                        activeSet.weight = loggedWeight;
+                        activeSet.weight = totalWeight; // Store total weight
+                        activeSet.isBilateral = isBilateral; // Flag for reference
                         if (repsInputRaw) activeSet.reps = repsInputRaw;
                         if (loggedRpe > 0) activeSet.rpe = loggedRpe;
                     }
 
                     const historyItem = document.createElement('div');
                     const repsDisplay = loggedReps || '—';
-                    const weightDisplay = loggedWeight ? loggedWeight : '—';
+                    // Display total weight with bilateral indicator
+                    const weightDisplay = totalWeight ? (isBilateral ? `${totalWeight}kg (${loggedWeight}x2)` : `${totalWeight}kg`) : '—';
                     const rpeDisplay = loggedRpe > 0 ? ` @ RPE ${loggedRpe}` : '';
                     
                     // Show set type badge if not normal
@@ -2045,7 +2115,7 @@
                     const setType = activeSet?.type || 'normal';
                     const typeBadge = setTypeBadges[setType] || '';
                     
-                    historyItem.innerHTML = `✅ ${typeBadge}Set ${currentSetIndex + 1}: ${weightDisplay}kg x ${repsDisplay}${rpeDisplay}`;
+                    historyItem.innerHTML = `✅ ${typeBadge}Set ${currentSetIndex + 1}: ${weightDisplay} x ${repsDisplay}${rpeDisplay}`;
                     focusHistoryList.prepend(historyItem);
 
                     startRest();
@@ -2078,6 +2148,51 @@
                 focusExerciseName.textContent = ex.name;
                 const targetLabel = set?.target || ex.reps || '';
                 const baseCounter = `Set ${currentSetIndex + 1} / ${ex.sets.length}`;
+                
+                // Check if bilateral dumbbell exercise
+                const isBilateral = isBilateralDumbbell(ex.name);
+                const bilateralIndicator = document.getElementById('focusBilateralIndicator');
+                const weightLabel = document.getElementById('focusWeightLabel');
+                
+                if (bilateralIndicator) {
+                    bilateralIndicator.style.display = isBilateral ? 'block' : 'none';
+                }
+                if (weightLabel) {
+                    weightLabel.textContent = isBilateral ? 'KG (x1)' : 'KG';
+                }
+                
+                // Check if superset exercise
+                const supersetIndicator = document.getElementById('focusSupersetIndicator');
+                if (ex.supersetId) {
+                    if (!supersetIndicator) {
+                        // Create superset indicator if not exists
+                        const indicator = document.createElement('div');
+                        indicator.id = 'focusSupersetIndicator';
+                        indicator.style.cssText = 'background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(238,90,36,0.1)); border: 1px solid rgba(255,107,107,0.4); border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 0.75rem; text-align: center;';
+                        indicator.innerHTML = `
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <span style="font-size: 1rem;">🔗</span>
+                                <span style="color: #ff6b6b; font-size: 0.8rem; font-weight: 500;">SUPERSET ${ex.supersetRole}</span>
+                                <span id="supersetPartnerName" style="color: var(--color-text-muted); font-size: 0.7rem;"></span>
+                            </div>
+                        `;
+                        focusActiveArea.insertBefore(indicator, focusActiveArea.firstChild);
+                    }
+                    
+                    // Update partner name
+                    const partnerName = document.getElementById('supersetPartnerName');
+                    if (partnerName) {
+                        const partnerIndex = ex.supersetRole === 'A' ? currentExerciseIndex + 1 : currentExerciseIndex - 1;
+                        const partner = currentWorkout.exercises[partnerIndex];
+                        if (partner && partner.supersetId === ex.supersetId) {
+                            partnerName.textContent = `• con ${partner.name}`;
+                        }
+                    }
+                    
+                    document.getElementById('focusSupersetIndicator').style.display = 'block';
+                } else if (supersetIndicator) {
+                    supersetIndicator.style.display = 'none';
+                }
                 
                 // Show set type if not normal
                 const setTypeLabels = {
@@ -2154,6 +2269,25 @@
                 const percent = Math.round((completed / totalSets) * 100);
                 focusProgressBar.style.width = percent + '%';
                 focusProgressText.textContent = percent + '%';
+                
+                // Update Next Exercise Preview
+                const nextExercisePreview = document.getElementById('nextExercisePreview');
+                const nextExerciseName = document.getElementById('nextExerciseName');
+                const nextExerciseSets = document.getElementById('nextExerciseSets');
+                
+                if (nextExercisePreview && nextExerciseName && nextExerciseSets) {
+                    const nextExIndex = currentExerciseIndex + 1;
+                    if (nextExIndex < currentWorkout.exercises.length) {
+                        const nextEx = currentWorkout.exercises[nextExIndex];
+                        nextExerciseName.textContent = nextEx.name || 'Esercizio';
+                        const setsCount = nextEx.sets ? nextEx.sets.length : 0;
+                        nextExerciseSets.textContent = `${setsCount} serie`;
+                        nextExercisePreview.style.display = 'block';
+                    } else {
+                        // No more exercises after current
+                        nextExercisePreview.style.display = 'none';
+                    }
+                }
             }
 
             let timerWorker = null;
@@ -2179,17 +2313,53 @@
                 focusActiveArea.style.display = 'none';
                 focusTimerArea.style.display = 'block';
 
-                // Determine Rest Time
+                const currentEx = currentWorkout.exercises[currentExerciseIndex];
+                const exName = currentEx.name.toLowerCase();
+                
+                // Check for superset logic
                 let restTime = 90; // Default
-                const exName = currentWorkout.exercises[currentExerciseIndex].name.toLowerCase();
-
-                // Intelligent Timer Logic
-                if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
-                    restTime = 180; // Compounds
-                } else if (exName.includes('curl') || exName.includes('alzate') || exName.includes('polpacci') || exName.includes('abs')) {
-                    restTime = 60; // Isolation
+                let restLabel = 'RECUPERO';
+                
+                if (currentEx.supersetId) {
+                    const nextExIndex = currentExerciseIndex + 1;
+                    const nextEx = currentWorkout.exercises[nextExIndex];
+                    const isLastSetOfExercise = currentSetIndex >= currentEx.sets.length - 1;
+                    
+                    if (currentEx.supersetRole === 'A' && nextEx?.supersetId === currentEx.supersetId) {
+                        // Transitioning from A to B within superset
+                        restTime = currentEx.intraRest || 0;
+                        restLabel = 'TRANSIZIONE A→B';
+                        
+                        if (restTime === 0) {
+                            // No rest, go directly to exercise B
+                            isResting = false;
+                            currentExerciseIndex++;
+                            // Keep same set index for paired tracking
+                            updateFocusUI();
+                            return;
+                        }
+                    } else if (currentEx.supersetRole === 'B') {
+                        // After completing B, check if we need inter-superset rest
+                        const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
+                        if (prevEx?.supersetId === currentEx.supersetId && prevEx?.supersetRole === 'A') {
+                            // Use inter-superset rest from exercise A
+                            restTime = prevEx.interRest || 90;
+                            restLabel = 'RECUPERO SUPERSET';
+                        }
+                    }
+                } else {
+                    // Standard rest logic for non-superset exercises
+                    if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
+                        restTime = 180; // Compounds
+                    } else if (exName.includes('curl') || exName.includes('alzate') || exName.includes('polpacci') || exName.includes('abs')) {
+                        restTime = 60; // Isolation
+                    }
                 }
 
+                // Update timer label
+                const timerLabel = focusTimerArea.querySelector('div');
+                if (timerLabel) timerLabel.textContent = restLabel;
+                
                 updateTimerDisplay(restTime);
 
                 focusActionBtn.textContent = "SALTA REST";
@@ -2233,6 +2403,8 @@
 
             function nextSet() {
                 const ex = currentWorkout.exercises[currentExerciseIndex];
+                const isSuperset = !!ex.supersetId;
+                
                 if (currentSetIndex < ex.sets.length - 1) {
                     const previousSet = ex.sets[currentSetIndex];
                     currentSetIndex++;
@@ -2249,6 +2421,27 @@
                         }
                     }
                 } else {
+                    // Finished all sets of current exercise
+                    if (isSuperset && ex.supersetRole === 'B') {
+                        // After completing B, go back to A for next round
+                        const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
+                        if (prevEx?.supersetId === ex.supersetId && prevEx?.supersetRole === 'A') {
+                            // Check if A has more sets to do
+                            const completedRoundsA = prevEx.sets.filter(s => s.weight > 0).length;
+                            const completedRoundsB = ex.sets.filter(s => s.weight > 0).length;
+                            
+                            if (completedRoundsA < prevEx.sets.length) {
+                                // Go back to A
+                                currentExerciseIndex--;
+                                currentSetIndex = completedRoundsA;
+                                focusHistoryList.innerHTML = ''; // Clear for new round
+                                updateFocusUI();
+                                return;
+                            }
+                        }
+                    }
+                    
+                    // Move to next exercise
                     currentSetIndex = 0;
                     currentExerciseIndex++;
                     focusHistoryList.innerHTML = ''; // Clear history for new exercise
