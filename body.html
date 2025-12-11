@@ -1180,13 +1180,34 @@
                                 </div>
                                 <div style="padding:1rem; border-top:1px solid var(--color-border); display:flex; gap:1rem;">
                                     <button class="btn btn-outline close-overlay-btn" style="flex:1;">Chiudi</button>
+                                    <button class="btn delete-photo-btn" style="flex:1; background:#ff4444; border-color:#ff4444;">🗑️ Elimina</button>
                                     <a href="${photo.url}" target="_blank" class="btn btn-primary" style="flex:1; text-align:center; text-decoration:none;">Apri</a>
                                 </div>
                             </div>`;
                         
                         document.body.appendChild(overlay);
                         overlay.querySelector('.close-overlay-btn').onclick = () => overlay.remove();
+                        overlay.querySelector('.delete-photo-btn').onclick = () => {
+                            if (confirm('Eliminare questa foto?')) {
+                                deletePhoto(photo.id);
+                                overlay.remove();
+                            }
+                        };
                         overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+                    }
+                    
+                    // --- Delete Photo ---
+                    function deletePhoto(photoId) {
+                        photos = photos.filter(p => p.id !== photoId);
+                        window._galleryPhotos = photos;
+                        localStorage.setItem('ironflow_photos', JSON.stringify(photos));
+                        renderPhotos();
+                        
+                        // Sync to Firestore
+                        if (typeof firestoreService !== 'undefined' && firestoreService.syncToCloud) {
+                            firestoreService.syncToCloud({ photos }).catch(err => console.error('Sync error:', err));
+                        }
+                        console.log('Photo deleted:', photoId);
                     }
                     
                     function getBfColor(bf) {
