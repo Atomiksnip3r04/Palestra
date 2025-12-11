@@ -1707,14 +1707,22 @@
                 }
             };
             
+            // EXPOSE GLOBALLY for sync scripts
+            window.loadExerciseEstimates = loadExerciseEstimates;
+            
             // Calcola peso suggerito per esercizio e reps target
             const getSuggestedWeight = (exerciseName, targetReps) => {
+                // FIX: Ricarica stime se vuote (utile post-sync su iOS)
+                if (!exerciseEstimates || Object.keys(exerciseEstimates).length === 0) {
+                    loadExerciseEstimates();
+                }
+
                 const name = normalizeExerciseName(exerciseName);
                 
                 // Parsa le reps target (gestisce range come "8-12")
                 let reps = parseInt(targetReps);
                 if (isNaN(reps)) {
-                    const match = String(targetReps).match(/(\d+)/);
+                    const match = String(targetReps || '').match(/(\d+)/);
                     reps = match ? parseInt(match[1]) : null;
                 }
                 
