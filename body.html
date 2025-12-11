@@ -96,11 +96,79 @@
 
         .modal-content {
             background: var(--color-bg);
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: var(--radius-md);
-            width: 90%;
-            max-width: 500px;
+            width: 95%;
+            max-width: 550px;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid var(--color-primary);
+        }
+        
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+            background: var(--color-surface);
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: var(--color-primary);
+            border-radius: 3px;
+        }
+        
+        /* Photo card with BF-AI indicator */
+        .photo-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .photo-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0, 243, 255, 0.2);
+        }
+        .photo-card.has-bfai::after {
+            content: '📊';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        /* Photo detail modal */
+        .photo-detail-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .photo-detail-content {
+            max-width: 900px;
+            width: 100%;
+            max-height: 95vh;
+            overflow-y: auto;
+            background: var(--color-bg);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-primary);
+        }
+        
+        @media (max-width: 600px) {
+            .modal-content {
+                padding: 1rem;
+                width: 98%;
+                max-height: 95vh;
+            }
+            #bfaiParamsSection > div {
+                grid-template-columns: 1fr !important;
+            }
         }
 
         .form-group {
@@ -434,7 +502,7 @@
                     
                     <!-- Multi-photo preview -->
                     <div id="photoPreviewContainer" style="display:none; margin-bottom:1rem;">
-                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem;" id="photoPreviewGrid"></div>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(80px, 1fr)); gap:0.5rem; max-height:150px; overflow-y:auto;" id="photoPreviewGrid"></div>
                         <small style="color:#888; display:block; margin-top:0.5rem;">
                             📸 <span id="photoCount">0</span> foto selezionate
                             <span id="bfaiPhotoHint" style="display:none; color:#00f3ff;"> • Per BF-AI: fronte + lato + retro = maggiore precisione</span>
@@ -1025,17 +1093,85 @@
 
                     // --- Render Photos ---
                     function renderPhotos() {
-                        photoGallery.innerHTML = photos.map(p => `
-                    <div class="photo-card">
-                        <a href="${p.url}" target="_blank">
-                            <img src="${p.thumb || p.url}" alt="Progress Photo">
-                        </a>
+                        photoGallery.innerHTML = photos.map((p, idx) => `
+                    <div class="photo-card ${p.bfai ? 'has-bfai' : ''}" data-photo-idx="${idx}" style="position:relative; cursor:pointer;">
+                        <img src="${p.thumb || p.url}" alt="Progress Photo" style="width:100%; height:200px; object-fit:cover;">
+                        ${p.bfai ? `<div style="position:absolute; top:8px; right:8px; background:rgba(0,243,255,0.9); color:#000; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;">${p.bfai.bodyFat?.toFixed(1) || '?'}%</div>` : ''}
                         <div class="photo-info">
                             <div>${new Date(p.date).toLocaleDateString()}</div>
-                            <div>${p.note || ''}</div>
+                            <div>${p.note || ''}${p.bfai ? ' 📊' : ''}</div>
                         </div>
                     </div>
                 `).join('');
+                        
+                        // Add click handlers for photo details
+                        document.querySelectorAll('.photo-card').forEach(card => {
+                            card.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                const idx = parseInt(card.dataset.photoIdx);
+                                showPhotoDetail(photos[idx]);
+                            });
+                        });
+                    }
+                    
+                    // --- Show Photo Detail Modal ---
+                    function showPhotoDetail(photo) {
+                        const overlay = document.createElement('div');
+                        overlay.className = 'photo-detail-overlay';
+                        overlay.innerHTML = `
+                            <div class="photo-detail-content">
+                                <div style="display:grid; grid-template-columns: 1fr ${photo.bfai ? '1fr' : ''}; gap:1rem; padding:1rem;">
+                                    <div>
+                                        <img src="${photo.url}" style="width:100%; border-radius:8px; max-height:60vh; object-fit:contain;">
+                                        <div style="margin-top:1rem; color:#888;">
+                                            <div style="font-size:0.9rem;">${new Date(photo.date).toLocaleString('it-IT')}</div>
+                                            ${photo.note ? `<div style="margin-top:0.5rem;">${photo.note}</div>` : ''}
+                                        </div>
+                                    </div>
+                                    ${photo.bfai ? `
+                                    <div style="padding:1rem; background:var(--color-surface); border-radius:8px;">
+                                        <h3 style="color:var(--color-primary); margin-bottom:1rem;">📊 Analisi Body Fat</h3>
+                                        <div style="text-align:center; margin-bottom:1.5rem;">
+                                            <div style="font-size:3rem; font-weight:700; color:${getBfColor(photo.bfai.bodyFat)};">${photo.bfai.bodyFat?.toFixed(1) || '?'}%</div>
+                                            <div style="color:${getBfColor(photo.bfai.bodyFat)}; font-size:0.9rem;">${photo.bfai.category || 'N/A'}</div>
+                                        </div>
+                                        ${photo.bfai.composition ? `
+                                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:1rem;">
+                                            <div style="background:rgba(255,107,107,0.1); padding:0.75rem; border-radius:8px; text-align:center;">
+                                                <div style="font-size:0.75rem; color:#888;">Massa Grassa</div>
+                                                <div style="font-size:1.2rem; color:#ff6b6b; font-weight:600;">${photo.bfai.composition.fat_mass_kg} kg</div>
+                                            </div>
+                                            <div style="background:rgba(0,255,136,0.1); padding:0.75rem; border-radius:8px; text-align:center;">
+                                                <div style="font-size:0.75rem; color:#888;">Massa Magra</div>
+                                                <div style="font-size:1.2rem; color:#00ff88; font-weight:600;">${photo.bfai.composition.lean_mass_kg} kg</div>
+                                            </div>
+                                        </div>
+                                        ` : ''}
+                                        ${photo.bfai.multiPhoto ? `<div style="font-size:0.75rem; color:#888; text-align:center;">📷 Analisi multi-foto</div>` : ''}
+                                    </div>
+                                    ` : ''}
+                                </div>
+                                <div style="padding:1rem; border-top:1px solid var(--color-border); display:flex; gap:1rem;">
+                                    <button class="btn btn-outline" style="flex:1;" onclick="this.closest('.photo-detail-overlay').remove()">Chiudi</button>
+                                    <a href="${photo.url}" target="_blank" class="btn btn-primary" style="flex:1; text-align:center; text-decoration:none;">Apri Originale</a>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(overlay);
+                        
+                        // Close on overlay click
+                        overlay.addEventListener('click', (e) => {
+                            if (e.target === overlay) overlay.remove();
+                        });
+                    }
+                    
+                    function getBfColor(bf) {
+                        if (!bf) return '#888';
+                        if (bf <= 10) return '#ff4444';
+                        if (bf <= 15) return '#00f3ff';
+                        if (bf <= 20) return '#00ff88';
+                        if (bf <= 25) return '#ffff00';
+                        return '#ff6600';
                     }
 
                     // --- Stats Logic ---
@@ -1303,11 +1439,52 @@
                                 localStorage.setItem('ironflow_photos', JSON.stringify(photos));
 
                                 renderPhotos();
-                                // Close modal (delay if BF-AI showed results)
-                                setTimeout(() => { photoModal.style.display = 'none'; }, bfaiResult ? 2000 : 100);
+                                
+                                // Show close button instead of auto-close
+                                if (bfaiResult) {
+                                    uploadStatus.innerHTML = `
+                                        <div style="margin-top:1rem; padding:1rem; background:rgba(0,255,136,0.1); border:1px solid #00ff88; border-radius:8px;">
+                                            <div style="color:#00ff88; font-weight:600; margin-bottom:0.5rem;">✓ Foto caricate e analisi completata!</div>
+                                            <div style="color:#888; font-size:0.85rem; margin-bottom:1rem;">I risultati BF-AI sono stati salvati con le foto.</div>
+                                            <button id="closeAfterUploadBtn" class="btn btn-primary" style="width:100%;">Chiudi</button>
+                                        </div>
+                                    `;
+                                    document.getElementById('closeAfterUploadBtn').addEventListener('click', () => {
+                                        photoModal.style.display = 'none';
+                                    });
+                                } else {
+                                    photoModal.style.display = 'none';
+                                }
 
-                                // Sync to Firestore
+                                // Sync photos to Firestore
                                 await firestoreService.syncToCloud();
+                                
+                                // Save BF-AI history to Firestore if available
+                                if (bfaiResult && bfaiResult.success) {
+                                    try {
+                                        const bfaiHistory = {
+                                            date: new Date().toISOString(),
+                                            bodyFat: bfaiResult.primary,
+                                            category: bfaiResult.category?.label,
+                                            composition: bfaiResult.composition,
+                                            measurements: bfaiResult.body_fat || {},
+                                            multiPhoto: bfaiResult.multiPhoto || false,
+                                            photoCount: bfaiResult.photoCount || 1
+                                        };
+                                        
+                                        // Save to local storage for history
+                                        const bfHistory = JSON.parse(localStorage.getItem('ironflow_bf_history') || '[]');
+                                        bfHistory.unshift(bfaiHistory);
+                                        if (bfHistory.length > 50) bfHistory.pop(); // Keep last 50
+                                        localStorage.setItem('ironflow_bf_history', JSON.stringify(bfHistory));
+                                        
+                                        // Sync BF history to Firestore
+                                        await firestoreService.updateProfileField('bfHistory', bfHistory);
+                                        console.log('BF-AI history saved to Firestore');
+                                    } catch (bfSaveErr) {
+                                        console.warn('Failed to save BF-AI history:', bfSaveErr);
+                                    }
+                                }
                             } else {
                                 throw new Error(result.message);
                             }
