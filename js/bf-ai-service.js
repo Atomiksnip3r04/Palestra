@@ -145,7 +145,7 @@ class BFAIService {
                 <!-- Header con BF% principale -->
                 <div style="text-align: center; margin-bottom: 1.5rem;">
                     <div style="font-size: 0.9rem; color: #888; margin-bottom: 0.5rem;">🎯 Body Fat Stimato</div>
-                    <div style="font-size: 3rem; font-weight: bold; color: ${categoryColor};">${summary.bodyFatPercentage}%</div>
+                    <div style="font-size: 3rem; font-weight: bold; color: ${categoryColor};">${Number(summary.bodyFatPercentage).toFixed(1)}%</div>
                     <div style="font-size: 1.1rem; color: ${categoryColor}; margin-top: 0.25rem;">${summary.category}</div>
                     <div style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Confidence: ${summary.confidence}%</div>
                 </div>
@@ -154,15 +154,15 @@ class BFAIService {
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.5rem;">
                     <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; text-align: center;">
                         <div style="font-size: 0.7rem; color: #888;">Navy</div>
-                        <div style="font-size: 1.2rem; font-weight: bold; color: #fff;">${methods.navy}%</div>
+                        <div style="font-size: 1.2rem; font-weight: bold; color: #fff;">${Number(methods.navy).toFixed(1)}%</div>
                     </div>
                     <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; text-align: center;">
                         <div style="font-size: 0.7rem; color: #888;">CUN-BAE</div>
-                        <div style="font-size: 1.2rem; font-weight: bold; color: #fff;">${methods.cunBae}%</div>
+                        <div style="font-size: 1.2rem; font-weight: bold; color: #fff;">${Number(methods.cunBae).toFixed(1)}%</div>
                     </div>
                     <div style="background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px; text-align: center;">
                         <div style="font-size: 0.7rem; color: #888;">RFM</div>
-                        <div style="font-size: 1.2rem; font-weight: bold; color: #fff;">${methods.rfm}%</div>
+                        <div style="font-size: 1.2rem; font-weight: bold; color: #fff;">${Number(methods.rfm).toFixed(1)}%</div>
                     </div>
                 </div>
 
@@ -170,11 +170,11 @@ class BFAIService {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
                     <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px;">
                         <div style="font-size: 0.8rem; color: #888;">Massa Grassa</div>
-                        <div style="font-size: 1.3rem; font-weight: bold; color: #ff6b6b;">${bodyComposition.fatMassKg} kg</div>
+                        <div style="font-size: 1.3rem; font-weight: bold; color: #ff6b6b;">${Number(bodyComposition.fatMassKg).toFixed(2)} kg</div>
                     </div>
                     <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px;">
                         <div style="font-size: 0.8rem; color: #888;">Massa Magra</div>
-                        <div style="font-size: 1.3rem; font-weight: bold; color: #4ecdc4;">${bodyComposition.leanMassKg} kg</div>
+                        <div style="font-size: 1.3rem; font-weight: bold; color: #4ecdc4;">${Number(bodyComposition.leanMassKg).toFixed(2)} kg</div>
                     </div>
                 </div>
 
@@ -191,7 +191,7 @@ class BFAIService {
 
                 <!-- BMI -->
                 <div style="text-align: center; margin-top: 1rem; font-size: 0.85rem; color: #888;">
-                    BMI: <span style="color: #fff; font-weight: bold;">${summary.bmi}</span>
+                    BMI: <span style="color: #fff; font-weight: bold;">${Number(summary.bmi).toFixed(1)}</span>
                 </div>
 
                 <!-- Footer con credits -->
