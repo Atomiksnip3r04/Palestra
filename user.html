@@ -2566,6 +2566,27 @@
                 if (repsInput) {
                     repsInput.value = set.reps || '';
                     repsInput.placeholder = targetLabel || 'Reps';
+                    
+                    // Update suggestion when reps change
+                    repsInput.oninput = () => {
+                        const val = repsInput.value;
+                        if (val) {
+                            const suggestion = getSuggestedWeight(ex.name, val);
+                            const focusSuggestedWeight = document.getElementById('focusSuggestedWeight');
+                            const focusSuggestedValue = document.getElementById('focusSuggestedValue');
+                            const focusSuggestedBasis = document.getElementById('focusSuggestedBasis');
+                            
+                            if (suggestion && focusSuggestedWeight) {
+                                focusSuggestedValue.textContent = `${suggestion.weight} kg`;
+                                if (suggestion.type === 'direct') {
+                                    focusSuggestedBasis.textContent = `(1RM da ${suggestion.basedOn})`;
+                                } else {
+                                    focusSuggestedBasis.textContent = `(stimato da ${suggestion.basedOn})`;
+                                }
+                                focusSuggestedWeight.style.display = 'block';
+                            }
+                        }
+                    };
                 }
                 if (rpeInput) {
                     rpeInput.value = set.rpe || '';
