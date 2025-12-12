@@ -877,7 +877,7 @@
         import { authService } from './js/auth-service.js';
         import { firestoreService } from './js/firestore-service.js';
         import { aiService } from './js/ai-service.js';
-        import { MUSCLE_GROUPS, isBilateralDumbbell, calculateTotalWeight } from './js/exercise-db.js';
+        import { EXERCISE_DB, MUSCLE_GROUPS, isBilateralDumbbell, calculateTotalWeight } from './js/exercise-db.js';
         import { notificationManager } from './js/notification-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1541,7 +1541,7 @@
                 11: 0.73, 12: 0.70, 13: 0.68, 14: 0.66, 15: 0.64
             };
             
-            // Normalizza nome esercizio per matching
+            // Normalizza nome esercizio per matching (versione aggressiva)
             const normalizeExerciseName = (name) => {
                 return (name || '').toLowerCase().trim()
                     .replace(/\s+/g, ' ')
@@ -1549,7 +1549,125 @@
                     .replace(/[èéêë]/g, 'e')
                     .replace(/[ìíîï]/g, 'i')
                     .replace(/[òóôõ]/g, 'o')
-                    .replace(/[ùúûü]/g, 'u');
+                    .replace(/[ùúûü]/g, 'u')
+                    .replace(/\(.*?\)/g, '') // Rimuove contenuto tra parentesi
+                    .replace(/[:;,\-–]/g, ' ') // Rimuove punteggiatura
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            };
+            
+            // Trova i muscoli target di un esercizio
+            const getExerciseMuscles = (exerciseName) => {
+                const name = normalizeExerciseName(exerciseName);
+                
+                // Cerca match esatto in EXERCISE_DB
+                for (const [exName, muscles] of Object.entries(EXERCISE_DB)) {
+                    if (name === normalizeExerciseName(exName)) {
+                        return { muscles, primaryMuscle: muscles[0], matchType: 'exact' };
+                    }
+                }
+                
+                // Cerca match parziale (contiene)
+                for (const [exName, muscles] of Object.entries(EXERCISE_DB)) {
+                    const normalizedDbName = normalizeExerciseName(exName);
+                    if (name.includes(normalizedDbName) || normalizedDbName.includes(name)) {
+                        return { muscles, primaryMuscle: muscles[0], matchType: 'partial' };
+                    }
+                }
+                
+                // Cerca per keyword comuni
+                const keywords = {
+                    'panca': 'chest', 'bench': 'chest', 'push': 'chest', 'chest': 'chest',
+                    'traz': 'lats', 'pull': 'lats', 'lat': 'lats', 'row': 'lats', 'remator': 'lats',
+                    'squat': 'quads', 'pressa': 'quads', 'leg': 'quads', 'affond': 'quads',
+                    'stacco': 'hamstrings', 'deadlift': 'hamstrings',
+                    'curl': 'biceps', 'bicip': 'biceps',
+                    'tricip': 'triceps', 'french': 'triceps', 'pushdown': 'triceps',
+                    'spall': 'front-delts', 'shoulder': 'front-delts', 'military': 'front-delts', 'lento': 'front-delts',
+                    'lateral': 'side-delts', 'alzate': 'side-delts',
+                    'crunch': 'abs', 'plank': 'abs', 'addominali': 'abs'
+                };
+                
+                for (const [keyword, muscle] of Object.entries(keywords)) {
+                    if (name.includes(keyword)) {
+                        return { muscles: [muscle], primaryMuscle: muscle, matchType: 'keyword' };
+                    }
+                }
+                
+                return null;
+            };
+            
+            // Trova esercizi simili con dati storici
+            const findSimilarExerciseEstimate = (exerciseName) => {
+                const muscleInfo = getExerciseMuscles(exerciseName);
+                if (!muscleInfo) return null;
+                
+                const { primaryMuscle, muscles } = muscleInfo;
+                let bestMatch = null;
+                let bestScore = 0;
+                
+                // Cerca tra gli esercizi con dati storici
+                for (const [estName, estimate] of Object.entries(exerciseEstimates)) {
+                    const estMuscleInfo = getExerciseMuscles(estName);
+                    if (!estMuscleInfo) continue;
+                    
+                    // Calcola score di similarità
+                    let score = 0;
+                    
+                    // Match muscolo primario (peso alto)
+                    if (estMuscleInfo.primaryMuscle === primaryMuscle) {
+                        score += 10;
+                    }
+                    
+                    // Match muscoli secondari
+                    const commonMuscles = muscles.filter(m => estMuscleInfo.muscles.includes(m));
+                    score += commonMuscles.length * 2;
+                    
+                    // Match stesso gruppo (push/pull/legs)
+                    const getGroup = (muscle) => MUSCLE_GROUPS[muscle]?.group || 'other';
+                    if (getGroup(primaryMuscle) === getGroup(estMuscleInfo.primaryMuscle)) {
+                        score += 3;
+                    }
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = {
+                            name: estName,
+                            estimate: estimate,
+                            similarity: score,
+                            primaryMuscle: estMuscleInfo.primaryMuscle
+                        };
+                    }
+                }
+                
+                // Richiedi almeno un match sul muscolo primario
+                return bestScore >= 10 ? bestMatch : null;
+            };
+            
+            // Fattori di correzione per esercizi derivati
+            const getExerciseCorrectionFactor = (newExercise, referenceExercise) => {
+                const newName = normalizeExerciseName(newExercise);
+                const refName = normalizeExerciseName(referenceExercise);
+                
+                // Esercizi con manubri tipicamente ~80% del bilanciere
+                if ((newName.includes('manubr') || newName.includes('dumbbell')) && 
+                    !refName.includes('manubr') && !refName.includes('dumbbell')) {
+                    return 0.80;
+                }
+                
+                // Varianti inclinate tipicamente ~85% della versione piana
+                if (newName.includes('inclinat') && !refName.includes('inclinat')) {
+                    return 0.85;
+                }
+                
+                // Varianti unilaterali ~50% del bilaterale
+                if ((newName.includes('singol') || newName.includes('single') || newName.includes('unilateral')) &&
+                    !refName.includes('singol') && !refName.includes('single')) {
+                    return 0.50;
+                }
+                
+                // Default: stima conservativa al 85%
+                return 0.85;
             };
             
             // Carica stime 1RM dai log storici
@@ -1573,7 +1691,8 @@
                                         exerciseEstimates[name] = {
                                             est1RM: est1RM,
                                             basedOn: `${w}kg x ${r}`,
-                                            date: log.date
+                                            date: log.date,
+                                            originalName: ex.name
                                         };
                                     }
                                 }
@@ -1588,30 +1707,93 @@
                 }
             };
             
+            // EXPOSE GLOBALLY for sync scripts
+            window.loadExerciseEstimates = loadExerciseEstimates;
+            
             // Calcola peso suggerito per esercizio e reps target
             const getSuggestedWeight = (exerciseName, targetReps) => {
+                // FIX: Ricarica stime se vuote (utile post-sync su iOS)
+                if (!exerciseEstimates || Object.keys(exerciseEstimates).length === 0) {
+                    loadExerciseEstimates();
+                }
+
                 const name = normalizeExerciseName(exerciseName);
-                const estimate = exerciseEstimates[name];
-                
-                if (!estimate || !estimate.est1RM) return null;
                 
                 // Parsa le reps target (gestisce range come "8-12")
                 let reps = parseInt(targetReps);
                 if (isNaN(reps)) {
-                    const match = String(targetReps).match(/(\d+)/);
+                    const match = String(targetReps || '').match(/(\d+)/);
                     reps = match ? parseInt(match[1]) : null;
                 }
                 
-                if (!reps || reps < 1 || reps > 15) return null;
+                if (!reps || reps < 1 || reps > 15) reps = 10; // Default a 10 reps se non specificato
                 
                 const percentage = rmPercentages[reps] || 0.70;
-                const suggestedWeight = Math.round(estimate.est1RM * percentage * 2) / 2; // Arrotonda a 0.5kg
                 
-                return {
-                    weight: suggestedWeight,
-                    basedOn: estimate.basedOn,
-                    est1RM: Math.round(estimate.est1RM)
-                };
+                // STEP 1: Cerca match ESATTO (nome normalizzato identico)
+                const exactMatch = exerciseEstimates[name];
+                if (exactMatch && exactMatch.est1RM) {
+                    const suggestedWeight = Math.round(exactMatch.est1RM * percentage * 2) / 2;
+                    return {
+                        weight: suggestedWeight,
+                        basedOn: exactMatch.basedOn, // es. "60kg x 8"
+                        est1RM: Math.round(exactMatch.est1RM),
+                        type: 'direct'
+                    };
+                }
+                
+                // STEP 2: Cerca match per parole chiave (più robusto)
+                const nameWords = name.split(' ').filter(w => w.length > 2);
+                let bestMatch = null;
+                let bestScore = 0;
+                
+                for (const [estName, estData] of Object.entries(exerciseEstimates)) {
+                    const estWords = estName.split(' ').filter(w => w.length > 2);
+                    
+                    // Calcola quante parole in comune
+                    const commonWords = nameWords.filter(w => estWords.includes(w));
+                    const score = commonWords.length;
+                    
+                    // Match diretto se tutte le parole principali combaciano (almeno 2)
+                    if (score >= Math.min(nameWords.length, estWords.length) && score >= 2) {
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMatch = { estName, estData, isDirect: true };
+                        }
+                    }
+                    // Match simile se almeno 1 parola chiave combacia
+                    else if (score >= 1 && !bestMatch) {
+                        bestMatch = { estName, estData, isDirect: false };
+                    }
+                }
+                
+                if (bestMatch && bestMatch.isDirect) {
+                    const suggestedWeight = Math.round(bestMatch.estData.est1RM * percentage * 2) / 2;
+                    return {
+                        weight: suggestedWeight,
+                        basedOn: bestMatch.estData.basedOn,
+                        est1RM: Math.round(bestMatch.estData.est1RM),
+                        type: 'direct'
+                    };
+                }
+                
+                // STEP 3: Cerca esercizi simili per gruppo muscolare (fallback)
+                const similarMatch = findSimilarExerciseEstimate(exerciseName);
+                if (similarMatch) {
+                    const correctionFactor = getExerciseCorrectionFactor(exerciseName, similarMatch.name);
+                    const adjustedEst1RM = similarMatch.estimate.est1RM * correctionFactor;
+                    const suggestedWeight = Math.round(adjustedEst1RM * percentage * 2) / 2;
+                    
+                    return {
+                        weight: suggestedWeight,
+                        basedOn: similarMatch.estimate.originalName || similarMatch.name,
+                        est1RM: Math.round(adjustedEst1RM),
+                        type: 'similar',
+                        correctionFactor: correctionFactor
+                    };
+                }
+                
+                return null;
             };
             
             // Carica stime all'avvio
@@ -1991,6 +2173,12 @@
                 window.focusModeWellnessData = currentWellnessSnapshot;
                 window.focusModeSessionCompleted = false;
                 
+                // Blocca scroll del body quando Focus Mode è aperta
+                document.body.style.overflow = 'hidden';
+                document.body.style.position = 'fixed';
+                document.body.style.width = '100%';
+                document.body.style.top = `-${window.scrollY}px`;
+                
                 focusOverlay.style.display = 'flex';
             }
 
@@ -2060,6 +2248,13 @@
                 }
                 
                 stopTimer();
+                // Ripristina scroll del body
+                const scrollY = document.body.style.top;
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.width = '';
+                document.body.style.top = '';
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
                 focusOverlay.style.display = 'none';
             });
 
@@ -2068,6 +2263,13 @@
                     // Session completed normally - clear recovery data
                     window.focusModeSessionCompleted = true;
                     stopTimer();
+                    // Ripristina scroll del body
+                    const scrollY = document.body.style.top;
+                    document.body.style.overflow = '';
+                    document.body.style.position = '';
+                    document.body.style.width = '';
+                    document.body.style.top = '';
+                    window.scrollTo(0, parseInt(scrollY || '0') * -1);
                     focusOverlay.style.display = 'none';
                     return;
                 }
@@ -2075,52 +2277,186 @@
                 if (isResting) {
                     window.skipRest();
                 } else {
-                    const activeExercise = currentWorkout?.exercises?.[currentExerciseIndex];
-                    const activeSet = activeExercise?.sets?.[currentSetIndex];
+                    if (supersetModeActive) {
+                        // === SUPERSET COMBINED LOGGING ===
+                        const exA = currentWorkout.exercises[currentExerciseIndex];
+                        const exB = currentWorkout.exercises[currentExerciseIndex + 1];
+                        const setA = exA.sets[currentSetIndex];
+                        const setB = exB.sets[currentSetIndex];
 
-                    const weightInputRaw = focusWeightInput.value.trim();
-                    const repsInputRaw = focusRepsInput.value.trim();
-                    const rpeInputRaw = focusRpeInput.value.trim();
+                        const wInputA = document.getElementById('focusWeightInput_A');
+                        const rInputA = document.getElementById('focusRepsInput_A');
+                        const rpeInputA = document.getElementById('focusRpeInput_A');
+                        const wInputB = document.getElementById('focusWeightInput_B');
+                        const rInputB = document.getElementById('focusRepsInput_B');
+                        const rpeInputB = document.getElementById('focusRpeInput_B');
 
-                    let loggedWeight = weightInputRaw === '' ? 0 : parseFloat(weightInputRaw) || 0;
-                    const loggedReps = repsInputRaw || activeSet?.target || activeSet?.reps || '';
-                    const loggedRpe = rpeInputRaw ? parseFloat(rpeInputRaw) : 0;
-                    
-                    // Check if bilateral dumbbell - store total weight
-                    const isBilateral = isBilateralDumbbell(activeExercise?.name);
-                    const totalWeight = isBilateral ? calculateTotalWeight(activeExercise?.name, loggedWeight) : loggedWeight;
+                        const valWA = parseFloat(wInputA?.value) || 0;
+                        const valRA = rInputA?.value || setA?.target || setA?.reps || '';
+                        const valRpeA = parseFloat(rpeInputA?.value) || 0;
 
-                    if (activeSet) {
-                        activeSet.weight = totalWeight; // Store total weight
-                        activeSet.isBilateral = isBilateral; // Flag for reference
-                        if (repsInputRaw) activeSet.reps = repsInputRaw;
-                        if (loggedRpe > 0) activeSet.rpe = loggedRpe;
+                        const valWB = parseFloat(wInputB?.value) || 0;
+                        const valRB = rInputB?.value || setB?.target || setB?.reps || '';
+                        const valRpeB = parseFloat(rpeInputB?.value) || 0;
+
+                        if (setA) {
+                            setA.weight = valWA;
+                            setA.reps = valRA;
+                            if (valRpeA) setA.rpe = valRpeA;
+                        }
+                        if (setB) {
+                            setB.weight = valWB;
+                            setB.reps = valRB;
+                            if (valRpeB) setB.rpe = valRpeB;
+                        }
+
+                        const historyItem = document.createElement('div');
+                        historyItem.innerHTML = `
+                            <div style="display:flex; flex-direction:column; gap:4px; border-left: 3px solid #ff6b6b; padding-left: 8px; margin-bottom: 6px; background: rgba(255,107,107,0.05); padding: 6px; border-radius: 0 6px 6px 0;">
+                                <div style="font-size:0.85rem;">✅ <strong style="color:var(--color-primary)">A:</strong> ${valWA}kg x ${valRA}</div>
+                                <div style="font-size:0.85rem;">✅ <strong style="color:#ff6b6b">B:</strong> ${valWB}kg x ${valRB}</div>
+                            </div>
+                        `;
+                        focusHistoryList.prepend(historyItem);
+                        startRest();
+
+                    } else {
+                        // === NORMAL LOGGING ===
+                        const weightInput = document.getElementById('focusWeightInput');
+                        const repsInput = document.getElementById('focusRepsInput');
+                        const rpeInput = document.getElementById('focusRpeInput');
+                        
+                        const activeExercise = currentWorkout?.exercises?.[currentExerciseIndex];
+                        const activeSet = activeExercise?.sets?.[currentSetIndex];
+
+                        const weightInputRaw = weightInput.value.trim();
+                        const repsInputRaw = repsInput.value.trim();
+                        const rpeInputRaw = rpeInput.value.trim();
+
+                        let loggedWeight = weightInputRaw === '' ? 0 : parseFloat(weightInputRaw) || 0;
+                        const loggedReps = repsInputRaw || activeSet?.target || activeSet?.reps || '';
+                        const loggedRpe = rpeInputRaw ? parseFloat(rpeInputRaw) : 0;
+                        
+                        const isBilateral = isBilateralDumbbell(activeExercise?.name);
+                        const totalWeight = isBilateral ? calculateTotalWeight(activeExercise?.name, loggedWeight) : loggedWeight;
+
+                        if (activeSet) {
+                            activeSet.weight = totalWeight;
+                            activeSet.isBilateral = isBilateral;
+                            if (repsInputRaw) activeSet.reps = repsInputRaw;
+                            if (loggedRpe > 0) activeSet.rpe = loggedRpe;
+                        }
+
+                        const historyItem = document.createElement('div');
+                        const repsDisplay = loggedReps || '—';
+                        const weightDisplay = totalWeight ? (isBilateral ? `${totalWeight}kg (${loggedWeight}x2)` : `${totalWeight}kg`) : '—';
+                        const rpeDisplay = loggedRpe > 0 ? ` @ RPE ${loggedRpe}` : '';
+                        
+                        const setTypeBadges = {
+                            normal: '',
+                            warmup: '<span style="color:#ffc107;font-size:0.8em;">[W]</span> ',
+                            backoff: '<span style="color:#9c27b0;font-size:0.8em;">[B]</span> ',
+                            dropset: '<span style="color:#f44336;font-size:0.8em;">[D]</span> ',
+                            amrap: '<span style="color:#4caf50;font-size:0.8em;">[A]</span> ',
+                            pause: '<span style="color:#ff9800;font-size:0.8em;">[P]</span> '
+                        };
+                        const setType = activeSet?.type || 'normal';
+                        const typeBadge = setTypeBadges[setType] || '';
+                        
+                        historyItem.innerHTML = `✅ ${typeBadge}Set ${currentSetIndex + 1}: ${weightDisplay} x ${repsDisplay}${rpeDisplay}`;
+                        focusHistoryList.prepend(historyItem);
+
+                        startRest();
                     }
-
-                    const historyItem = document.createElement('div');
-                    const repsDisplay = loggedReps || '—';
-                    // Display total weight with bilateral indicator
-                    const weightDisplay = totalWeight ? (isBilateral ? `${totalWeight}kg (${loggedWeight}x2)` : `${totalWeight}kg`) : '—';
-                    const rpeDisplay = loggedRpe > 0 ? ` @ RPE ${loggedRpe}` : '';
-                    
-                    // Show set type badge if not normal
-                    const setTypeBadges = {
-                        normal: '',
-                        warmup: '<span style="color:#ffc107;font-size:0.8em;">[W]</span> ',
-                        backoff: '<span style="color:#9c27b0;font-size:0.8em;">[B]</span> ',
-                        dropset: '<span style="color:#f44336;font-size:0.8em;">[D]</span> ',
-                        amrap: '<span style="color:#4caf50;font-size:0.8em;">[A]</span> ',
-                        pause: '<span style="color:#ff9800;font-size:0.8em;">[P]</span> '
-                    };
-                    const setType = activeSet?.type || 'normal';
-                    const typeBadge = setTypeBadges[setType] || '';
-                    
-                    historyItem.innerHTML = `✅ ${typeBadge}Set ${currentSetIndex + 1}: ${weightDisplay} x ${repsDisplay}${rpeDisplay}`;
-                    focusHistoryList.prepend(historyItem);
-
-                    startRest();
                 }
             });
+
+            let supersetModeActive = false;
+
+            function renderNormalInputs() {
+                supersetModeActive = false;
+                const html = `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label id="focusWeightLabel" style="font-size: 0.8rem; color: #888; display: block; margin-bottom: 0.5rem;">KG</label>
+                            <input type="number" id="focusWeightInput" class="focus-input" placeholder="Kg">
+                            <div id="focusBilateralIndicator" style="display:none; font-size:0.65rem; color:var(--color-primary); margin-top:4px;">
+                                Totale (x2)
+                            </div>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #888; display: block; margin-bottom: 0.5rem;">REPS</label>
+                            <input type="text" id="focusRepsInput" class="focus-input" placeholder="Reps">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: #888; display: block; margin-bottom: 0.5rem;">RPE</label>
+                            <input type="number" id="focusRpeInput" class="focus-input" placeholder="1-10">
+                        </div>
+                    </div>
+                `;
+                focusActiveArea.innerHTML = html;
+            }
+
+            function renderSupersetInputs(exA, exB, setA, setB) {
+                supersetModeActive = true;
+                
+                const targetA = setA?.target || exA.reps || '';
+                const targetB = setB?.target || exB.reps || '';
+                
+                // Get suggestions for both
+                const suggestA = getSuggestedWeight(exA.name, targetA);
+                const suggestB = getSuggestedWeight(exB.name, targetB);
+
+                const htmlA = `
+                    <div class="superset-block-a" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="font-size: 1rem; color: var(--color-primary); margin-bottom: 0.5rem;">A: ${exA.name}</div>
+                        ${suggestA ? `<div style="font-size: 0.75rem; color: #aaa; margin-bottom: 0.5rem;">💡 Suggerito: <span style="color:var(--color-primary)">${suggestA.weight}kg</span></div>` : ''}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">KG</label>
+                                <input type="number" id="focusWeightInput_A" value="${setA.weight || ''}" placeholder="${setA.weight || 'Kg'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">REPS</label>
+                                <input type="text" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || 'Reps'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">RPE</label>
+                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const htmlB = `
+                    <div class="superset-block-b">
+                        <div style="font-size: 1rem; color: #ff6b6b; margin-bottom: 0.5rem;">B: ${exB.name}</div>
+                        ${suggestB ? `<div style="font-size: 0.75rem; color: #aaa; margin-bottom: 0.5rem;">💡 Suggerito: <span style="color:#ff6b6b">${suggestB.weight}kg</span></div>` : ''}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">KG</label>
+                                <input type="number" id="focusWeightInput_B" value="${setB.weight || ''}" placeholder="${setB.weight || 'Kg'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">REPS</label>
+                                <input type="text" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || 'Reps'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">RPE</label>
+                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                focusActiveArea.innerHTML = `
+                    <div class="superset-container" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,107,107,0.3); border-radius: 12px; padding: 1rem;">
+                        <div style="text-align:center; margin-bottom:1rem; color:#ff6b6b; font-size:0.8rem; font-weight:bold; letter-spacing:1px;">🔗 SUPERSET COMBINATO</div>
+                        ${htmlA}
+                        ${htmlB}
+                    </div>
+                `;
+            }
 
             function updateFocusUI() {
                 if (!currentWorkout || !Array.isArray(currentWorkout.exercises) || currentWorkout.exercises.length === 0) {
@@ -2144,57 +2480,38 @@
                 }
 
                 const set = ex.sets[currentSetIndex];
+                
+                // CHECK FOR SUPERSET COMBINED MODE
+                // If this is Role A, and next is Role B of same Superset
+                if (ex.supersetId && ex.supersetRole === 'A') {
+                    const nextEx = currentWorkout.exercises[currentExerciseIndex + 1];
+                    if (nextEx && nextEx.supersetId === ex.supersetId && nextEx.supersetRole === 'B') {
+                        // Render Combined UI
+                        const nextSet = nextEx.sets[currentSetIndex];
+                        if (set && nextSet) {
+                            focusExerciseName.textContent = `${ex.name} + ${nextEx.name}`;
+                            focusExerciseName.style.fontSize = '1.1rem';
+                            
+                            renderSupersetInputs(ex, nextEx, set, nextSet);
+                            updateFocusCommon(ex, set);
+                            return;
+                        }
+                    }
+                }
 
+                // Normal Mode
                 focusExerciseName.textContent = ex.name;
+                focusExerciseName.style.fontSize = '';
+                
+                renderNormalInputs();
+                updateFocusCommon(ex, set);
+            }
+
+            function updateFocusCommon(ex, set) {
                 const targetLabel = set?.target || ex.reps || '';
                 const baseCounter = `Set ${currentSetIndex + 1} / ${ex.sets.length}`;
                 
-                // Check if bilateral dumbbell exercise
-                const isBilateral = isBilateralDumbbell(ex.name);
-                const bilateralIndicator = document.getElementById('focusBilateralIndicator');
-                const weightLabel = document.getElementById('focusWeightLabel');
-                
-                if (bilateralIndicator) {
-                    bilateralIndicator.style.display = isBilateral ? 'block' : 'none';
-                }
-                if (weightLabel) {
-                    weightLabel.textContent = isBilateral ? 'KG (x1)' : 'KG';
-                }
-                
-                // Check if superset exercise
-                const supersetIndicator = document.getElementById('focusSupersetIndicator');
-                if (ex.supersetId) {
-                    if (!supersetIndicator) {
-                        // Create superset indicator if not exists
-                        const indicator = document.createElement('div');
-                        indicator.id = 'focusSupersetIndicator';
-                        indicator.style.cssText = 'background: linear-gradient(135deg, rgba(255,107,107,0.2), rgba(238,90,36,0.1)); border: 1px solid rgba(255,107,107,0.4); border-radius: 8px; padding: 0.5rem 1rem; margin-bottom: 0.75rem; text-align: center;';
-                        indicator.innerHTML = `
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                <span style="font-size: 1rem;">🔗</span>
-                                <span style="color: #ff6b6b; font-size: 0.8rem; font-weight: 500;">SUPERSET ${ex.supersetRole}</span>
-                                <span id="supersetPartnerName" style="color: var(--color-text-muted); font-size: 0.7rem;"></span>
-                            </div>
-                        `;
-                        focusActiveArea.insertBefore(indicator, focusActiveArea.firstChild);
-                    }
-                    
-                    // Update partner name
-                    const partnerName = document.getElementById('supersetPartnerName');
-                    if (partnerName) {
-                        const partnerIndex = ex.supersetRole === 'A' ? currentExerciseIndex + 1 : currentExerciseIndex - 1;
-                        const partner = currentWorkout.exercises[partnerIndex];
-                        if (partner && partner.supersetId === ex.supersetId) {
-                            partnerName.textContent = `• con ${partner.name}`;
-                        }
-                    }
-                    
-                    document.getElementById('focusSupersetIndicator').style.display = 'block';
-                } else if (supersetIndicator) {
-                    supersetIndicator.style.display = 'none';
-                }
-                
-                // Show set type if not normal
+                // Set Type Badge
                 const setTypeLabels = {
                     normal: '',
                     warmup: '🔥 Warm-up',
@@ -2210,45 +2527,76 @@
                 if (setTypeLabel) {
                     counterText = `${setTypeLabel} • ${baseCounter}`;
                 }
-                if (targetLabel) {
-                    counterText += ` • Target ${targetLabel}`;
-                }
+                
                 focusSetCounter.textContent = counterText;
 
-                // Pre-fill inputs
-                if (set.weight && set.weight > 0) {
-                    focusWeightInput.value = set.weight;
-                    focusWeightInput.placeholder = `${set.weight} kg`;
-                } else {
-                    focusWeightInput.value = '';
-                    focusWeightInput.placeholder = 'Kg';
+                // Check if bilateral dumbbell exercise (Only relevant for Normal Mode indicator usually)
+                const isBilateral = isBilateralDumbbell(ex.name);
+                const bilateralIndicator = document.getElementById('focusBilateralIndicator');
+                const weightLabel = document.getElementById('focusWeightLabel');
+                
+                if (bilateralIndicator) {
+                    bilateralIndicator.style.display = isBilateral ? 'block' : 'none';
+                }
+                if (weightLabel) {
+                    weightLabel.textContent = isBilateral ? 'KG (x1)' : 'KG';
+                }
+                
+                // Populate Inputs for Normal Mode (Superset mode handles its own values in renderSupersetInputs)
+                const weightInput = document.getElementById('focusWeightInput');
+                const repsInput = document.getElementById('focusRepsInput');
+                const rpeInput = document.getElementById('focusRpeInput');
+                
+                if (weightInput) {
+                    weightInput.value = set.weight || '';
+                    weightInput.placeholder = set.weight || 'Kg';
+                }
+                if (repsInput) {
+                    repsInput.value = set.reps || '';
+                    repsInput.placeholder = targetLabel || 'Reps';
+                }
+                if (rpeInput) {
+                    rpeInput.value = set.rpe || '';
                 }
 
-                if (set.reps !== undefined && set.reps !== null && set.reps !== '') {
-                    focusRepsInput.value = set.reps;
-                } else {
-                    focusRepsInput.value = '';
-                }
-                focusRepsInput.placeholder = targetLabel || 'Reps';
-
-                // Pre-fill RPE if available
-                if (set.rpe && set.rpe > 0) {
-                    focusRpeInput.value = set.rpe;
-                } else {
-                    focusRpeInput.value = '';
-                }
-                focusRpeInput.placeholder = '1-10';
+                // Suggestions Logic
+                const focusSuggestedWeight = document.getElementById('focusSuggestedWeight');
+                const focusSuggestedValue = document.getElementById('focusSuggestedValue');
+                const focusSuggestedBasis = document.getElementById('focusSuggestedBasis');
                 
-                // Show suggested weight based on historical data
-                const targetReps = set.reps || set.target || ex.reps || targetLabel;
-                const suggestion = getSuggestedWeight(ex.name, targetReps);
-                
-                if (suggestion && focusSuggestedWeight) {
-                    focusSuggestedValue.textContent = `${suggestion.weight} kg`;
-                    focusSuggestedBasis.textContent = `(1RM: ~${suggestion.est1RM}kg da ${suggestion.basedOn})`;
-                    focusSuggestedWeight.style.display = 'block';
-                } else if (focusSuggestedWeight) {
-                    focusSuggestedWeight.style.display = 'none';
+                if (focusSuggestedWeight && !supersetModeActive) {
+                    const targetReps = set.target || ex.reps || '10';
+                    let suggestion = null;
+                    
+                    if (set.suggestedWeight) {
+                        suggestion = {
+                            weight: set.suggestedWeight,
+                            basedOn: set.suggestedBasedOn || 'storico',
+                            type: set.suggestedType || 'ai-generated'
+                        };
+                    } else {
+                        // Calcola al volo dai dati storici
+                        suggestion = getSuggestedWeight(ex.name, targetReps);
+                    }
+                    
+                    if (suggestion) {
+                        focusSuggestedValue.textContent = `${suggestion.weight} kg`;
+                        
+                        if (suggestion.type === 'direct') {
+                            focusSuggestedBasis.textContent = `(1RM da ${suggestion.basedOn})`;
+                            focusSuggestedWeight.style.background = 'linear-gradient(135deg, rgba(0,243,255,0.15), rgba(0,153,255,0.1))';
+                            focusSuggestedWeight.style.borderColor = 'rgba(0,243,255,0.3)';
+                        } else if (suggestion.type === 'similar' || suggestion.type === 'ai-generated') {
+                            const basisText = suggestion.type === 'ai-generated' ? 'calcolato da AI' : `stimato da ${suggestion.basedOn}`;
+                            focusSuggestedBasis.textContent = `(${basisText})`;
+                            focusSuggestedWeight.style.background = 'linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,152,0,0.1))';
+                            focusSuggestedWeight.style.borderColor = 'rgba(255,193,7,0.3)';
+                        }
+                        
+                        focusSuggestedWeight.style.display = 'block';
+                    } else {
+                        focusSuggestedWeight.style.display = 'none';
+                    }
                 }
 
                 // Reset UI State
@@ -2276,7 +2624,9 @@
                 const nextExerciseSets = document.getElementById('nextExerciseSets');
                 
                 if (nextExercisePreview && nextExerciseName && nextExerciseSets) {
-                    const nextExIndex = currentExerciseIndex + 1;
+                    let nextExIndex = currentExerciseIndex + 1;
+                    if (supersetModeActive) nextExIndex++; // Skip the partner in preview
+                    
                     if (nextExIndex < currentWorkout.exercises.length) {
                         const nextEx = currentWorkout.exercises[nextExIndex];
                         nextExerciseName.textContent = nextEx.name || 'Esercizio';
@@ -2320,10 +2670,17 @@
                 let restTime = 90; // Default
                 let restLabel = 'RECUPERO';
                 
-                if (currentEx.supersetId) {
+                if (supersetModeActive) {
+                    // === COMBINED MODE REST LOGIC ===
+                    // We just completed a set for BOTH A and B.
+                    // So we are effectively at the "Inter-Superset" rest period.
+                    restTime = currentEx.interRest || 90;
+                    restLabel = 'RECUPERO SUPERSET';
+
+                } else if (currentEx.supersetId) {
+                    // === SEQUENTIAL MODE LOGIC (Fallback) ===
                     const nextExIndex = currentExerciseIndex + 1;
                     const nextEx = currentWorkout.exercises[nextExIndex];
-                    const isLastSetOfExercise = currentSetIndex >= currentEx.sets.length - 1;
                     
                     if (currentEx.supersetRole === 'A' && nextEx?.supersetId === currentEx.supersetId) {
                         // Transitioning from A to B within superset
@@ -2349,7 +2706,9 @@
                     }
                 } else {
                     // Standard rest logic for non-superset exercises
-                    if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
+                    if (currentEx.rest) {
+                        restTime = currentEx.rest;
+                    } else if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
                         restTime = 180; // Compounds
                     } else if (exName.includes('curl') || exName.includes('alzate') || exName.includes('polpacci') || exName.includes('abs')) {
                         restTime = 60; // Isolation
@@ -2422,32 +2781,53 @@
                     }
                 } else {
                     // Finished all sets of current exercise
-                    if (isSuperset && ex.supersetRole === 'B') {
-                        // After completing B, go back to A for next round
-                        const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
-                        if (prevEx?.supersetId === ex.supersetId && prevEx?.supersetRole === 'A') {
-                            // Check if A has more sets to do
-                            const completedRoundsA = prevEx.sets.filter(s => s.weight > 0).length;
-                            const completedRoundsB = ex.sets.filter(s => s.weight > 0).length;
-                            
-                            if (completedRoundsA < prevEx.sets.length) {
-                                // Go back to A
-                                currentExerciseIndex--;
-                                currentSetIndex = completedRoundsA;
-                                focusHistoryList.innerHTML = ''; // Clear for new round
-                                updateFocusUI();
-                                return;
-                            }
-                        }
-                    }
+                    // IF Sequential Mode (Alternating) - only if NOT in combined mode
+            if (isSuperset && ex.supersetRole === 'B' && !supersetModeActive) {
+                // After completing B, go back to A for next round
+                const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
+                if (prevEx?.supersetId === ex.supersetId && prevEx?.supersetRole === 'A') {
+                    // Check if A has more sets to do
+                    const completedRoundsA = prevEx.sets.filter(s => s.weight > 0).length;
                     
-                    // Move to next exercise
-                    currentSetIndex = 0;
-                    currentExerciseIndex++;
-                    focusHistoryList.innerHTML = ''; // Clear history for new exercise
+                    if (completedRoundsA < prevEx.sets.length) {
+                        // Go back to A
+                        currentExerciseIndex--;
+                        currentSetIndex = completedRoundsA;
+                        focusHistoryList.innerHTML = ''; // Clear for new round
+                        updateFocusUI();
+                        return;
+                    }
                 }
-                updateFocusUI();
             }
+            
+            // Move to next exercise
+            currentSetIndex = 0;
+            currentExerciseIndex++;
+            focusHistoryList.innerHTML = ''; // Clear history for new exercise
+
+            // CHECK FOR COMPLETED SUPERSET PARTNER (Combined Mode)
+            // If we just finished A (in combined mode), we are now at B.
+            // But B is already done. So we should skip it.
+            if (currentExerciseIndex < currentWorkout.exercises.length) {
+                const newEx = currentWorkout.exercises[currentExerciseIndex];
+                const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
+                
+                // If we just moved from A -> B, and B is the partner
+                if (prevEx && prevEx.supersetId && newEx.supersetId === prevEx.supersetId && newEx.supersetRole === 'B') {
+                    // Check if B is already fully completed (e.g. via combined logging)
+                    // We check if all sets have weight logged
+                    const allSetsDone = newEx.sets.every(s => s.weight > 0);
+                    
+                    if (allSetsDone) {
+                        console.log('[Focus] Skipping completed superset partner:', newEx.name);
+                        currentExerciseIndex++;
+                        focusHistoryList.innerHTML = '';
+                    }
+                }
+            }
+        }
+        updateFocusUI();
+    }
 
             function finishWorkout(empty = false) {
                 sessionCompleted = true;
@@ -2514,6 +2894,15 @@
                         : undefined;
                     
                     const exerciseData = { name: ex.name, sets: validSets };
+                    
+                    // Include Superset Data
+                    if (ex.supersetId) {
+                        exerciseData.supersetId = ex.supersetId;
+                        exerciseData.supersetRole = ex.supersetRole;
+                        if (ex.intraRest !== undefined) exerciseData.intraRest = ex.intraRest;
+                        if (ex.interRest !== undefined) exerciseData.interRest = ex.interRest;
+                    }
+
                     if (avgRpe !== undefined) {
                         exerciseData.avgRpe = avgRpe;
                     }

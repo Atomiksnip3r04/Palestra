@@ -463,9 +463,15 @@
                         <label>Esercizio</label>
                         <input type="text" class="ex-name" placeholder="es. Panca Piana" value="${data?.name || ''}">
                     </div>
-                    <div class="form-group">
-                        <label>Note</label>
-                        <input type="text" class="ex-notes" placeholder="Fermo 1s al petto" value="${data?.notes || ''}">
+                    <div class="form-group" style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Note</label>
+                            <input type="text" class="ex-notes" placeholder="Fermo 1s al petto" value="${data?.notes || ''}">
+                        </div>
+                        <div class="normal-rest-config" style="display: ${supersetId ? 'none' : 'block'};">
+                            <label>Recupero (s)</label>
+                            <input type="number" class="ex-rest" value="${data?.rest || 90}" placeholder="90">
+                        </div>
                     </div>
                     
                     <div class="sets-container">
@@ -566,6 +572,7 @@
                     div.querySelector('.superset-rest-config').dataset.supersetId = supersetId;
                     div.querySelector('.remove-superset-btn').style.display = 'inline-block';
                     createSupersetBtn.style.display = 'none';
+                    div.querySelector('.normal-rest-config').style.display = 'none';
                     
                     // Mark exercise B
                     nextExercise.dataset.supersetId = supersetId;
@@ -577,6 +584,7 @@
                     nextExercise.insertBefore(indicatorB, nextExercise.firstChild);
                     nextExercise.querySelector('.remove-superset-btn').style.display = 'inline-block';
                     nextExercise.querySelector('.create-superset-btn').style.display = 'none';
+                    nextExercise.querySelector('.normal-rest-config').style.display = 'none';
                 });
                 
                 removeSupersetBtn.addEventListener('click', () => {
@@ -594,6 +602,7 @@
                         ex.querySelector('.superset-rest-config').classList.remove('visible');
                         ex.querySelector('.remove-superset-btn').style.display = 'none';
                         ex.querySelector('.create-superset-btn').style.display = 'inline-block';
+                        ex.querySelector('.normal-rest-config').style.display = 'block';
                     });
                 });
 
@@ -661,6 +670,7 @@
                     document.querySelectorAll('.exercise-item').forEach(item => {
                         const exName = item.querySelector('.ex-name').value;
                         const exNotes = item.querySelector('.ex-notes').value;
+                        const exRest = item.querySelector('.ex-rest').value;
                         
                         // Collect all sets
                         const sets = [];
@@ -689,7 +699,8 @@
                             const exerciseData = {
                                 name: exName,
                                 sets: sets,
-                                notes: exNotes
+                                notes: exNotes,
+                                rest: exRest ? parseInt(exRest) : 90
                             };
                             
                             // Add superset data if applicable
