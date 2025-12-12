@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="GymBro">
+    <meta name="apple-mobile-web-app-title" content="IronFlow">
     <link rel="apple-touch-icon" href="assets/icon.svg">
 
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
@@ -143,7 +143,7 @@
 
     <header class="header">
         <div class="container">
-            <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
+            <a href="index.html" class="logo">IRON<span class="text-primary">FLOW</span></a>
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
@@ -157,7 +157,7 @@
         </div>
     </header>
 
-    <section class="section" style="padding-top: 160px;">
+    <section class="section" style="padding-top: 120px;">
         <div class="container">
             <h1 style="margin-bottom: var(--spacing-md);">Analisi <span class="text-primary">Performance</span></h1>
 
@@ -1107,16 +1107,10 @@
                     div.onmouseout = () => div.style.borderColor = 'transparent';
 
                     div.addEventListener('click', () => {
-                        console.log('📋 Caricamento storico AI - entry:', entry);
-                        console.log('📋 entry.text length:', entry.text ? entry.text.length : 'undefined');
                         closeModal(historyModal);
                         openModal(aiModal);
-                        if (entry.text && entry.text.length > 0) {
-                            aiContent.innerHTML = marked.parse(entry.text);
-                            processTables(aiContent);
-                        } else {
-                            aiContent.innerHTML = '<p style="color: #ff4444;">Errore: il testo dell\'analisi non è stato salvato correttamente.</p>';
-                        }
+                        aiContent.innerHTML = marked.parse(entry.text);
+                        processTables(aiContent);
                     });
 
                     historyList.appendChild(div);
@@ -1268,7 +1262,7 @@
                 exportAiReportBtn.addEventListener('click', () => {
                     const content = aiContent.innerHTML;
                     if (content && content.trim() !== '') {
-                        exportService.showExportMenu(content, 'GymBro - Coach AI Report');
+                        exportService.showExportMenu(content, 'IronFlow - Coach AI Report');
                     }
                 });
             }
@@ -1279,7 +1273,7 @@
                 exportTrendSummaryBtn.addEventListener('click', () => {
                     const content = document.getElementById('trendSummaryContent').innerHTML;
                     if (content && content.trim() !== '') {
-                        exportService.showExportMenu(content, 'GymBro - Resoconto Trend');
+                        exportService.showExportMenu(content, 'IronFlow - Resoconto Trend');
                     }
                 });
             }

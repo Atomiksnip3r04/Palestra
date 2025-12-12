@@ -1733,7 +1733,13 @@
                 // STEP 1: Cerca match ESATTO (nome normalizzato identico)
                 const exactMatch = exerciseEstimates[name];
                 if (exactMatch && exactMatch.est1RM) {
-                    const suggestedWeight = Math.round(exactMatch.est1RM * percentage * 2) / 2;
+                    let suggestedWeight = Math.round(exactMatch.est1RM * percentage * 2) / 2;
+                    
+                    // FIX: Se esercizio bilaterale con manubri, dividi per 2 (assumendo che AI/DB forniscano totale)
+                    if (isBilateralDumbbell(name)) {
+                        suggestedWeight = suggestedWeight / 2;
+                    }
+
                     return {
                         weight: suggestedWeight,
                         basedOn: exactMatch.basedOn, // es. "60kg x 8"
@@ -1768,7 +1774,13 @@
                 }
                 
                 if (bestMatch && bestMatch.isDirect) {
-                    const suggestedWeight = Math.round(bestMatch.estData.est1RM * percentage * 2) / 2;
+                    let suggestedWeight = Math.round(bestMatch.estData.est1RM * percentage * 2) / 2;
+                    
+                    // FIX: Se esercizio bilaterale con manubri, dividi per 2
+                    if (isBilateralDumbbell(name)) {
+                        suggestedWeight = suggestedWeight / 2;
+                    }
+
                     return {
                         weight: suggestedWeight,
                         basedOn: bestMatch.estData.basedOn,
@@ -1777,21 +1789,14 @@
                     };
                 }
                 
-                // STEP 3: Cerca esercizi simili per gruppo muscolare (fallback)
+                // STEP 3: RIMOSSO su richiesta utente (evitare derivazioni indirette)
+                // Il sistema deve basarsi solo sull'esercizio specifico o dati AI diretti.
+                /*
                 const similarMatch = findSimilarExerciseEstimate(exerciseName);
                 if (similarMatch) {
-                    const correctionFactor = getExerciseCorrectionFactor(exerciseName, similarMatch.name);
-                    const adjustedEst1RM = similarMatch.estimate.est1RM * correctionFactor;
-                    const suggestedWeight = Math.round(adjustedEst1RM * percentage * 2) / 2;
-                    
-                    return {
-                        weight: suggestedWeight,
-                        basedOn: similarMatch.estimate.originalName || similarMatch.name,
-                        est1RM: Math.round(adjustedEst1RM),
-                        type: 'similar',
-                        correctionFactor: correctionFactor
-                    };
+                    // ...
                 }
+                */
                 
                 return null;
             };
@@ -2402,11 +2407,15 @@
                             setA.weight = valWA;
                             setA.reps = valRA;
                             if (valRpeA) setA.rpe = valRpeA;
+                            // Check bilateral for A
+                            setA.isBilateral = isBilateralDumbbell(exA.name);
                         }
                         if (setB) {
                             setB.weight = valWB;
                             setB.reps = valRB;
                             if (valRpeB) setB.rpe = valRpeB;
+                            // Check bilateral for B
+                            setB.isBilateral = isBilateralDumbbell(exB.name);
                         }
 
                         const historyItem = document.createElement('div');
@@ -2440,7 +2449,8 @@
                         const totalWeight = isBilateral ? calculateTotalWeight(activeExercise?.name, loggedWeight) : loggedWeight;
 
                         if (activeSet) {
-                            activeSet.weight = totalWeight;
+                            // FIX: Salviamo sempre il peso inserito (singolo manubrio se bilaterale) per mantenere input corretti
+                            activeSet.weight = loggedWeight;
                             activeSet.isBilateral = isBilateral;
                             if (repsInputRaw) activeSet.reps = repsInputRaw;
                             if (loggedRpe > 0) activeSet.rpe = loggedRpe;
@@ -2910,6 +2920,8 @@
                         
                         // Include RPE and set type if available
                         const setData = { weight: weightVal, reps: repsVal };
+                        if (set.isBilateral) setData.isBilateral = true; // FIX: Persist bilateral status
+
                         if (set.rpe !== undefined && set.rpe !== null && set.rpe !== '') {
                             setData.rpe = Number(set.rpe);
                         }
@@ -2950,7 +2962,10 @@
                 }
 
                 const totalVolume = exercises.reduce((acc, ex) => {
-                    return acc + ex.sets.reduce((sum, set) => sum + (set.weight * set.reps), 0);
+                    return acc + ex.sets.reduce((sum, set) => {
+                        const effectiveWeight = set.isBilateral ? set.weight * 2 : set.weight;
+                        return sum + (effectiveWeight * set.reps);
+                    }, 0);
                 }, 0);
 
                 const durationMinutes = sessionStartTime

@@ -664,6 +664,7 @@ function setupAIGenerationInterception() {
                         11: 0.73, 12: 0.70, 13: 0.68, 14: 0.66, 15: 0.64
                     };
                     
+                    // Normalizza nome esercizio per matching
                     // Normalizza nome esercizio per matching (versione aggressiva)
                     const normalizeExerciseName = (name) => {
                         return (name || '').toLowerCase().trim()

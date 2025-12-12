@@ -3,8 +3,6 @@
  * Calcola metriche avanzate dai dati di allenamento esistenti
  */
 
-import { EXERCISE_DB } from './exercise-db.js';
-
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export class AdvancedMetricsEngine {
@@ -183,17 +181,6 @@ export class AdvancedMetricsEngine {
             core: 0
         };
 
-        // Mapping from detailed muscles (EXERCISE_DB) to chart categories
-        const muscleCategoryMap = {
-            "chest": "chest", "upper-chest": "chest",
-            "lats": "back", "traps": "back", "rhomboids": "back", "lower-back": "back",
-            "front-delts": "shoulders", "side-delts": "shoulders", "rear-delts": "shoulders",
-            "biceps": "biceps", "forearms": "biceps",
-            "triceps": "triceps",
-            "quads": "legs", "hamstrings": "legs", "calves": "legs", "glutes": "legs",
-            "abs": "core", "core": "core"
-        };
-
         const muscleKeywords = {
             chest: ['panca', 'chest', 'pettoral', 'push up', 'dip', 'fly', 'croci'],
             back: ['lat', 'row', 'pull', 'dorsal', 'rematore', 'trazioni', 'pulldown'],
@@ -213,36 +200,10 @@ export class AdvancedMetricsEngine {
                     return sum + (w * r);
                 }, 0);
 
-                // 1. Try EXERCISE_DB first (Better precision)
-                const dbKey = Object.keys(EXERCISE_DB).find(k => name.includes(k));
-                let foundInDb = false;
-
-                if (dbKey) {
-                    const muscles = EXERCISE_DB[dbKey];
-                    // Map detailed muscles to broad categories
-                    const categories = new Set();
-                    muscles.forEach(m => {
-                        const cat = muscleCategoryMap[m];
-                        if (cat) categories.add(cat);
-                    });
-
-                    if (categories.size > 0) {
-                        foundInDb = true;
-                        categories.forEach(cat => {
-                            if (muscleVolume[cat] !== undefined) {
-                                muscleVolume[cat] += volume;
-                            }
-                        });
-                    }
-                }
-
-                // 2. Fallback to simple keywords if not found in DB
-                if (!foundInDb) {
-                    for (const [muscle, keywords] of Object.entries(muscleKeywords)) {
-                        if (keywords.some(kw => name.includes(kw))) {
-                            muscleVolume[muscle] += volume;
-                            break;
-                        }
+                for (const [muscle, keywords] of Object.entries(muscleKeywords)) {
+                    if (keywords.some(kw => name.includes(kw))) {
+                        muscleVolume[muscle] += volume;
+                        break;
                     }
                 }
             });
