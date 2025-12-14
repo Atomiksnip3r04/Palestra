@@ -570,12 +570,23 @@
 
             <!-- Trend Monitor -->
             <div class="card" id="trendMonitorCard" style="margin-bottom: var(--spacing-md);">
-                <div style="display:flex; justify-content: space-between; align-items:center; gap:1rem;">
-                    <h3 style="margin-bottom: 1rem;">Trend <span class="text-primary">Monitor</span></h3>
+                <div style="display:flex; justify-content: space-between; align-items:center; gap:1rem; margin-bottom: 1rem;">
+                    <div>
+                        <h3 style="margin: 0;">Trend <span class="text-primary">Monitor</span></h3>
+                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0;">Confronto ultime 2 settimane</p>
+                    </div>
                     <button id="trendSummaryHistoryBtn" class="btn btn-outline btn-compact"
-                        style="font-size: 0.75rem;">📊 Storico Resoconti</button>
+                        style="font-size: 0.75rem;">📊 Storico</button>
                 </div>
-                <div id="trendMetricsList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                
+                <!-- Legend -->
+                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; padding: 0.5rem 0.75rem; background: rgba(255,255,255,0.03); border-radius: 8px; font-size: 0.7rem;">
+                    <span style="display: flex; align-items: center; gap: 4px;"><span style="color: #00ffb3;">↑</span> Miglioramento</span>
+                    <span style="display: flex; align-items: center; gap: 4px;"><span style="color: #ff6b6b;">↓</span> Calo</span>
+                    <span style="display: flex; align-items: center; gap: 4px;"><span style="color: #ccc;">→</span> Stabile</span>
+                </div>
+                
+                <div id="trendMetricsList" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;">
                     <!-- dynamic metrics -->
                 </div>
             </div>
@@ -1487,39 +1498,61 @@
                 
                 if (validMetrics.length === 0) {
                     trendMetricsList.innerHTML = `
-                        <p style="color: var(--color-text-muted); text-align: center; padding: 1rem;">
-                            Registra almeno un allenamento per vedere i trend.
-                        </p>
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">
+                            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📈</div>
+                            <p style="color: var(--color-text-muted); margin-bottom: 0.5rem;">
+                                Registra almeno un allenamento per vedere i trend.
+                            </p>
+                            <p style="font-size: 0.75rem; color: var(--color-text-muted);">
+                                I trend mostrano come stai progredendo nel tempo.
+                            </p>
+                        </div>
                     `;
                     return;
                 }
                 
+                // Icone per ogni metrica
+                const metricIcons = {
+                    frequency: '📅',
+                    volume: '📊',
+                    bodyWeight: '⚖️',
+                    prs: '🏆',
+                    consistency: '🎯',
+                    sleepQuality: '😴',
+                    energyLevel: '⚡',
+                    stressLevel: '🧘',
+                    sorenessLevel: '💪'
+                };
+                
                 validMetrics.forEach(metric => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display:flex; justify-content: space-between; align-items:center; border:1px solid rgba(255,255,255,0.05); border-radius:8px; padding:0.75rem;';
+                    const card = document.createElement('div');
                     
                     // Determina colore e icona in base allo stato
-                    let statusColor, statusIcon, statusText;
+                    let statusColor, statusIcon, statusBg, borderColor;
                     switch (metric.status) {
                         case 'improving':
                             statusColor = '#00ffb3';
                             statusIcon = '↑';
-                            statusText = metric.summary;
+                            statusBg = 'rgba(0, 255, 179, 0.08)';
+                            borderColor = 'rgba(0, 255, 179, 0.3)';
                             break;
                         case 'declining':
                             statusColor = '#ff6b6b';
                             statusIcon = '↓';
-                            statusText = metric.summary;
+                            statusBg = 'rgba(255, 107, 107, 0.08)';
+                            borderColor = 'rgba(255, 107, 107, 0.3)';
                             break;
                         case 'new':
                             statusColor = '#00f3ff';
                             statusIcon = '✨';
-                            statusText = 'Nuovo';
+                            statusBg = 'rgba(0, 243, 255, 0.08)';
+                            borderColor = 'rgba(0, 243, 255, 0.3)';
                             break;
                         default:
-                            statusColor = '#ccc';
+                            statusColor = '#888';
                             statusIcon = '→';
-                            statusText = metric.summary || 'Stabile';
+                            statusBg = 'rgba(255,255,255,0.02)';
+                            borderColor = 'rgba(255,255,255,0.08)';
                     }
                     
                     // Format current value with proper unit
@@ -1530,14 +1563,30 @@
                     // Non mostrare valori 0 come dato reale
                     const displayValue = metric.current > 0 ? formattedValue : 'N/D';
                     
-                    row.innerHTML = `
-                        <div>
-                            <strong>${metric.label}</strong>
-                            <div style="font-size:0.8rem; color: var(--color-text-muted);">${displayValue} ${statusText}</div>
-                        </div>
-                        <span style="color:${statusColor}; font-weight:600; font-size: 1.2rem;">${statusIcon}</span>
+                    // Calcola variazione percentuale se disponibile
+                    const pctChange = metric.pct ? (metric.pct > 0 ? `+${metric.pct.toFixed(0)}%` : `${metric.pct.toFixed(0)}%`) : '';
+                    
+                    const icon = metricIcons[metric.id] || '📌';
+                    
+                    card.style.cssText = `
+                        background: ${statusBg};
+                        border: 1px solid ${borderColor};
+                        border-radius: 12px;
+                        padding: 0.85rem;
+                        position: relative;
+                        overflow: hidden;
                     `;
-                    trendMetricsList.appendChild(row);
+                    
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                            <span style="font-size: 1.3rem;">${icon}</span>
+                            <span style="color: ${statusColor}; font-weight: 700; font-size: 1.4rem; line-height: 1;">${statusIcon}</span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">${metric.label}</div>
+                        <div style="font-family: var(--font-display); font-size: 1rem; color: #fff; font-weight: 600;">${displayValue}</div>
+                        ${pctChange ? `<div style="font-size: 0.7rem; color: ${statusColor}; margin-top: 0.25rem;">${pctChange}</div>` : ''}
+                    `;
+                    trendMetricsList.appendChild(card);
                 });
             };
             renderTrendMetrics();
