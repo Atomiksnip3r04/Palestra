@@ -279,20 +279,27 @@ export class AdvancedMetricsEngine {
 
     /**
      * 4. GET UNIQUE EXERCISES FROM LOGS
-     * Estrae tutti gli esercizi unici dai log con almeno minOccurrences
+     * Estrae TUTTI gli esercizi unici dai log (senza filtri minimi)
      * USA PESO REALE MASSIMO (non stimato)
      */
-    getUniqueExercises(minOccurrences = 1) {
+    getUniqueExercises(minOccurrences = 0) {
         const exerciseCounts = {};
         const exerciseMaxWeight = {}; // PESO REALE MASSIMO
+        const exerciseLastDate = {}; // Data ultimo allenamento
 
         this.logs.forEach(log => {
             (log.exercises || []).forEach(ex => {
                 const name = (ex.name || '').trim();
                 if (!name) return;
 
-                // Conta occorrenze
+                // Conta occorrenze (sessioni in cui appare l'esercizio)
                 exerciseCounts[name] = (exerciseCounts[name] || 0) + 1;
+                
+                // Aggiorna data ultimo allenamento
+                const logDate = new Date(log.date).getTime();
+                if (!exerciseLastDate[name] || logDate > exerciseLastDate[name]) {
+                    exerciseLastDate[name] = logDate;
+                }
 
                 // Trova il PESO REALE MASSIMO sollevato (non stimato)
                 (ex.sets || []).forEach(set => {
@@ -306,67 +313,66 @@ export class AdvancedMetricsEngine {
             });
         });
 
-        // Filtra esercizi con almeno minOccurrences e ordina per peso reale massimo
+        // Ritorna TUTTI gli esercizi con almeno un peso registrato, ordinati per data più recente poi per peso
         return Object.entries(exerciseCounts)
-            .filter(([_, count]) => count >= minOccurrences)
             .filter(([name]) => exerciseMaxWeight[name] > 0)
             .map(([name, count]) => ({
                 name,
                 count,
-                maxWeight: Math.round(exerciseMaxWeight[name] || 0) // PESO REALE
+                maxWeight: Math.round(exerciseMaxWeight[name] || 0),
+                lastDate: exerciseLastDate[name] || 0
             }))
-            .sort((a, b) => b.maxWeight - a.maxWeight);
+            .sort((a, b) => {
+                // Prima ordina per data più recente
+                if (b.lastDate !== a.lastDate) return b.lastDate - a.lastDate;
+                // Poi per peso massimo
+                return b.maxWeight - a.maxWeight;
+            });
     }
 
     /**
      * 5. STRENGTH PROGRESSION
-     * Traccia progressione PESO REALE MASSIMO nel tempo
-     * NON usa stime 1RM, solo il peso effettivamente sollevato
+     * Traccia TUTTI i pesi fatti per un esercizio nel tempo
+     * Raccoglie ogni set con peso registrato, non solo il massimo per sessione
      */
     calculateStrengthProgression(exerciseName, months = 3) {
         const cutoff = Date.now() - (months * 30 * DAY_MS);
-        const relevantLogs = this.logs.filter(log => new Date(log.date).getTime() >= cutoff);
-
-        const dataPoints = [];
+        
+        // Usa TUTTI i log per trovare l'esercizio, poi filtra per data
+        const allDataPoints = [];
         const searchTerm = exerciseName.toLowerCase().trim();
-
-        // Verifica che l'esercizio esista nei log
         let exerciseFound = false;
 
-        relevantLogs.forEach(log => {
+        // Raccogli TUTTI i pesi fatti per questo esercizio (da tutti i log)
+        this.logs.forEach(log => {
             (log.exercises || []).forEach(ex => {
                 const exName = (ex.name || '').toLowerCase().trim();
                 // Match esatto o contenuto
-                if (exName === searchTerm || exName.includes(searchTerm)) {
+                if (exName === searchTerm || exName.includes(searchTerm) || searchTerm.includes(exName)) {
                     exerciseFound = true;
+                    const logTimestamp = new Date(log.date).getTime();
                     
-                    // Trova il PESO REALE MASSIMO in questa sessione (non stimato)
-                    let maxWeight = 0;
-                    let maxWeightReps = 0;
-                    (ex.sets || []).forEach(set => {
+                    // Raccogli OGNI set con peso (non solo il max della sessione)
+                    (ex.sets || []).forEach((set, setIndex) => {
                         const w = parseFloat(set.weight) || 0;
                         const r = parseFloat(set.reps) || 0;
-                        if (w > 0 && w > maxWeight) {
-                            maxWeight = w;
-                            maxWeightReps = r;
+                        if (w > 0) {
+                            allDataPoints.push({
+                                date: log.date.split('T')[0],
+                                value: Math.round(w),
+                                reps: r,
+                                timestamp: logTimestamp,
+                                setIndex: setIndex,
+                                exerciseName: ex.name
+                            });
                         }
                     });
-                    
-                    if (maxWeight > 0) {
-                        dataPoints.push({
-                            date: log.date.split('T')[0],
-                            value: Math.round(maxWeight), // PESO REALE
-                            reps: maxWeightReps,
-                            timestamp: new Date(log.date).getTime(),
-                            exerciseName: ex.name
-                        });
-                    }
                 }
             });
         });
 
         // Se l'esercizio non esiste, ritorna stato vuoto
-        if (!exerciseFound) {
+        if (!exerciseFound || allDataPoints.length === 0) {
             return {
                 dataPoints: [],
                 current: 0,
@@ -374,37 +380,74 @@ export class AdvancedMetricsEngine {
                 change: 0,
                 changePercent: 0,
                 trend: 'no_data',
-                exerciseNotFound: true
+                exerciseNotFound: !exerciseFound
             };
         }
 
-        // Ordina per data
-        dataPoints.sort((a, b) => a.timestamp - b.timestamp);
+        // Ordina tutti i punti per data (timestamp)
+        allDataPoints.sort((a, b) => a.timestamp - b.timestamp);
 
-        // Calcola trend
-        if (dataPoints.length >= 2) {
-            const first = dataPoints[0].value;
-            const last = dataPoints[dataPoints.length - 1].value;
+        // Per il grafico: prendi il peso MASSIMO per ogni sessione (giorno)
+        // Questo evita duplicati nello stesso giorno ma mostra la progressione
+        const dataByDate = {};
+        allDataPoints.forEach(point => {
+            if (!dataByDate[point.date] || point.value > dataByDate[point.date].value) {
+                dataByDate[point.date] = point;
+            }
+        });
+        
+        // Converti in array ordinato per il grafico
+        const chartDataPoints = Object.values(dataByDate).sort((a, b) => a.timestamp - b.timestamp);
+
+        // Filtra solo gli ultimi N mesi per calcoli di trend
+        const recentDataPoints = chartDataPoints.filter(d => d.timestamp >= cutoff);
+
+        // Calcola statistiche basate sui dati recenti
+        if (recentDataPoints.length >= 2) {
+            const first = recentDataPoints[0].value;
+            const last = recentDataPoints[recentDataPoints.length - 1].value;
             const change = last - first;
-            const changePercent = ((change / first) * 100).toFixed(1);
+            const changePercent = first > 0 ? ((change / first) * 100).toFixed(1) : 0;
             
             return {
-                dataPoints,
+                dataPoints: chartDataPoints, // Tutti i dati per il grafico
+                recentDataPoints: recentDataPoints, // Solo ultimi N mesi
                 current: last,
                 initial: first,
                 change,
                 changePercent: parseFloat(changePercent),
-                trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable'
+                trend: change > 0 ? 'up' : change < 0 ? 'down' : 'stable',
+                totalSessions: chartDataPoints.length
+            };
+        } else if (recentDataPoints.length === 1) {
+            // Solo un dato recente - cerca dati più vecchi per confronto
+            const allTimeCurrent = chartDataPoints[chartDataPoints.length - 1].value;
+            const allTimeFirst = chartDataPoints[0].value;
+            const change = allTimeCurrent - allTimeFirst;
+            const changePercent = allTimeFirst > 0 ? ((change / allTimeFirst) * 100).toFixed(1) : 0;
+            
+            return {
+                dataPoints: chartDataPoints,
+                recentDataPoints: recentDataPoints,
+                current: allTimeCurrent,
+                initial: allTimeFirst,
+                change: chartDataPoints.length > 1 ? change : 0,
+                changePercent: chartDataPoints.length > 1 ? parseFloat(changePercent) : 0,
+                trend: chartDataPoints.length > 1 ? (change > 0 ? 'up' : change < 0 ? 'down' : 'stable') : 'insufficient_data',
+                totalSessions: chartDataPoints.length
             };
         }
 
+        // Un solo dato point
         return {
-            dataPoints,
-            current: dataPoints[0]?.value || 0,
-            initial: dataPoints[0]?.value || 0,
+            dataPoints: chartDataPoints,
+            recentDataPoints: [],
+            current: chartDataPoints[0]?.value || 0,
+            initial: chartDataPoints[0]?.value || 0,
             change: 0,
             changePercent: 0,
-            trend: 'insufficient_data'
+            trend: 'insufficient_data',
+            totalSessions: chartDataPoints.length
         };
     }
 

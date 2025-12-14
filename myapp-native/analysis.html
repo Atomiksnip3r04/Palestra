@@ -836,13 +836,14 @@
                     `;
                 }
 
-                // 5. Strength Progression - Popola select con esercizi reali
-                const uniqueExercises = advancedMetrics.getUniqueExercises(1);
+                // 5. Strength Progression - Popola select con TUTTI gli esercizi reali
+                const uniqueExercises = advancedMetrics.getUniqueExercises(0); // 0 = nessun filtro minimo
                 const strengthSelect = document.getElementById('strengthExerciseSelect');
                 
                 if (uniqueExercises.length > 0) {
-                    strengthSelect.innerHTML = uniqueExercises.slice(0, 15).map((ex, i) => 
-                        `<option value="${ex.name}" ${i === 0 ? 'selected' : ''}>${ex.name} (${ex.maxWeight}kg)</option>`
+                    // Mostra TUTTI gli esercizi senza limite, ordinati per data più recente
+                    strengthSelect.innerHTML = uniqueExercises.map((ex, i) => 
+                        `<option value="${ex.name}" ${i === 0 ? 'selected' : ''}>${ex.name} (max ${ex.maxWeight}kg)</option>`
                     ).join('');
                 } else {
                     strengthSelect.innerHTML = '<option value="">Nessun esercizio registrato</option>';
@@ -879,11 +880,12 @@
                     
                     const trendIcon = progression.trend === 'up' ? '📈' : progression.trend === 'down' ? '📉' : '➡️';
                     const trendClass = progression.trend === 'up' ? 'up' : progression.trend === 'down' ? 'down' : 'stable';
+                    const sessionsText = progression.totalSessions ? `${progression.totalSessions} sessioni` : '';
                     
                     document.getElementById('strengthProgressStats').innerHTML = `
                         <div>
                             <div style="font-family: var(--font-display); font-size: 1.5rem; color: var(--color-primary);">${progression.current || '-'}</div>
-                            <div style="font-size: 0.7rem; color: var(--color-text-muted);">1RM Attuale (kg)</div>
+                            <div style="font-size: 0.7rem; color: var(--color-text-muted);">Peso Max (kg)</div>
                         </div>
                         <div>
                             <div style="font-family: var(--font-display); font-size: 1.5rem;" class="metric-trend ${trendClass}">
@@ -2151,7 +2153,8 @@
                     list.style.flexDirection = 'column';
                     list.style.gap = '4px';
 
-                    prList.slice(0, 5).forEach((pr, idx) => {
+                    // Mostra TUTTI i PR per questo range (senza limite)
+                    prList.forEach((pr, idx) => {
                         const date = new Date(pr.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short' });
                         const weightDisplay = unitService ? unitService.formatWeight(pr.weight) : Math.round(pr.weight) + ' kg';
                         
@@ -2270,7 +2273,7 @@
 
                 const percentage = rmPercentages[currentRMView] || 1.0;
 
-                // Calcola e ordina per il RM selezionato
+                // Calcola e ordina per il RM selezionato - mostra TUTTI gli esercizi
                 const sortedEstimates = Object.entries(estimatedRMs)
                     .map(([name, data]) => ({
                         name,
@@ -2278,8 +2281,7 @@
                         basedOn: data.basedOn,
                         date: data.date
                     }))
-                    .sort((a, b) => b.estimatedWeight - a.estimatedWeight)
-                    .slice(0, 8);
+                    .sort((a, b) => b.estimatedWeight - a.estimatedWeight);
 
                 if (sortedEstimates.length === 0) {
                     const tr = document.createElement('tr');
