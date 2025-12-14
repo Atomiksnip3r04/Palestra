@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="IronFlow">
+    <meta name="apple-mobile-web-app-title" content="GymBro">
     <link rel="apple-touch-icon" href="assets/icon.svg">
 
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
@@ -143,7 +143,7 @@
 
     <header class="header">
         <div class="container">
-            <a href="index.html" class="logo">IRON<span class="text-primary">FLOW</span></a>
+            <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
@@ -157,7 +157,7 @@
         </div>
     </header>
 
-    <section class="section" style="padding-top: 120px;">
+    <section class="section" style="padding-top: 160px;">
         <div class="container">
             <h1 style="margin-bottom: var(--spacing-md);">Analisi <span class="text-primary">Performance</span></h1>
 
@@ -879,26 +879,73 @@
                 const calendarData = advancedMetrics.generateConsistencyCalendar(12);
                 ChartRenderer.renderCalendar('consistencyCalendar', calendarData);
 
-                // 7. Sleep-Performance Correlation
+                // 7. Sleep-Performance Correlation con validazione statistica migliorata
                 const correlation = advancedMetrics.calculateSleepPerformanceCorrelation();
                 if (correlation.dataPoints.length >= 5) {
                     const scatterData = correlation.dataPoints.map(d => ({
                         x: d.sleep,
                         y: d.performance
                     }));
+                    
+                    // Passa le informazioni di validità statistica al renderer
                     ChartRenderer.renderScatter('sleepPerformanceScatter', scatterData, {
                         xLabel: 'Qualità Sonno (1-10)',
-                        yLabel: 'Performance Index'
+                        yLabel: 'Performance Index',
+                        showTrendLine: true,
+                        isStatisticallyValid: correlation.isStatisticallyValid
                     });
                     
-                    const corrColor = correlation.correlation > 0.3 ? '#00ff88' : correlation.correlation < -0.1 ? '#ff6b6b' : '#ffcc00';
-                    document.getElementById('correlationInsight').innerHTML = `
-                        <span class="icon">🧠</span>
+                    // Colori basati sulla forza della correlazione E sulla validità statistica
+                    let corrColor, corrIcon, corrLabel;
+                    
+                    if (!correlation.isStatisticallyValid) {
+                        corrColor = '#888888';
+                        corrIcon = '⚠️';
+                        corrLabel = 'Dati non sufficientemente variati';
+                    } else {
+                        switch(correlation.correlationStrength) {
+                            case 'strong':
+                                corrColor = correlation.correlation > 0 ? '#00ff88' : '#ff6b6b';
+                                corrIcon = correlation.correlation > 0 ? '🎯' : '⚠️';
+                                corrLabel = 'Correlazione forte';
+                                break;
+                            case 'moderate':
+                                corrColor = '#ffcc00';
+                                corrIcon = '📊';
+                                corrLabel = 'Correlazione moderata';
+                                break;
+                            default:
+                                corrColor = '#888888';
+                                corrIcon = '🔍';
+                                corrLabel = 'Correlazione debole';
+                        }
+                    }
+
+                    // Costruisci il messaggio
+                    let insightHTML = `
+                        <span class="icon">${corrIcon}</span>
                         <p>
-                            <strong style="color: ${corrColor}">Correlazione: ${correlation.correlation}</strong><br>
+                            <strong style="color: ${corrColor}">${corrLabel}: ${correlation.correlation}</strong><br>
                             ${correlation.insight}
-                        </p>
                     `;
+                    
+                    // Aggiungi warning se presente
+                    if (correlation.varianceWarning) {
+                        insightHTML += `<br><small style="color: #ffcc00; display: block; margin-top: 0.5rem;">
+                            💡 ${correlation.varianceWarning}
+                        </small>`;
+                    }
+                    
+                    // Aggiungi stats per debug/trasparenza (opzionale, in piccolo)
+                    if (correlation.stats && correlation.stats.n >= 5) {
+                        insightHTML += `<br><small style="color: var(--color-text-muted); font-size: 0.7rem;">
+                            ${correlation.stats.n} sessioni · σ(sonno)=${correlation.stats.stdDevX}
+                        </small>`;
+                    }
+                    
+                    insightHTML += '</p>';
+                    
+                    document.getElementById('correlationInsight').innerHTML = insightHTML;
                 } else {
                     document.getElementById('sleepPerformanceScatter').innerHTML = `
                         <p style="text-align: center; color: var(--color-text-muted); padding: 2rem;">
@@ -1107,10 +1154,16 @@
                     div.onmouseout = () => div.style.borderColor = 'transparent';
 
                     div.addEventListener('click', () => {
+                        console.log('📋 Caricamento storico AI - entry:', entry);
+                        console.log('📋 entry.text length:', entry.text ? entry.text.length : 'undefined');
                         closeModal(historyModal);
                         openModal(aiModal);
-                        aiContent.innerHTML = marked.parse(entry.text);
-                        processTables(aiContent);
+                        if (entry.text && entry.text.length > 0) {
+                            aiContent.innerHTML = marked.parse(entry.text);
+                            processTables(aiContent);
+                        } else {
+                            aiContent.innerHTML = '<p style="color: #ff4444;">Errore: il testo dell\'analisi non è stato salvato correttamente.</p>';
+                        }
                     });
 
                     historyList.appendChild(div);
@@ -1262,7 +1315,7 @@
                 exportAiReportBtn.addEventListener('click', () => {
                     const content = aiContent.innerHTML;
                     if (content && content.trim() !== '') {
-                        exportService.showExportMenu(content, 'IronFlow - Coach AI Report');
+                        exportService.showExportMenu(content, 'GymBro - Coach AI Report');
                     }
                 });
             }
@@ -1273,7 +1326,7 @@
                 exportTrendSummaryBtn.addEventListener('click', () => {
                     const content = document.getElementById('trendSummaryContent').innerHTML;
                     if (content && content.trim() !== '') {
-                        exportService.showExportMenu(content, 'IronFlow - Resoconto Trend');
+                        exportService.showExportMenu(content, 'GymBro - Resoconto Trend');
                     }
                 });
             }

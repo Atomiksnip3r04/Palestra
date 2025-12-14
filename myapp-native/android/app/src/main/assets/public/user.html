@@ -1725,7 +1725,13 @@
                 // STEP 1: Cerca match ESATTO (nome normalizzato identico)
                 const exactMatch = exerciseEstimates[name];
                 if (exactMatch && exactMatch.est1RM) {
-                    const suggestedWeight = Math.round(exactMatch.est1RM * percentage * 2) / 2;
+                    let suggestedWeight = Math.round(exactMatch.est1RM * percentage * 2) / 2;
+                    
+                    // FIX: Se esercizio bilaterale con manubri, dividi per 2
+                    if (isBilateralDumbbell(name)) {
+                        suggestedWeight = suggestedWeight / 2;
+                    }
+
                     return {
                         weight: suggestedWeight,
                         basedOn: exactMatch.basedOn, // es. "60kg x 8"
@@ -1760,7 +1766,13 @@
                 }
                 
                 if (bestMatch && bestMatch.isDirect) {
-                    const suggestedWeight = Math.round(bestMatch.estData.est1RM * percentage * 2) / 2;
+                    let suggestedWeight = Math.round(bestMatch.estData.est1RM * percentage * 2) / 2;
+                    
+                    // FIX: Se esercizio bilaterale con manubri, dividi per 2
+                    if (isBilateralDumbbell(name)) {
+                        suggestedWeight = suggestedWeight / 2;
+                    }
+
                     return {
                         weight: suggestedWeight,
                         basedOn: bestMatch.estData.basedOn,

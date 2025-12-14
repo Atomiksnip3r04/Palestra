@@ -492,7 +492,7 @@ export class AdvancedMetricsEngine {
 
     /**
      * 6. SLEEP-PERFORMANCE CORRELATION
-     * Analizza correlazione tra sonno e performance
+     * Analizza correlazione tra sonno e performance con validazione statistica
      */
     calculateSleepPerformanceCorrelation() {
         const dataPoints = [];
@@ -519,7 +519,9 @@ export class AdvancedMetricsEngine {
             return {
                 correlation: null,
                 dataPoints,
-                insight: 'Dati insufficienti per calcolare la correlazione'
+                insight: 'Dati insufficienti per calcolare la correlazione',
+                isStatisticallyValid: false,
+                varianceWarning: null
             };
         }
 
@@ -531,24 +533,96 @@ export class AdvancedMetricsEngine {
         const sumX2 = dataPoints.reduce((s, d) => s + (d.sleep * d.sleep), 0);
         const sumY2 = dataPoints.reduce((s, d) => s + (d.performance * d.performance), 0);
 
+        // Calcola deviazione standard per X (sonno) e Y (performance)
+        const meanX = sumX / n;
+        const meanY = sumY / n;
+        const varianceX = (sumX2 / n) - (meanX * meanX);
+        const varianceY = (sumY2 / n) - (meanY * meanY);
+        const stdDevX = Math.sqrt(varianceX);
+        const stdDevY = Math.sqrt(varianceY);
+
+        // Verifica varianza sufficiente (problema identificato: dati in colonna verticale)
+        const MIN_STD_DEV_X = 0.8; // Minima deviazione standard per sonno (scala 1-10)
+        const hasLowVarianceX = stdDevX < MIN_STD_DEV_X;
+        const hasLowVarianceY = stdDevY < 0.5;
+
+        // Rileva outlier con leverage elevato (punto isolato che forza la regressione)
+        const leveragePoints = this._detectHighLeveragePoints(dataPoints, meanX, stdDevX);
+        const hasHighLeverageOutlier = leveragePoints.length > 0 && leveragePoints.length <= Math.floor(n * 0.15);
+
         const numerator = (n * sumXY) - (sumX * sumY);
         const denominator = Math.sqrt(((n * sumX2) - (sumX * sumX)) * ((n * sumY2) - (sumY * sumY)));
         
         const correlation = denominator !== 0 ? numerator / denominator : 0;
 
+        // Determina validità statistica
+        const isStatisticallyValid = !hasLowVarianceX && !hasHighLeverageOutlier && n >= 8;
+        
+        // Genera warning appropriati
+        let varianceWarning = null;
+        if (hasLowVarianceX) {
+            varianceWarning = 'Varia i tuoi voti sulla qualità del sonno per scoprire correlazioni significative';
+        } else if (hasHighLeverageOutlier) {
+            varianceWarning = 'Un singolo punto sta influenzando troppo la correlazione. Raccogli più dati variati';
+        }
+
+        // Soglie di correlazione corrette scientificamente
+        // r < 0.3 = debole, 0.3-0.5 = moderata, > 0.5 = forte
         let insight = '';
-        if (correlation > 0.5) insight = 'Forte correlazione positiva: dormi meglio, ti alleni meglio!';
-        else if (correlation > 0.2) insight = 'Correlazione moderata: il sonno influenza le tue performance';
-        else if (correlation > -0.2) insight = 'Correlazione debole: altri fattori influenzano di più';
-        else insight = 'Correlazione negativa: analizza altri fattori di recupero';
+        let correlationStrength = 'weak';
+        const absCorr = Math.abs(correlation);
+        
+        if (!isStatisticallyValid) {
+            insight = varianceWarning || 'Dati insufficienti per una correlazione affidabile';
+            correlationStrength = 'invalid';
+        } else if (absCorr >= 0.5) {
+            insight = correlation > 0 
+                ? 'Forte correlazione positiva: dormi meglio, ti alleni meglio!' 
+                : 'Forte correlazione negativa: analizza i fattori di recupero';
+            correlationStrength = 'strong';
+        } else if (absCorr >= 0.3) {
+            insight = correlation > 0
+                ? 'Correlazione moderata: il sonno sembra influenzare le performance'
+                : 'Correlazione moderata negativa: il sonno potrebbe non essere ottimale';
+            correlationStrength = 'moderate';
+        } else {
+            insight = 'Correlazione debole: altri fattori influenzano maggiormente le performance';
+            correlationStrength = 'weak';
+        }
 
         return {
             correlation: Math.round(correlation * 100) / 100,
             dataPoints,
             insight,
             avgSleep: (sumX / n).toFixed(1),
-            avgPerformance: (sumY / n).toFixed(1)
+            avgPerformance: (sumY / n).toFixed(1),
+            // Nuovi campi per validità statistica
+            isStatisticallyValid,
+            varianceWarning,
+            correlationStrength,
+            stats: {
+                n,
+                stdDevX: Math.round(stdDevX * 100) / 100,
+                stdDevY: Math.round(stdDevY * 100) / 100,
+                hasLowVarianceX,
+                hasHighLeverageOutlier,
+                leveragePointsCount: leveragePoints.length
+            }
         };
+    }
+
+    /**
+     * Rileva punti con alto leverage (outlier che influenzano la regressione)
+     */
+    _detectHighLeveragePoints(dataPoints, meanX, stdDevX) {
+        if (stdDevX === 0) return [];
+        
+        // Un punto ha alto leverage se è molto distante dalla media su X
+        const threshold = 2.5; // Oltre 2.5 deviazioni standard
+        return dataPoints.filter(d => {
+            const zScore = Math.abs((d.sleep - meanX) / stdDevX);
+            return zScore > threshold;
+        });
     }
 
     /**

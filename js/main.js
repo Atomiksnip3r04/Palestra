@@ -12,31 +12,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log('GYMBRO initialized.');
 
-    // Service Worker Management
+    // FORCE UNREGISTER SERVICE WORKER (Fix for Black Screen / Cache Issues)
     if ('serviceWorker' in navigator) {
-        // Check if running in Capacitor Native
-        const isNative = window.Capacitor && window.Capacitor.isNativePlatform();
-
-        if (isNative) {
-            console.log('Running in Native mode: Unregistering Service Workers to prevent conflicts.');
-            navigator.serviceWorker.getRegistrations().then(registrations => {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+            if (registrations.length > 0) {
+                console.log('Found existing Service Workers. Unregistering to ensure stability...');
                 for(let registration of registrations) {
-                    registration.unregister().then(success => {
-                        console.log('Service Worker unregistered:', success);
-                    });
+                    registration.unregister();
                 }
-            });
-        } else {
-            // Standard PWA registration for web
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('service-worker.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
-        }
+                // Optional: Reload page once if we found one, to ensure fresh start? 
+                // Better not to loop. Just unregister for next run.
+            }
+        });
     }
+
+    // Explicitly hide Splash Screen if Capacitor is available
+    /*
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.SplashScreen) {
+        window.Capacitor.Plugins.SplashScreen.hide();
+    }
+    */
 });
