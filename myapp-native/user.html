@@ -6,30 +6,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Profilo | GYMBRO</title>
 
-    <!-- Smart App Redirect: Try to open in app first, fallback to web -->
+    <!-- Open in App Banner for Share Links -->
     <script>
         (function () {
-            // Check for share parameter
             const urlParams = new URLSearchParams(window.location.search);
             const shareId = urlParams.get('s') || urlParams.get('shareId');
 
             if (shareId && /Android/i.test(navigator.userAgent)) {
-                // Store that we're attempting app open
-                const attemptKey = 'gymbro_app_attempt_' + shareId;
+                // Check if we're not already in the app (Capacitor)
+                const isInApp = window.location.origin.includes('capacitor') ||
+                    window.location.origin.includes('localhost');
 
-                // Don't try again if we already attempted (prevents loop)
-                if (!sessionStorage.getItem(attemptKey)) {
-                    sessionStorage.setItem(attemptKey, 'true');
+                if (!isInApp) {
+                    // Show banner when DOM is ready
+                    document.addEventListener('DOMContentLoaded', function () {
+                        const banner = document.createElement('div');
+                        banner.id = 'openInAppBanner';
+                        banner.innerHTML = `
+                        <div style="
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            background: linear-gradient(135deg, #00f3ff, #0066ff);
+                            color: white;
+                            padding: 12px 16px;
+                            z-index: 9999;
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            gap: 12px;
+                            font-family: 'Inter', sans-serif;
+                            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                        ">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">📱 Hai l'app GymBro?</div>
+                                <div style="font-size: 12px; opacity: 0.9;">Apri questa scheda direttamente nell'app</div>
+                            </div>
+                            <button id="openInAppBtn" style="
+                                background: white;
+                                color: #0066ff;
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 20px;
+                                font-weight: 600;
+                                font-size: 13px;
+                                cursor: pointer;
+                                white-space: nowrap;
+                            ">Apri App</button>
+                            <button id="dismissBannerBtn" style="
+                                background: transparent;
+                                border: none;
+                                color: white;
+                                font-size: 20px;
+                                cursor: pointer;
+                                padding: 4px;
+                                opacity: 0.8;
+                            ">×</button>
+                        </div>
+                    `;
+                        document.body.insertBefore(banner, document.body.firstChild);
 
-                    // Try intent:// URL (more compatible than custom scheme)
-                    const intentUrl = 'intent://workout?id=' + shareId +
-                        '#Intent;scheme=gymbro;package=com.gymbro.app;end';
+                        // Add top padding to body to account for banner
+                        document.body.style.paddingTop = '70px';
 
-                    // Attempt to open app
-                    window.location.href = intentUrl;
+                        // Open in App button
+                        document.getElementById('openInAppBtn').addEventListener('click', function () {
+                            const intentUrl = 'intent://workout?id=' + shareId + '#Intent;scheme=gymbro;package=com.gymbro.app;end';
+                            window.location.href = intentUrl;
+                        });
 
-                    // If we're still here after 2 seconds, app probably isn't installed
-                    // The page will continue loading normally
+                        // Dismiss button
+                        document.getElementById('dismissBannerBtn').addEventListener('click', function () {
+                            banner.remove();
+                            document.body.style.paddingTop = '';
+                        });
+                    });
                 }
             }
         })();
