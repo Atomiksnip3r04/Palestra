@@ -201,46 +201,24 @@ export class WorkoutSharingHandler {
                         Condividi <strong style="color: var(--color-text);">${workoutName}</strong>
                     </p>
                     
-                    <!-- App Deep Link (for users with app) -->
-                    ${deepLink ? `
+                    <!-- Smart Link (opens app on Android if installed, otherwise web) -->
                     <div style="margin-bottom: 1rem;">
-                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.3rem;">
-                            📱 <strong>Per chi ha l'app GymBro:</strong>
-                        </p>
-                        <div id="deepLinkBox" style="
-                            background: linear-gradient(135deg, rgba(0,243,255,0.1), rgba(0,153,255,0.1));
-                            padding: 0.8rem;
+                        <div id="shareLinkBox" style="
+                            background: rgba(255,255,255,0.05);
+                            padding: 1rem;
                             border-radius: var(--radius-sm);
                             border: 1px solid var(--color-primary);
                             word-break: break-all;
                             font-family: monospace;
-                            font-size: 0.8rem;
+                            font-size: 0.85rem;
                             color: var(--color-primary);
                             cursor: pointer;
-                        " onclick="navigator.clipboard.writeText('${deepLink}').then(() => this.innerHTML = '✅ Copiato!')">
-                            ${deepLink}
-                        </div>
-                    </div>
-                    ` : ''}
-                    
-                    <!-- Web Link (universal) -->
-                    <div style="margin-bottom: 1rem;">
-                        <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.3rem;">
-                            🌐 <strong>Link universale (browser):</strong>
-                        </p>
-                        <div id="webLinkBox" style="
-                            background: rgba(255,255,255,0.05);
-                            padding: 0.8rem;
-                            border-radius: var(--radius-sm);
-                            border: 1px solid var(--color-border);
-                            word-break: break-all;
-                            font-family: monospace;
-                            font-size: 0.8rem;
-                            color: var(--color-text);
-                            cursor: pointer;
-                        " onclick="navigator.clipboard.writeText('${shareUrl}').then(() => this.innerHTML = '✅ Copiato!')">
+                        " onclick="navigator.clipboard.writeText('${shareUrl}').then(() => this.innerHTML = '✅ Link Copiato!')">
                             ${shareUrl}
                         </div>
+                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-top: 0.5rem; text-align: center;">
+                            📱 Su Android si apre automaticamente nell'app se installata
+                        </p>
                     </div>
                     
                     <!-- Social Share Buttons -->

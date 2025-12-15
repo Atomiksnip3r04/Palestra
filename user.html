@@ -5,6 +5,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Profilo | GYMBRO</title>
+
+    <!-- Smart App Redirect: Try to open in app first, fallback to web -->
+    <script>
+        (function () {
+            // Check for share parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const shareId = urlParams.get('s') || urlParams.get('shareId');
+
+            if (shareId && /Android/i.test(navigator.userAgent)) {
+                // Store that we're attempting app open
+                const attemptKey = 'gymbro_app_attempt_' + shareId;
+
+                // Don't try again if we already attempted (prevents loop)
+                if (!sessionStorage.getItem(attemptKey)) {
+                    sessionStorage.setItem(attemptKey, 'true');
+
+                    // Try intent:// URL (more compatible than custom scheme)
+                    const intentUrl = 'intent://workout?id=' + shareId +
+                        '#Intent;scheme=gymbro;package=com.gymbro.app;end';
+
+                    // Attempt to open app
+                    window.location.href = intentUrl;
+
+                    // If we're still here after 2 seconds, app probably isn't installed
+                    // The page will continue loading normally
+                }
+            }
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap"
