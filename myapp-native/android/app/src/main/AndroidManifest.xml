@@ -22,6 +22,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!-- Deep Links for Workout Sharing (user.html?s=...) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="massimilianociconte.github.io"
+                      android:pathPrefix="/Palestra/user.html" />
+            </intent-filter>
+
+            <!-- Deep Links for Diary Log Sharing (diary.html?log=...) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https"
+                      android:host="massimilianociconte.github.io"
+                      android:pathPrefix="/Palestra/diary.html" />
+            </intent-filter>
+
         </activity>
 
         <provider
