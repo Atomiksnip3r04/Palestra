@@ -380,18 +380,23 @@ class HealthConnectService {
             weekStart.setHours(0, 0, 0, 0);
             const weekStartNanos = weekStart.getTime() * 1000000;
 
-            // 3. Time range per metriche di stato (Peso, Altezza) - Ultimi 30 giorni
-            // Serve per trovare l'ultimo valore registrato anche se non è di oggi
+            // 3. Time range per metriche di stato (Peso, Body Fat) - Ultimi 90 giorni
+            // Esteso per catturare misurazioni meno frequenti
             const stateStart = new Date(now);
-            stateStart.setDate(stateStart.getDate() - 30);
+            stateStart.setDate(stateStart.getDate() - 90);
             const stateStartNanos = stateStart.getTime() * 1000000;
+
+            // 4. Time range per Altezza - Ultimi 365 giorni (cambia raramente)
+            const heightStart = new Date(now);
+            heightStart.setDate(heightStart.getDate() - 365);
+            const heightStartNanos = heightStart.getTime() * 1000000;
 
             console.log('Syncing daily metrics from:', todayStart.toLocaleString());
             console.log('Syncing weekly metrics (Steps, Calories, Sleep) from:', weekStart.toLocaleString());
-            console.log('Syncing state metrics from:', stateStart.toLocaleString());
+            console.log('Syncing body metrics (90 days) from:', stateStart.toLocaleString());
 
             // Fetch tutti i tipi di dati (base + aggiuntivi)
-            // NOTA: Per passi, calorie, distanza usiamo le nuove funzioni che calcolano la MEDIA GIORNALIERA
+            // NOTA: Per passi, calorie, distanza usiamo le nuove funzioni che calcolano la MEDIA GIORNALIERA REALE
             const [
                 stepsData, heartRate, weight, caloriesData, distanceData, sleepData,
                 activeMinutesData, hrv, bodyFat, height, hydration,
@@ -400,15 +405,15 @@ class HealthConnectService {
                 // Dati base - con calcolo media giornaliera
                 this.fetchStepsWithDailyAverage(weekStartNanos, endNanos),
                 this.fetchHeartRate(todayStartNanos, endNanos), // Daily
-                this.fetchWeight(stateStartNanos, endNanos), // State metric
+                this.fetchWeight(stateStartNanos, endNanos), // State metric (90gg)
                 this.fetchCaloriesWithDailyAverage(weekStartNanos, endNanos),
                 this.fetchDistanceWithDailyAverage(weekStartNanos, endNanos),
                 this.fetchSleepWithDetails(weekStartNanos, endNanos), // Restituisce oggetto con media e dettagli
                 // Dati aggiuntivi
                 this.fetchActiveMinutesWithDailyAverage(weekStartNanos, endNanos),
                 this.fetchHRV(todayStartNanos, endNanos), // Daily
-                this.fetchBodyFat(stateStartNanos, endNanos), // State metric
-                this.fetchHeight(stateStartNanos, endNanos), // State metric
+                this.fetchBodyFat(stateStartNanos, endNanos), // State metric (90gg)
+                this.fetchHeight(heightStartNanos, endNanos), // State metric (365gg)
                 this.fetchHydration(todayStartNanos, endNanos), // Daily
                 this.fetchBloodPressure(todayStartNanos, endNanos), // Daily
                 this.fetchBloodGlucose(todayStartNanos, endNanos), // Daily
@@ -471,25 +476,25 @@ class HealthConnectService {
                 steps: stepsResult?.dailyAverage || stepsResult || null,
                 stepsTotal: stepsResult?.total || null, // Totale settimanale per riferimento
                 stepsDaysWithData: stepsResult?.daysWithData || null,
-                
+
                 heartRate: heartRate.status === 'fulfilled' ? heartRate.value : null,
                 weight: weight.status === 'fulfilled' ? weight.value : null,
-                
+
                 calories: caloriesResult?.dailyAverage || caloriesResult || null,
                 caloriesTotal: caloriesResult?.total || null,
                 caloriesDaysWithData: caloriesResult?.daysWithData || null,
-                
+
                 distance: distanceResult?.dailyAverage || distanceResult || null,
                 distanceTotal: distanceResult?.total || null,
                 distanceDaysWithData: distanceResult?.daysWithData || null,
-                
+
                 sleep: sleepResult?.dailyAverage || sleepResult || null,
                 sleepDaysWithData: sleepResult?.daysWithData || null,
-                
+
                 // Dati aggiuntivi
                 activeMinutes: activeMinutesResult?.dailyAverage || activeMinutesResult || null,
                 activeMinutesTotal: activeMinutesResult?.total || null,
-                
+
                 hrv: hrv.status === 'fulfilled' ? hrv.value : null,
                 bodyFat: bodyFat.status === 'fulfilled' ? bodyFat.value : null,
                 height: height.status === 'fulfilled' ? height.value : null,
@@ -544,17 +549,17 @@ class HealthConnectService {
             const steps = point.value?.[0]?.intVal || 0;
             const startNanos = point.startTimeNanos;
             const endNanos = point.endTimeNanos;
-            
+
             // Usa la data di fine dell'intervallo per attribuire i passi al giorno corretto
             const dayKey = new Date(parseInt(endNanos) / 1000000).toISOString().split('T')[0];
-            
+
             if (!stepsByDay[dayKey]) {
                 stepsByDay[dayKey] = new Map(); // Map per evitare duplicati per intervallo
             }
-            
+
             // Chiave unica per questo intervallo
             const intervalKey = `${startNanos}-${endNanos}`;
-            
+
             // Se abbiamo già dati per questo intervallo, prendi il valore più alto
             if (stepsByDay[dayKey].has(intervalKey)) {
                 const existing = stepsByDay[dayKey].get(intervalKey);
@@ -567,17 +572,22 @@ class HealthConnectService {
         // Calcola totale per ogni giorno
         const dailyTotals = {};
         let totalSteps = 0;
-        
+
         Object.entries(stepsByDay).forEach(([day, intervalsMap]) => {
             const dayTotal = Array.from(intervalsMap.values()).reduce((sum, s) => sum + s, 0);
             dailyTotals[day] = dayTotal;
             totalSteps += dayTotal;
         });
 
+        // CALCOLO MEDIA CORRETTO: Basato sulla durata del periodo (7 giorni)
+        const durationMs = (parseInt(endTime) - parseInt(startTime)) / 1000000;
+        const daysInPeriod = Math.max(1, Math.round(durationMs / (1000 * 60 * 60 * 24)));
         const daysWithData = Object.keys(dailyTotals).length;
-        const dailyAverage = daysWithData > 0 ? Math.round(totalSteps / daysWithData) : 0;
 
-        console.log(`Steps: ${dailyAverage.toLocaleString()}/day average (${totalSteps.toLocaleString()} total over ${daysWithData} days)`);
+        // Media reale sul periodo, includendo giorni a 0
+        const dailyAverage = Math.round(totalSteps / daysInPeriod);
+
+        console.log(`Steps: ${dailyAverage.toLocaleString()}/day average (Real ${daysInPeriod}-day avg) - Total: ${totalSteps.toLocaleString()}`);
         console.log('Steps by day:', dailyTotals);
 
         return {
@@ -634,7 +644,7 @@ class HealthConnectService {
      */
     async fetchWeight(startTime, endTime) {
         const data = await this.fetchGoogleFitData('weight', startTime, endTime);
-        
+
         if (!data.point || data.point.length === 0) {
             console.log('No weight data available');
             return null;
@@ -657,9 +667,9 @@ class HealthConnectService {
         // Prendi l'ultimo peso con precisione a 1 decimale
         const latestWeight = Math.round(sortedPoints[0].value[0].fpVal * 10) / 10;
         const timestamp = new Date(parseInt(sortedPoints[0].endTimeNanos || sortedPoints[0].startTimeNanos) / 1000000);
-        
+
         console.log(`Latest weight: ${latestWeight} kg (recorded: ${timestamp.toLocaleString()})`);
-        
+
         return latestWeight;
     }
 
@@ -669,7 +679,7 @@ class HealthConnectService {
      */
     async fetchCaloriesWithDailyAverage(startTime, endTime) {
         const data = await this.fetchGoogleFitData('calories', startTime, endTime);
-        
+
         if (!data.point || data.point.length === 0) {
             console.log('No calories data available');
             return { dailyAverage: 0, total: 0, daysWithData: 0, byDay: {} };
@@ -682,15 +692,15 @@ class HealthConnectService {
             const calories = point.value?.[0]?.fpVal || 0;
             const startNanos = point.startTimeNanos;
             const endNanos = point.endTimeNanos;
-            
+
             const dayKey = new Date(parseInt(endNanos) / 1000000).toISOString().split('T')[0];
-            
+
             if (!caloriesByDay[dayKey]) {
                 caloriesByDay[dayKey] = new Map();
             }
-            
+
             const intervalKey = `${startNanos}-${endNanos}`;
-            
+
             if (caloriesByDay[dayKey].has(intervalKey)) {
                 const existing = caloriesByDay[dayKey].get(intervalKey);
                 caloriesByDay[dayKey].set(intervalKey, Math.max(existing, calories));
@@ -702,17 +712,21 @@ class HealthConnectService {
         // Calcola totale per ogni giorno
         const dailyTotals = {};
         let totalCalories = 0;
-        
+
         Object.entries(caloriesByDay).forEach(([day, intervalsMap]) => {
             const dayTotal = Array.from(intervalsMap.values()).reduce((sum, c) => sum + c, 0);
             dailyTotals[day] = Math.round(dayTotal);
             totalCalories += dayTotal;
         });
 
+        // Media reale sul periodo
+        const durationMs = (parseInt(endTime) - parseInt(startTime)) / 1000000;
+        const daysInPeriod = Math.max(1, Math.round(durationMs / (1000 * 60 * 60 * 24)));
         const daysWithData = Object.keys(dailyTotals).length;
-        const dailyAverage = daysWithData > 0 ? Math.round(totalCalories / daysWithData) : 0;
 
-        console.log(`Calories: ${dailyAverage.toLocaleString()} kcal/day average (${Math.round(totalCalories).toLocaleString()} total over ${daysWithData} days)`);
+        const dailyAverage = Math.round(totalCalories / daysInPeriod);
+
+        console.log(`Calories: ${dailyAverage.toLocaleString()} kcal/day average (Real ${daysInPeriod}-day avg) - Total: ${Math.round(totalCalories).toLocaleString()}`);
         console.log('Calories by day:', dailyTotals);
 
         return {
@@ -737,7 +751,7 @@ class HealthConnectService {
      */
     async fetchDistanceWithDailyAverage(startTime, endTime) {
         const data = await this.fetchGoogleFitData('distance', startTime, endTime);
-        
+
         if (!data.point || data.point.length === 0) {
             console.log('No distance data available');
             return { dailyAverage: 0, total: 0, daysWithData: 0, byDay: {} };
@@ -750,15 +764,15 @@ class HealthConnectService {
             const distance = point.value?.[0]?.fpVal || 0;
             const startNanos = point.startTimeNanos;
             const endNanos = point.endTimeNanos;
-            
+
             const dayKey = new Date(parseInt(endNanos) / 1000000).toISOString().split('T')[0];
-            
+
             if (!distanceByDay[dayKey]) {
                 distanceByDay[dayKey] = new Map();
             }
-            
+
             const intervalKey = `${startNanos}-${endNanos}`;
-            
+
             if (distanceByDay[dayKey].has(intervalKey)) {
                 const existing = distanceByDay[dayKey].get(intervalKey);
                 distanceByDay[dayKey].set(intervalKey, Math.max(existing, distance));
@@ -770,17 +784,21 @@ class HealthConnectService {
         // Calcola totale per ogni giorno
         const dailyTotals = {};
         let totalDistance = 0;
-        
+
         Object.entries(distanceByDay).forEach(([day, intervalsMap]) => {
             const dayTotal = Array.from(intervalsMap.values()).reduce((sum, d) => sum + d, 0);
             dailyTotals[day] = Math.round(dayTotal * 100) / 100; // metri con 2 decimali
             totalDistance += dayTotal;
         });
 
+        // Media reale sul periodo
+        const durationMs = (parseInt(endTime) - parseInt(startTime)) / 1000000;
+        const daysInPeriod = Math.max(1, Math.round(durationMs / (1000 * 60 * 60 * 24)));
         const daysWithData = Object.keys(dailyTotals).length;
-        const dailyAverage = daysWithData > 0 ? Math.round((totalDistance / daysWithData) * 100) / 100 : 0;
 
-        console.log(`Distance: ${(dailyAverage / 1000).toFixed(2)} km/day average (${(totalDistance / 1000).toFixed(2)} km total over ${daysWithData} days)`);
+        const dailyAverage = Math.round((totalDistance / daysInPeriod) * 100) / 100;
+
+        console.log(`Distance: ${(dailyAverage / 1000).toFixed(2)} km/day average (Real ${daysInPeriod}-day avg)`);
         console.log('Distance by day (meters):', dailyTotals);
 
         return {
@@ -886,7 +904,7 @@ class HealthConnectService {
 
         // Precisione a 2 decimali per maggiore accuratezza
         const preciseAvgHours = Math.round(avgHours * 100) / 100;
-        
+
         console.log(`Sleep: ${preciseAvgHours.toFixed(2)} hours/night average (${days.length} nights with data)`);
         console.log('Sleep by day (hours):', dailyHours);
 
@@ -910,7 +928,7 @@ class HealthConnectService {
      */
     async fetchActiveMinutesWithDailyAverage(startTime, endTime) {
         const data = await this.fetchGoogleFitData('activeMinutes', startTime, endTime);
-        
+
         if (!data.point || data.point.length === 0) {
             return { dailyAverage: 0, total: 0, daysWithData: 0, byDay: {} };
         }
@@ -922,7 +940,7 @@ class HealthConnectService {
             const minutes = point.value?.[0]?.intVal || 0;
             const endNanos = point.endTimeNanos;
             const dayKey = new Date(parseInt(endNanos) / 1000000).toISOString().split('T')[0];
-            
+
             if (!minutesByDay[dayKey]) {
                 minutesByDay[dayKey] = 0;
             }
@@ -969,7 +987,14 @@ class HealthConnectService {
         const data = await this.fetchGoogleFitData('bodyFat', startTime, endTime);
         const bodyFatValues = data.point?.map(p => p.value?.[0]?.fpVal).filter(v => v) || [];
         if (bodyFatValues.length === 0) return null;
-        return bodyFatValues[bodyFatValues.length - 1]; // Ultimo valore registrato
+
+        // Prendi l'ultimo valore (il più recente nel periodo)
+        // NOTA: Google Fit restituisce array, l'ordine dipende dalla query ma solitamente è cronologico se non specificato altrimenti
+        // Per sicurezza usiamo l'ultimo elemento dell'array
+        const lastValue = bodyFatValues[bodyFatValues.length - 1];
+
+        // Arrotonda a 2 decimali per precisione
+        return Math.round(lastValue * 100) / 100;
     }
 
     /**
