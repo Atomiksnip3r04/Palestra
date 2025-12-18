@@ -143,7 +143,12 @@ class HealthConnectService {
 
             // Chiama la Firebase Function per scambiare il code
             const exchangeCode = httpsCallable(functions, 'exchangeHealthCode');
-            const result = await exchangeCode({ code });
+            // FIX: Passiamo esplicitamente il redirectUri usato per garantire che coincida
+            // con quello usato lato client, evitando l'errore redirect_uri_mismatch
+            const result = await exchangeCode({
+                code,
+                redirectUri: this.redirectUri
+            });
 
             if (result.data.success) {
                 console.log('Auth code exchanged successfully');
