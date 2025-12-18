@@ -809,6 +809,32 @@
                             manubrio</span>
                     </div>
                 </div>
+                <!-- Unilateral Mode Toggle (Single Arm) -->
+                <div id="focusUnilateralToggle" style="display: none; margin-bottom: 0.75rem;">
+                    <label
+                        style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.6rem 1rem; background: linear-gradient(135deg, rgba(255,152,0,0.12), rgba(255,193,7,0.08)); border: 1px solid rgba(255,152,0,0.35); border-radius: var(--radius-md); transition: all 0.2s ease;">
+                        <div
+                            style="position: relative; width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; transition: background 0.2s;">
+                            <input type="checkbox" id="unilateralToggleCheckbox"
+                                style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
+                            <div id="unilateralToggleTrack"
+                                style="position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.15); border-radius: 12px; transition: background 0.2s;">
+                            </div>
+                            <div id="unilateralToggleThumb"
+                                style="position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s, background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                            </div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.1rem;">
+                            <span
+                                style="color: #ff9800; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                💪 Modalità Braccio Singolo
+                            </span>
+                            <span style="color: var(--color-text-muted); font-size: 0.7rem;">
+                                Traccia pesi diversi per DX e SX
+                            </span>
+                        </div>
+                    </label>
+                </div>
                 <!-- Suggested Weight Banner -->
                 <div id="focusSuggestedWeight"
                     style="display: none; background: linear-gradient(135deg, rgba(0,243,255,0.15), rgba(0,153,255,0.1)); border: 1px solid rgba(0,243,255,0.3); border-radius: var(--radius-md); padding: 0.6rem 1rem; margin-bottom: 1rem; text-align: center;">
@@ -2427,10 +2453,97 @@
             });
 
             let supersetModeActive = false;
+            let unilateralModeActive = false;
+
+            function renderUnilateralInputs(ex, set) {
+                unilateralModeActive = true;
+
+                // Get pre-filled values safely
+                const weightLeft = set.weightLeft || set.weight || '';
+                const weightRight = set.weightRight || set.weight || '';
+                const repsLeft = set.repsLeft || set.reps || '';
+                const repsRight = set.repsRight || set.reps || '';
+                const rpeLeft = set.rpeLeft || set.rpe || '';
+                const rpeRight = set.rpeRight || set.rpe || '';
+                const targetReps = set.target || ex.reps || '';
+
+                focusActiveArea.innerHTML = `
+                <!-- Unilateral Mode Toggle (Active) -->
+                <div id="focusUnilateralToggle" style="margin-bottom: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.6rem 1rem; background: linear-gradient(135deg, rgba(255,152,0,0.2), rgba(255,193,7,0.15)); border: 1px solid rgba(255,152,0,0.5); border-radius: var(--radius-md); transition: all 0.2s ease; box-shadow: 0 0 10px rgba(255,152,0,0.1);">
+                        <div style="position: relative; width: 44px; height: 24px; background: rgba(255,152,0,0.2); border-radius: 12px; transition: background 0.2s;">
+                            <input type="checkbox" id="unilateralToggleCheckbox" checked
+                                style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
+                            <div id="unilateralToggleTrack" style="position: absolute; width: 100%; height: 100%; background: rgba(255,152,0,0.3); border-radius: 12px; transition: background 0.2s;"></div>
+                            <div id="unilateralToggleThumb" style="position: absolute; top: 2px; left: 22px; width: 20px; height: 20px; background: #ffc107; border-radius: 50%; transition: transform 0.2s, background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.1rem;">
+                            <span style="color: #ff9800; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                💪 Modalità Braccio Singolo
+                            </span>
+                            <span style="color: #ffcc80; font-size: 0.7rem;">
+                                Attivo: Pesi separati DX/SX
+                            </span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="unilateral-container" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,152,0,0.3); border-radius: 12px; padding: 1rem; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(to right, #ff9800, #ffc107);"></div>
+                    
+                    <div style="text-align:center; margin-bottom:1rem; color:#ff9800; font-size:0.8rem; font-weight:bold; letter-spacing:1px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <span>💪 BRACCIO SINGOLO</span>
+                    </div>
+
+                    <!-- Left Arm (Sinistro) -->
+                    <div class="unilateral-block-left" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="font-size: 0.95rem; color: #ffc107; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>👈 Braccio Sinistro (SX)</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px; border-left: 2px solid #ffc107;">
+                                <label style="font-size: 0.6rem; color: #888;">KG SX</label>
+                                <input type="number" id="focusWeightInput_Left" value="${weightLeft}" placeholder="Kg" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">REPS SX</label>
+                                <input type="text" id="focusRepsInput_Left" value="${repsLeft}" placeholder="${targetReps}" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">RPE</label>
+                                <input type="number" id="focusRpeInput_Left" value="${rpeLeft}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Arm (Destro) -->
+                    <div class="unilateral-block-right">
+                        <div style="font-size: 0.95rem; color: #ff9800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span>👉 Braccio Destro (DX)</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px; border-left: 2px solid #ff9800;">
+                                <label style="font-size: 0.6rem; color: #888;">KG DX</label>
+                                <input type="number" id="focusWeightInput_Right" value="${weightRight}" placeholder="Kg" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">REPS DX</label>
+                                <input type="text" id="focusRepsInput_Right" value="${repsRight}" placeholder="${targetReps}" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                            </div>
+                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
+                                <label style="font-size: 0.6rem; color: #888;">RPE</label>
+                                <input type="number" id="focusRpeInput_Right" value="${rpeRight}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            }
 
             function renderNormalInputs() {
-                if (!supersetModeActive) return; // Already normal
+                if (!supersetModeActive && !unilateralModeActive) return; // Already normal
                 supersetModeActive = false;
+                unilateralModeActive = false;
 
                 focusActiveArea.innerHTML = `
                 <div id="focusBilateralIndicator" style="display: none; background: linear-gradient(135deg, rgba(156,39,176,0.15), rgba(103,58,183,0.1)); border: 1px solid rgba(156,39,176,0.3); border-radius: var(--radius-md); padding: 0.5rem 1rem; margin-bottom: 0.75rem; text-align: center;">
@@ -2439,6 +2552,26 @@
                         <span style="color: #ce93d8; font-size: 0.8rem; font-weight: 500;">Manubri Bilaterali</span>
                         <span style="color: var(--color-text-muted); font-size: 0.7rem;">• Inserisci peso singolo manubrio</span>
                     </div>
+                </div>
+                <!-- Unilateral Mode Toggle (Single Arm) -->
+                <div id="focusUnilateralToggle"
+                    style="display: none; margin-bottom: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.6rem 1rem; background: linear-gradient(135deg, rgba(255,152,0,0.12), rgba(255,193,7,0.08)); border: 1px solid rgba(255,152,0,0.35); border-radius: var(--radius-md); transition: all 0.2s ease;">
+                        <div style="position: relative; width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; transition: background 0.2s;">
+                            <input type="checkbox" id="unilateralToggleCheckbox" 
+                                style="opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; z-index: 2;">
+                            <div id="unilateralToggleTrack" style="position: absolute; width: 100%; height: 100%; background: rgba(255,255,255,0.15); border-radius: 12px; transition: background 0.2s;"></div>
+                            <div id="unilateralToggleThumb" style="position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.2s, background 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.1rem;">
+                            <span style="color: #ff9800; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.4rem;">
+                                💪 Modalità Braccio Singolo
+                            </span>
+                            <span style="color: var(--color-text-muted); font-size: 0.7rem;">
+                                Traccia pesi diversi per DX e SX
+                            </span>
+                        </div>
+                    </label>
                 </div>
                 <div id="focusSuggestedWeight" style="display: none; background: linear-gradient(135deg, rgba(0,243,255,0.15), rgba(0,153,255,0.1)); border: 1px solid rgba(0,243,255,0.3); border-radius: var(--radius-md); padding: 0.6rem 1rem; margin-bottom: 1rem; text-align: center;">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; flex-wrap: wrap;">
@@ -2466,6 +2599,7 @@
 
             function renderSupersetInputs(exA, exB, setA, setB) {
                 supersetModeActive = true;
+                unilateralModeActive = false; // Reset unilateral mode
 
                 const targetA = setA?.target || exA.reps || '';
                 const targetB = setB?.target || exB.reps || '';
@@ -2591,6 +2725,63 @@
                         focusHistoryList.prepend(historyItem);
                         startRest();
 
+                    } else if (unilateralModeActive) {
+                        // === UNILATERAL LOGGING ===
+                        const activeExercise = currentWorkout?.exercises?.[currentExerciseIndex];
+                        const activeSet = activeExercise?.sets?.[currentSetIndex];
+
+                        const wLeft = document.getElementById('focusWeightInput_Left').value;
+                        const wRight = document.getElementById('focusWeightInput_Right').value;
+                        const rLeft = document.getElementById('focusRepsInput_Left').value;
+                        const rRight = document.getElementById('focusRepsInput_Right').value;
+                        const rpeLeftVal = document.getElementById('focusRpeInput_Left').value;
+                        const rpeRightVal = document.getElementById('focusRpeInput_Right').value;
+
+                        const valWLeft = parseFloat(wLeft) || 0;
+                        const valWRight = parseFloat(wRight) || 0;
+                        const valRLeft = rLeft || activeSet?.target || activeSet?.reps || '';
+                        const valRRight = rRight || activeSet?.target || activeSet?.reps || '';
+
+                        if (activeSet) {
+                            activeSet.isUnilateral = true;
+                            // Reset bilateral just in case
+                            activeSet.isBilateral = false;
+
+                            activeSet.weightLeft = valWLeft;
+                            activeSet.weightRight = valWRight;
+                            activeSet.repsLeft = valRLeft;
+                            activeSet.repsRight = valRRight;
+                            activeSet.rpeLeft = rpeLeftVal ? parseFloat(rpeLeftVal) : 0;
+                            activeSet.rpeRight = rpeRightVal ? parseFloat(rpeRightVal) : 0;
+
+                            // Backward compatibility and summary fields
+                            // Use average weight or max? Max is safer for PRs logic roughly, but separate is best.
+                            // We save both, but 'weight' is used by charts usually. Let's use MAX to tracking strength cap.
+                            activeSet.weight = Math.max(valWLeft, valWRight);
+                            activeSet.reps = valRLeft; // Default to Left reps for summary
+                            activeSet.rpe = Math.max(activeSet.rpeLeft, activeSet.rpeRight);
+                        }
+
+                        const historyItem = document.createElement('div');
+                        // Format: 15kg SX / 16kg DX
+                        const weightDisplay = `<span style="color:#ffc107">${valWLeft}kg SX</span> / <span style="color:#ff9800">${valWRight}kg DX</span>`;
+                        const repsDisplay = `${valRLeft}`; // Simplified display if equal? No, let's keep simple.
+
+                        const setTypeBadges = {
+                            normal: '',
+                            warmup: '<span style="color:#ffc107;font-size:0.8em;">[W]</span> ',
+                            backoff: '<span style="color:#9c27b0;font-size:0.8em;">[B]</span> ',
+                            dropset: '<span style="color:#f44336;font-size:0.8em;">[D]</span> ',
+                            amrap: '<span style="color:#4caf50;font-size:0.8em;">[A]</span> ',
+                            pause: '<span style="color:#ff9800;font-size:0.8em;">[P]</span> '
+                        };
+                        const setType = activeSet?.type || 'normal';
+                        const typeBadge = setTypeBadges[setType] || '';
+
+                        historyItem.innerHTML = `✅ ${typeBadge}Set ${currentSetIndex + 1}: ${weightDisplay} x ${repsDisplay}`;
+                        focusHistoryList.prepend(historyItem);
+                        startRest();
+
                     } else {
                         // === NORMAL LOGGING ===
                         const weightInput = document.getElementById('focusWeightInput');
@@ -2695,6 +2886,34 @@
             function updateFocusCommon(ex, set) {
                 const targetLabel = set?.target || ex.reps || '';
                 const baseCounter = `Set ${currentSetIndex + 1} / ${ex.sets.length}`;
+
+                // --- UNILATERAL MODE TOGGLE LOGIC ---
+                const unilateralToggleWrapper = document.getElementById('focusUnilateralToggle');
+                const unilateralCheckbox = document.getElementById('unilateralToggleCheckbox');
+
+                if (unilateralToggleWrapper && unilateralCheckbox) {
+                    unilateralToggleWrapper.style.display = 'block';
+
+                    // Auto-switch based on saved data (only if not already in that mode)
+                    if (set.isUnilateral && !unilateralModeActive) {
+                        renderUnilateralInputs(ex, set);
+                        updateFocusCommon(ex, set); // Re-bind and exit
+                        return;
+                    }
+
+                    // Sync Checkbox State
+                    unilateralCheckbox.checked = unilateralModeActive;
+
+                    // Bind Change Event
+                    unilateralCheckbox.onchange = (e) => {
+                        if (e.target.checked) {
+                            renderUnilateralInputs(ex, set);
+                        } else {
+                            renderNormalInputs();
+                        }
+                        updateFocusCommon(ex, set);
+                    }
+                }
 
                 // Set Type Badge
                 const setTypeLabels = {
@@ -3077,13 +3296,33 @@
 
                 const exercises = currentWorkout.exercises.map(ex => {
                     const validSets = (ex.sets || []).map(set => {
+                        // Check if unilateral
+                        if (set.isUnilateral) {
+                            const setData = {
+                                weight: Math.max(Number(set.weightLeft || 0), Number(set.weightRight || 0)),
+                                reps: Number(set.repsLeft || set.reps || 0),
+                                isUnilateral: true,
+                                weightLeft: Number(set.weightLeft || 0),
+                                weightRight: Number(set.weightRight || 0),
+                                repsLeft: Number(set.repsLeft || 0),
+                                repsRight: Number(set.repsRight || 0)
+                            };
+                            if (set.rpeLeft || set.rpeRight) {
+                                setData.rpe = Math.max(Number(set.rpeLeft || 0), Number(set.rpeRight || 0));
+                                setData.rpeLeft = Number(set.rpeLeft || 0);
+                                setData.rpeRight = Number(set.rpeRight || 0);
+                            }
+                            if (set.type && set.type !== 'normal') setData.type = set.type;
+                            return setData;
+                        }
+
                         const weightVal = Number(set.weight) || 0;
                         const repsVal = parseFloat(set.reps ?? set.target);
                         if (weightVal <= 0 || !Number.isFinite(repsVal) || repsVal <= 0) return null;
 
                         // Include RPE and set type if available
                         const setData = { weight: weightVal, reps: repsVal };
-                        if (set.isBilateral) setData.isBilateral = true; // FIX: Persist bilateral status
+                        if (set.isBilateral) setData.isBilateral = true;
 
                         if (set.rpe !== undefined && set.rpe !== null && set.rpe !== '') {
                             setData.rpe = Number(set.rpe);
@@ -3126,6 +3365,9 @@
 
                 const totalVolume = exercises.reduce((acc, ex) => {
                     return acc + ex.sets.reduce((sum, set) => {
+                        if (set.isUnilateral) {
+                            return sum + (set.weightLeft * set.repsLeft) + (set.weightRight * set.repsRight);
+                        }
                         const effectiveWeight = set.isBilateral ? set.weight * 2 : set.weight;
                         return sum + (effectiveWeight * set.reps);
                     }, 0);
