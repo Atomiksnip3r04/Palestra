@@ -783,9 +783,9 @@
                 style="background: none; border: 1px solid #333; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer;">✕</button>
         </div>
 
-        <!-- Main Content -->
-        <div
-            style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 500px; margin: 0 auto;">
+        <!-- Main Content (Scrollable) -->
+        <div id="focusContentWrapper"
+            style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 500px; margin: 0 auto; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;">
 
             <!-- Exercise Info -->
             <div style="text-align: center; margin-bottom: 2rem; width: 100%;">
@@ -3875,6 +3875,45 @@
                 }
             });
         });
+    </script>
+
+    <!-- Focus Mode UX: Mobile Keyboard Handler -->
+    <script>
+        (function () {
+            const focusOverlay = document.getElementById('focusModeOverlay');
+            const focusContent = document.getElementById('focusContentWrapper');
+
+            // 1. Dynamic Padding on Resize (Visual Viewport)
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => {
+                    if (!focusOverlay || focusOverlay.style.display === 'none') return;
+
+                    // Detect keyboard opening (significant height reduction)
+                    const ratio = window.visualViewport.height / window.innerHeight;
+                    if (ratio < 0.85) {
+                        // Keyboard likely open
+                        // Add extra padding to allow scrolling inputs to center
+                        focusContent.style.paddingBottom = '50vh'; // Large safe padding
+                    } else {
+                        // Keyboard closed
+                        focusContent.style.paddingBottom = '20px'; // Default
+                    }
+                });
+            }
+
+            // 2. Scroll into View on Focus
+            document.addEventListener('focusin', (e) => {
+                if (!focusOverlay || focusOverlay.style.display === 'none') return;
+
+                const target = e.target;
+                if (target.tagName === 'INPUT' && focusOverlay.contains(target)) {
+                    // Delay to wait for viewport resize
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 400);
+                }
+            });
+        })();
     </script>
 </body>
 
