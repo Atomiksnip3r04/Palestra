@@ -141,13 +141,15 @@ class HealthConnectService {
             const { getFunctions, httpsCallable } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js');
             const functions = getFunctions();
 
+            console.log('Exchanging auth code with redirect URI:', this.redirectUri);
+
             // Chiama la Firebase Function per scambiare il code
             const exchangeCode = httpsCallable(functions, 'exchangeHealthCode');
-            // FIX: Passiamo esplicitamente il redirectUri usato per garantire che coincida
-            // con quello usato lato client, evitando l'errore redirect_uri_mismatch
+            // FIX: Invio redirect_uri in vari formati per compatibilità col backend
             const result = await exchangeCode({
                 code,
-                redirectUri: this.redirectUri
+                redirectUri: this.redirectUri,
+                redirect_uri: this.redirectUri // Snake case standard OAuth
             });
 
             if (result.data.success) {
