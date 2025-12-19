@@ -1,5 +1,8 @@
 import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from './firebase-config.js';
+import { auth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithCredential } from './firebase-config.js';
 import { firestoreService } from './firestore-service.js';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 
 export class AuthService {
     constructor() {
@@ -45,14 +48,42 @@ export class AuthService {
 
     async loginWithGoogle() {
         try {
-            const provider = new GoogleAuthProvider();
-            const result = await signInWithPopup(auth, provider);
+            let userResult;
+
+            if (Capacitor.isNativePlatform()) {
+                // Native Platform (Android/iOS)
+                console.log('📱 Using Native Google Sign-In');
+                // Ensure initialized (safe to call multiple times)
+                await GoogleAuth.initialize();
+
+                const googleUser = await GoogleAuth.signIn();
+
+                if (!googleUser) {
+                    throw new Error('Google Sign-In cancelled');
+                }
+
+                // Create Firebase credential from the Google ID token
+                const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+                userResult = await signInWithCredential(auth, credential);
+
+            } else {
+                // Web Platform
+                console.log('🌐 Using Web Google Sign-In');
+                const provider = new GoogleAuthProvider();
+                userResult = await signInWithPopup(auth, provider);
+            }
+
             // Initialize user data in Firestore if new
-            await firestoreService.initializeNewUser(result.user);
-            return { success: true, user: result.user };
+            await firestoreService.initializeNewUser(userResult.user);
+            return { success: true, user: userResult.user };
         } catch (error) {
             console.error("Google Login error:", error);
-            return { success: false, message: error.message };
+            // Handle common native errors (e.g. 10: Developer Error)
+            let msg = error.message || JSON.stringify(error);
+            if (msg.includes('10:') || msg.includes('12500:')) {
+                msg = 'Errore configurazione Google (SHA-1 fingerprint mancante?). ' + msg;
+            }
+            return { success: false, message: msg };
         }
     }
 
