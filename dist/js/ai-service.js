@@ -1,4 +1,5 @@
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+// Firebase Functions SDK for secure backend AI calls
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 import { exerciseNormalizer } from './exercise-normalizer.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -61,19 +62,35 @@ const buildExternalDomsBlock = (recentLogs = []) => {
 
 export class AIService {
     constructor() {
-        // API Key is loaded from LocalStorage only. 
-        // NEVER hardcode keys in public repositories.
-        // V2: Force refresh of API Key to handle leak issue
-        this.apiKey = localStorage.getItem('gymbro_ai_key_v2') || 'AIzaSyB4Qeclh3rIN-q6ltDyn2qenOCCPmP2uHs';
+        // API Key is now managed securely in Firebase Cloud Functions.
+        // No client-side key storage needed.
+        this.functions = getFunctions();
+        this.generateContentCallable = httpsCallable(this.functions, 'generateContentWithGemini');
     }
 
+    // Legacy method - always returns true since key is server-side
     hasKey() {
-        return !!this.apiKey;
+        return true;
     }
 
+    // Legacy method - no-op, key is managed server-side
     saveKey(key) {
-        this.apiKey = key;
-        localStorage.setItem('gymbro_ai_key_v2', key);
+        console.warn('AI Key is now managed server-side. This method is deprecated.');
+    }
+
+    // Helper: Call the Cloud Function for AI generation
+    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-1.5-flash') {
+        try {
+            const result = await this.generateContentCallable({
+                prompt: prompt,
+                config: config,
+                modelName: modelName
+            });
+            return result.data;
+        } catch (error) {
+            console.error('Cloud Function AI Error:', error);
+            throw error;
+        }
     }
 
     // --- TOON Encoder Implementation (Lightweight) ---
@@ -109,13 +126,7 @@ export class AIService {
     }
 
     async analyzeProgress(data) {
-        if (!this.apiKey) {
-            return { success: false, message: "API Key mancante." };
-        }
-
         try {
-            const genAI = new GoogleGenerativeAI(this.apiKey);
-
             // Configuration for high-quality, comprehensive output
             const generationConfig = {
                 temperature: 0.7, // Creative but grounded
@@ -123,13 +134,6 @@ export class AIService {
                 topK: 40,
                 maxOutputTokens: 16384, // Massimo per analisi approfondita e completa
             };
-
-            // Use the most advanced model available
-            // Fallback chain: 1.5 Pro (Stable High Intelligence) -> 2.0 Flash (Fast)
-            const model = genAI.getGenerativeModel({
-                model: "gemini-3-flash-preview",
-                generationConfig
-            });
 
             // Convert data to TOON to save tokens
             const toonLogs = this.encodeToTOON(data.recentLogs, 'workoutLogs');
@@ -534,11 +538,9 @@ Usa Markdown con questa struttura OBBLIGATORIA:
 `;
             console.log("Sending Advanced TOON Prompt size:", prompt.length);
 
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+            const result = await this.callGeminiBackend(prompt, generationConfig, 'gemini-1.5-flash');
 
-            return { success: true, text: text };
+            return { success: true, text: result.text };
         } catch (error) {
             console.error("AI Error:", error);
             return { success: false, message: "Errore AI: " + error.message };
@@ -547,10 +549,7 @@ Usa Markdown con questa struttura OBBLIGATORIA:
 
     // NEW: AI Session Predictor
     async predictNextSession(data) {
-        if (!this.apiKey) return { success: false, message: "API Key mancante." };
         try {
-            const genAI = new GoogleGenerativeAI(this.apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
             const toonLogs = this.encodeToTOON(data.recentLogs.slice(0, 10), 'lastWorkouts'); // Last 10 for better pattern detection
             const domsGuidance = buildRecentDomsBlock(data?.domsInsights?.hotspots || []);
@@ -653,8 +652,8 @@ Rispondi in formato JSON (senza markdown, solo JSON puro):
 
 ${exerciseNormalizer.getAINormalizationPrompt()}
 `;
-            const result = await model.generateContent(prompt);
-            let text = result.response.text();
+            const result = await this.callGeminiBackend(prompt, { temperature: 0.7 }, 'gemini-1.5-flash');
+            let text = result.text;
             // Clean markdown if present
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
@@ -663,7 +662,8 @@ ${exerciseNormalizer.getAINormalizationPrompt()}
             // Normalizza i nomi degli esercizi per evitare duplicati semantici
             if (parsed.exercises && Array.isArray(parsed.exercises)) {
                 const exerciseNames = parsed.exercises.map(ex => ex.name);
-                const normalizedNames = await exerciseNormalizer.normalizeWithAI(exerciseNames, this.apiKey);
+                // Use Cloud Function for normalization too
+                const normalizedNames = await exerciseNormalizer.normalizeWithCloudFunction(exerciseNames, this.generateContentCallable);
                 parsed.exercises.forEach((ex, i) => {
                     ex.name = normalizedNames[i] || ex.name;
                 });
@@ -677,10 +677,7 @@ ${exerciseNormalizer.getAINormalizationPrompt()}
     }
 
     async generateTrendDigest(payload) {
-        if (!this.apiKey) return { success: false, message: "API Key mancante." };
         try {
-            const genAI = new GoogleGenerativeAI(this.apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
             const domsHotspots = payload?.domsHotspots || [];
             const externalDomsInfo = buildExternalDomsBlock(payload?.recentLogs || []);
@@ -753,9 +750,8 @@ ${payload.healthData ? `
 - Nella sezione "Rischi / Regressioni" cita eventuali distretti con DOMS persistenti e, se serve, richiamali anche nel focus dei prossimi 7 giorni.
 - Usa lo storico trend per identificare pattern a lungo termine (es. stallo prolungato, regressioni ricorrenti).
 `;
-            const result = await model.generateContent(prompt);
-            const text = result.response.text();
-            return { success: true, text };
+            const result = await this.callGeminiBackend(prompt, { temperature: 0.7 }, 'gemini-1.5-flash');
+            return { success: true, text: result.text };
         } catch (error) {
             console.error("AI Trend Digest Error:", error);
             return { success: false, message: error.message };

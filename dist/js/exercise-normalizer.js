@@ -1,9 +1,8 @@
 /**
  * Exercise Normalizer Service
  * Normalizza i nomi degli esercizi usando AI per evitare duplicati semantici
+ * Now uses Firebase Cloud Functions for secure API key management.
  */
-
-import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 export class ExerciseNormalizer {
     constructor() {
@@ -87,39 +86,52 @@ export class ExerciseNormalizer {
     }
 
     /**
-     * Normalizza una lista di esercizi usando AI
-     * Usato quando l'AI genera un nuovo workout
+     * Normalizza una lista di esercizi
+     * @deprecated Use normalizeWithCloudFunction instead
+     * This method now only uses local normalization for backward compatibility
      */
     async normalizeWithAI(exerciseNames, apiKey) {
-        if (!apiKey || !exerciseNames || exerciseNames.length === 0) {
+        // Legacy method - now uses only local normalization
+        // Use normalizeWithCloudFunction for AI-powered normalization
+        console.warn('normalizeWithAI is deprecated. Use normalizeWithCloudFunction instead.');
+
+        if (!exerciseNames || exerciseNames.length === 0) {
             return exerciseNames;
         }
 
         this.loadExistingExercises();
 
         if (this.existingExercises.length === 0) {
-            // Nessun esercizio esistente, non serve normalizzare
             return exerciseNames;
         }
 
-        // Check cache
+        // Use local normalization only
+        return exerciseNames.map(name => this.normalizeLocally(name));
+    }
+
+    /**
+     * Normalizza una lista di esercizi usando Cloud Function
+     * @param {string[]} exerciseNames - Lista di nomi esercizi da normalizzare
+     * @param {function} generateContentCallable - httpsCallable function from ai-service
+     */
+    async normalizeWithCloudFunction(exerciseNames, generateContentCallable) {
+        if (!generateContentCallable || !exerciseNames || exerciseNames.length === 0) {
+            return exerciseNames;
+        }
+
+        this.loadExistingExercises();
+
+        if (this.existingExercises.length === 0) {
+            return exerciseNames;
+        }
+
         const uncached = exerciseNames.filter(name => !this.exerciseCache.has(name));
 
         if (uncached.length === 0) {
-            // Tutto in cache
             return exerciseNames.map(name => this.exerciseCache.get(name) || name);
         }
 
         try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({
-                model: "gemini-3-flash-preview",
-                generationConfig: {
-                    temperature: 0.1, // Molto deterministico
-                    maxOutputTokens: 1024
-                }
-            });
-
             const prompt = `Sei un assistente per la normalizzazione dei nomi degli esercizi di palestra.
 
 ESERCIZI GIÀ ESISTENTI NEL DATABASE:
@@ -130,7 +142,7 @@ ${uncached.join('\n')}
 
 REGOLE IMPORTANTI:
 1. Se un esercizio da normalizzare è IDENTICO o SEMANTICAMENTE EQUIVALENTE a uno esistente, ritorna ESATTAMENTE il nome esistente (stesso casing, stessa stringa)
-2. Considera equivalenti variazioni come: singolare/plurale, con/senza articoli, abbreviazioni comuni (es: "Panca Piana" = "Bench Press" = "Panca" se il contesto è chiaro)
+2. Considera equivalenti variazioni come: singolare/plurale, con/senza articoli, abbreviazioni comuni
 3. Se l'esercizio è NUOVO e non ha equivalenti, ritornalo esattamente come fornito
 4. NON inventare nuovi nomi, NON modificare la formattazione se non necessario
 
@@ -139,29 +151,30 @@ FORMATO RISPOSTA (JSON array, mantenendo l'ordine):
 
 Rispondi SOLO con il JSON array, nient'altro.`;
 
-            const result = await model.generateContent(prompt);
-            const text = result.response.text().trim();
+            const result = await generateContentCallable({
+                prompt: prompt,
+                config: { temperature: 0.1, maxOutputTokens: 1024 },
+                modelName: 'gemini-1.5-flash'
+            });
 
-            // Parse JSON response
+            const text = result.data.text.trim();
+
             const jsonMatch = text.match(/\[[\s\S]*\]/);
             if (jsonMatch) {
                 const normalized = JSON.parse(jsonMatch[0]);
 
-                // Aggiorna cache
                 uncached.forEach((name, i) => {
                     if (normalized[i]) {
                         this.exerciseCache.set(name, normalized[i]);
                     }
                 });
 
-                // Ritorna lista completa
                 return exerciseNames.map(name => this.exerciseCache.get(name) || name);
             }
         } catch (error) {
-            console.warn('Exercise normalization AI failed:', error);
+            console.warn('Exercise normalization Cloud Function failed:', error);
         }
 
-        // Fallback a normalizzazione locale
         return exerciseNames.map(name => this.normalizeLocally(name));
     }
 
