@@ -79,7 +79,7 @@ export class AIService {
     }
 
     // Helper: Call the Cloud Function for AI generation
-    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-1.5-flash') {
+    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-3-flash-preview') {
         try {
             const result = await this.generateContentCallable({
                 prompt: prompt,
@@ -538,7 +538,7 @@ Usa Markdown con questa struttura OBBLIGATORIA:
 `;
             console.log("Sending Advanced TOON Prompt size:", prompt.length);
 
-            const result = await this.callGeminiBackend(prompt, generationConfig, 'gemini-1.5-flash');
+            const result = await this.callGeminiBackend(prompt, generationConfig, 'gemini-3-flash-preview');
 
             return { success: true, text: result.text };
         } catch (error) {
@@ -652,7 +652,7 @@ Rispondi in formato JSON (senza markdown, solo JSON puro):
 
 ${exerciseNormalizer.getAINormalizationPrompt()}
 `;
-            const result = await this.callGeminiBackend(prompt, { temperature: 0.7 }, 'gemini-1.5-flash');
+            const result = await this.callGeminiBackend(prompt, { temperature: 0.7 }, 'gemini-3-flash-preview');
             let text = result.text;
             // Clean markdown if present
             text = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -750,7 +750,7 @@ ${payload.healthData ? `
 - Nella sezione "Rischi / Regressioni" cita eventuali distretti con DOMS persistenti e, se serve, richiamali anche nel focus dei prossimi 7 giorni.
 - Usa lo storico trend per identificare pattern a lungo termine (es. stallo prolungato, regressioni ricorrenti).
 `;
-            const result = await this.callGeminiBackend(prompt, { temperature: 0.7 }, 'gemini-1.5-flash');
+            const result = await this.callGeminiBackend(prompt, { temperature: 0.7 }, 'gemini-3-flash-preview');
             return { success: true, text: result.text };
         } catch (error) {
             console.error("AI Trend Digest Error:", error);

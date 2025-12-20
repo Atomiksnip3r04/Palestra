@@ -154,7 +154,7 @@ Rispondi SOLO con il JSON array, nient'altro.`;
             const result = await generateContentCallable({
                 prompt: prompt,
                 config: { temperature: 0.1, maxOutputTokens: 1024 },
-                modelName: 'gemini-1.5-flash'
+                modelName: 'gemini-3-flash-preview'
             });
 
             const text = result.data.text.trim();

@@ -976,7 +976,7 @@ exports.generateContentWithGemini = functions
 
       // Use specified model or default to Flash for speed/cost
       const model = genAI.getGenerativeModel({
-        model: modelName || "gemini-1.5-flash",
+        model: modelName || "gemini-3-flash-preview",
         generationConfig: config || {}
       });
 
