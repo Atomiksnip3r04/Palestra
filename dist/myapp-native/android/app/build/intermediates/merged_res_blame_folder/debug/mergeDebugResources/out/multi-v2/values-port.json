@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.gymbro.app-mergeDebugResources-26:/values-port/values-port.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Massi\\.gradle\\caches\\8.13\\transforms\\5b5327734b332e0033c9090dcda3d89c\\transformed\\appcompat-1.7.0\\res\\values-port\\values-port.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "55",
+                        "endOffsets": "106"
+                    }
+                }
+            ]
+        }
+    ]
+}
