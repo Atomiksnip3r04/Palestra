@@ -3189,87 +3189,94 @@
                 const ex = currentWorkout.exercises[currentExerciseIndex];
                 const isSuperset = !!ex.supersetId;
 
-                if (currentSetIndex < ex.sets.length - 1) {
-                    const previousSet = ex.sets[currentSetIndex];
-                    currentSetIndex++;
-                    const upcomingSet = ex.sets[currentSetIndex];
-                    if (previousSet && upcomingSet) {
-                        if ((!upcomingSet.weight || upcomingSet.weight === 0) && previousSet.weight) {
-                            upcomingSet.weight = previousSet.weight;
-                        }
-                        if ((upcomingSet.reps === '' || upcomingSet.reps === undefined || upcomingSet.reps === null) && previousSet.reps) {
-                            upcomingSet.reps = previousSet.reps;
-                        }
-                        if (!upcomingSet.target && previousSet.target) {
-                            upcomingSet.target = previousSet.target;
-                        }
-                    }
+                // Carry over values for the NEXT set/exercise if logic allows
+                const carryData = (prev, next) => {
+                    if (!prev || !next) return;
+                    if ((!next.weight || next.weight === 0) && prev.weight) next.weight = prev.weight;
+                    if ((next.reps === '' || next.reps === undefined || next.reps === null) && prev.reps) next.reps = prev.reps;
+                    if (!next.target && prev.target) next.target = prev.target;
+                };
 
-                    // Handle Exercise B persistence in Combined Superset Mode
-                    if (supersetModeActive) {
+                if (supersetModeActive) {
+                    // COMBINED MODE: Both A and B done together
+                    if (currentSetIndex < ex.sets.length - 1) {
+                        const nextIndex = currentSetIndex + 1;
+                        carryData(ex.sets[currentSetIndex], ex.sets[nextIndex]);
+
+                        // Also carry for partner B
                         const exB = currentWorkout.exercises[currentExerciseIndex + 1];
                         if (exB && exB.supersetId === ex.supersetId) {
-                            const prevSetB = exB.sets[currentSetIndex - 1];
-                            const upSetB = exB.sets[currentSetIndex];
-                            if (prevSetB && upSetB) {
-                                if ((!upSetB.weight || upSetB.weight === 0) && prevSetB.weight) {
-                                    upSetB.weight = prevSetB.weight;
-                                }
-                                if ((upSetB.reps === '' || upSetB.reps === undefined || upSetB.reps === null) && prevSetB.reps) {
-                                    upSetB.reps = prevSetB.reps;
-                                }
-                            }
+                            carryData(exB.sets[currentSetIndex], exB.sets[nextIndex]);
+                        }
+
+                        currentSetIndex++;
+                    } else {
+                        // Finished both
+                        currentSetIndex = 0;
+                        currentExerciseIndex += 2; // Jump past A and B
+                    }
+                } else if (isSuperset) {
+                    // SEQUENTIAL MODE: A1 -> B1 -> A2 -> B2 ...
+                    if (ex.supersetRole === 'A') {
+                        // Finished set n of A, move to set n of B
+                        // currentSetIndex remains same
+                        currentExerciseIndex++;
+                    } else if (ex.supersetRole === 'B') {
+                        // Finished set n of B, check if we need to go back to A for n+1
+                        const exA = currentWorkout.exercises[currentExerciseIndex - 1];
+                        if (exA && exA.supersetId === ex.supersetId && currentSetIndex < exA.sets.length - 1) {
+                            // Carry values from B(n) to B(n+1) for future
+                            carryData(ex.sets[currentSetIndex], ex.sets[currentSetIndex + 1]);
+                            // Also carry A(n) to A(n+1)
+                            carryData(exA.sets[currentSetIndex], exA.sets[currentSetIndex + 1]);
+
+                            currentSetIndex++;
+                            currentExerciseIndex--; // Back to A
+                        } else {
+                            // Finished all rounds of A/B
+                            currentSetIndex = 0;
+                            currentExerciseIndex++;
+                        }
+                    } else {
+                        // Superset without role? Fallback to normal
+                        if (currentSetIndex < ex.sets.length - 1) {
+                            carryData(ex.sets[currentSetIndex], ex.sets[currentSetIndex + 1]);
+                            currentSetIndex++;
+                        } else {
+                            currentSetIndex = 0;
+                            currentExerciseIndex++;
                         }
                     }
                 } else {
-                    // Finished all sets of current exercise
-
-                    // IF Sequential Mode (Alternating) - only if NOT in combined mode
-                    // If we are in combined mode, we finish A and B together, so we don't alternate sets individually.
-                    if (isSuperset && ex.supersetRole === 'B' && !supersetModeActive) {
-                        // After completing B, go back to A for next round
-                        const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
-                        if (prevEx?.supersetId === ex.supersetId && prevEx?.supersetRole === 'A') {
-                            // Check if A has more sets to do
-                            const completedRoundsA = prevEx.sets.filter(s => s.weight > 0).length;
-
-                            if (completedRoundsA < prevEx.sets.length) {
-                                // Go back to A
-                                currentExerciseIndex--;
-                                currentSetIndex = completedRoundsA;
-                                focusHistoryList.innerHTML = ''; // Clear for new round
-                                updateFocusUI();
-                                return;
-                            }
-                        }
-                    }
-
-                    // Move to next exercise
-                    currentSetIndex = 0;
-                    currentExerciseIndex++;
-                    focusHistoryList.innerHTML = ''; // Clear history for new exercise
-
-                    // CHECK FOR COMPLETED SUPERSET PARTNER (Combined Mode)
-                    // If we just finished A (in combined mode), we are now at B.
-                    // But B is already done. So we should skip it.
-                    if (currentExerciseIndex < currentWorkout.exercises.length) {
-                        const newEx = currentWorkout.exercises[currentExerciseIndex];
-                        const prevEx = currentWorkout.exercises[currentExerciseIndex - 1];
-
-                        // If we just moved from A -> B, and B is the partner
-                        if (prevEx && prevEx.supersetId && newEx.supersetId === prevEx.supersetId && newEx.supersetRole === 'B') {
-                            // Check if B is already fully completed (e.g. via combined logging)
-                            // We check if all sets have weight logged
-                            const allSetsDone = newEx.sets.every(s => s.weight > 0);
-
-                            if (allSetsDone) {
-                                console.log('[Focus] Skipping completed superset partner:', newEx.name);
-                                currentExerciseIndex++;
-                                focusHistoryList.innerHTML = '';
-                            }
-                        }
+                    // NORMAL MODE
+                    if (currentSetIndex < ex.sets.length - 1) {
+                        carryData(ex.sets[currentSetIndex], ex.sets[currentSetIndex + 1]);
+                        currentSetIndex++;
+                    } else {
+                        currentSetIndex = 0;
+                        currentExerciseIndex++;
                     }
                 }
+
+                // BOUNDS & PARTNER SKIP CHECK
+                if (currentExerciseIndex >= currentWorkout.exercises.length) {
+                    finishWorkout();
+                    return;
+                }
+
+                focusHistoryList.innerHTML = ''; // Reset logging UI for new target
+
+                // If we moved to B but B is already completed (unlikely in seq, common in combined if index drifted)
+                const nextEx = currentWorkout.exercises[currentExerciseIndex];
+                if (nextEx && nextEx.supersetRole === 'B' && nextEx.sets.every(s => s.weight > 0)) {
+                    console.log('[Focus] Auto-skipping completed partner B:', nextEx.name);
+                    currentExerciseIndex++;
+                    if (currentExerciseIndex >= currentWorkout.exercises.length) {
+                        finishWorkout();
+                        return;
+                    }
+                }
+
                 updateFocusUI();
             }
 

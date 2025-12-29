@@ -16,7 +16,8 @@ const excludes = [
     'package-lock.json',
     'capacitor.config.json',
     'build.js',
-    '.gitignore'
+    '.gitignore',
+    'myapp-native'
 ];
 
 function cleanDist() {

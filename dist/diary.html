@@ -1125,72 +1125,108 @@
                 });
             }
 
+            function updateExerciseIndices() {
+                const exercises = Array.from(exercisesLogContainer.querySelectorAll('.exercise-log-item'));
+                exercises.forEach((ex, idx) => {
+                    ex.dataset.exerciseIndex = idx;
+                    // Update index on buttons
+                    const addBtn = ex.querySelector('.add-set-btn');
+                    if (addBtn) addBtn.dataset.exerciseIndex = idx;
+                    const removeBtn = ex.querySelector('.remove-exercise-btn');
+                    if (removeBtn) removeBtn.dataset.exerciseIndex = idx;
+                });
+                refreshSupersets();
+            }
+
             function refreshSupersets() {
-                const exercises = Array.from(exerciseInputs.querySelectorAll('.exercise-log-item'));
+                const exercises = Array.from(exercisesLogContainer.querySelectorAll('.exercise-log-item'));
                 exercises.forEach((ex, idx) => {
                     const sid = ex.dataset.supersetId;
+
                     if (sid) {
                         const prev = exercises[idx - 1];
                         const next = exercises[idx + 1];
 
-                        // Decide role based on presence of partner nearby
+                        let newRole = '';
                         if (next && next.dataset.supersetId === sid) {
-                            ex.dataset.supersetRole = 'A';
+                            newRole = 'A';
                         } else if (prev && prev.dataset.supersetId === sid) {
-                            ex.dataset.supersetRole = 'B';
+                            newRole = 'B';
+                        }
+
+                        if (newRole) {
+                            ex.dataset.supersetRole = newRole;
+                            ex.classList.add('in-superset');
+
+                            // Update indicator
+                            let indicator = ex.querySelector('.superset-indicator');
+                            if (!indicator) {
+                                indicator = document.createElement('span');
+                                indicator.className = 'superset-indicator';
+                                ex.insertBefore(indicator, ex.firstChild);
+                            }
+                            indicator.textContent = `Superset ${newRole}`;
+
+                            // Handle visibility
+                            const supersetConfig = ex.querySelector('.superset-rest-config');
+                            const normalConfig = ex.querySelector('.normal-rest-config');
+
+                            if (newRole === 'A') {
+                                if (supersetConfig) supersetConfig.classList.add('visible');
+                                if (normalConfig) normalConfig.style.display = 'none';
+                            } else {
+                                if (supersetConfig) supersetConfig.classList.remove('visible');
+                                if (normalConfig) normalConfig.style.display = 'none';
+                            }
+
+                            // Ensure buttons are correct
+                            const createBtn = ex.querySelector('.create-superset-btn');
+                            const removeBtn = ex.querySelector('.remove-superset-btn');
+                            if (createBtn) createBtn.style.display = 'none';
+                            if (removeBtn) removeBtn.style.display = 'inline-block';
                         } else {
                             // Lone superset exercise - break it
                             delete ex.dataset.supersetId;
                             delete ex.dataset.supersetRole;
                             ex.classList.remove('in-superset');
-                        }
-
-                        // Update UI elements
-                        let indicator = ex.querySelector('.superset-indicator');
-                        if (ex.dataset.supersetId) {
-                            const role = ex.dataset.supersetRole;
-                            if (indicator) {
-                                indicator.textContent = `Superset ${role}`;
-                            } else {
-                                indicator = document.createElement('span');
-                                indicator.className = 'superset-indicator';
-                                indicator.textContent = `Superset ${role}`;
-                                ex.insertBefore(indicator, ex.firstChild);
-                            }
-                            ex.classList.add('in-superset');
-
-                            // Hide/show config based on role A
-                            const config = ex.querySelector('.superset-rest-config');
-                            if (config) config.classList.toggle('visible', role === 'A');
-
-                            ex.querySelector('.remove-superset-btn').style.display = 'inline-block';
-                            ex.querySelector('.create-superset-btn').style.display = 'none';
-                            const normalRest = ex.querySelector('.normal-rest-config');
-                            if (normalRest) normalRest.style.display = 'none';
-                        } else {
+                            const indicator = ex.querySelector('.superset-indicator');
                             if (indicator) indicator.remove();
-                            ex.classList.remove('in-superset');
-                            const config = ex.querySelector('.superset-rest-config');
-                            if (config) config.remove(); // Usually we want to remove it and restore normal
+                            const supersetConfig = ex.querySelector('.superset-rest-config');
+                            if (supersetConfig) supersetConfig.classList.remove('visible');
+                            const normalConfig = ex.querySelector('.normal-rest-config');
+                            if (normalConfig) normalConfig.style.display = 'flex';
 
-                            const normalRest = ex.querySelector('.normal-rest-config');
-                            if (normalRest) normalRest.style.display = 'flex';
-
-                            ex.querySelector('.remove-superset-btn').style.display = 'none';
-                            ex.querySelector('.create-superset-btn').style.display = 'inline-block';
+                            const createBtn = ex.querySelector('.create-superset-btn');
+                            const removeBtn = ex.querySelector('.remove-superset-btn');
+                            if (createBtn) createBtn.style.display = 'inline-block';
+                            if (removeBtn) removeBtn.style.display = 'none';
                         }
+                    } else {
+                        // Not in superset
+                        ex.classList.remove('in-superset');
+                        const indicator = ex.querySelector('.superset-indicator');
+                        if (indicator) indicator.remove();
+                        const normalConfig = ex.querySelector('.normal-rest-config');
+                        if (normalConfig) normalConfig.style.display = 'flex';
+                        const supersetConfig = ex.querySelector('.superset-rest-config');
+                        if (supersetConfig) supersetConfig.classList.remove('visible');
+
+                        const createBtn = ex.querySelector('.create-superset-btn');
+                        const removeBtn = ex.querySelector('.remove-superset-btn');
+                        if (createBtn) createBtn.style.display = 'inline-block';
+                        if (removeBtn) removeBtn.style.display = 'none';
                     }
                 });
             }
 
             // Initialize Sortable
             if (window.Sortable) {
-                Sortable.create(exerciseInputs, {
+                Sortable.create(exercisesLogContainer, {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'sortable-ghost',
                     onEnd: function () {
-                        refreshSupersets();
+                        updateExerciseIndices();
                     }
                 });
             }
