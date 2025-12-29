@@ -771,7 +771,7 @@
 
     <!-- Focus Mode Overlay -->
     <div id="focusModeOverlay"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; flex-direction: column; padding: 1.5rem;">
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; flex-direction: column; padding: env(safe-area-inset-top, 1rem) 1.5rem env(safe-area-inset-bottom, 1rem) 1.5rem;">
         <!-- Top Bar -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <div style="display:flex; flex-direction:column;">
@@ -785,7 +785,7 @@
 
         <!-- Main Content (Scrollable) -->
         <div id="focusContentWrapper"
-            style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 500px; margin: 0 auto; overflow-y: auto; overflow-x: hidden; padding-bottom: 20px;">
+            style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; width: 100%; max-width: 500px; margin: 0 auto; overflow-y: auto; overflow-x: hidden; padding-top: 1rem; padding-bottom: 40px;">
 
             <!-- Exercise Info -->
             <div style="text-align: center; margin-bottom: 2rem; width: 100%;">
@@ -3202,6 +3202,23 @@
                         }
                         if (!upcomingSet.target && previousSet.target) {
                             upcomingSet.target = previousSet.target;
+                        }
+                    }
+
+                    // Handle Exercise B persistence in Combined Superset Mode
+                    if (supersetModeActive) {
+                        const exB = currentWorkout.exercises[currentExerciseIndex + 1];
+                        if (exB && exB.supersetId === ex.supersetId) {
+                            const prevSetB = exB.sets[currentSetIndex - 1];
+                            const upSetB = exB.sets[currentSetIndex];
+                            if (prevSetB && upSetB) {
+                                if ((!upSetB.weight || upSetB.weight === 0) && prevSetB.weight) {
+                                    upSetB.weight = prevSetB.weight;
+                                }
+                                if ((upSetB.reps === '' || upSetB.reps === undefined || upSetB.reps === null) && prevSetB.reps) {
+                                    upSetB.reps = prevSetB.reps;
+                                }
+                            }
                         }
                     }
                 } else {

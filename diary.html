@@ -21,6 +21,7 @@
 
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         .log-entry {
             background: var(--color-surface);
@@ -76,10 +77,35 @@
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
             border-bottom: 1px solid var(--color-border);
+            position: relative;
         }
 
         .exercise-log-item:last-child {
             border-bottom: none;
+        }
+
+        .drag-handle {
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--color-border);
+            cursor: grab;
+            padding: 0.5rem;
+            z-index: 10;
+            user-select: none;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        .exercise-log-item:hover .drag-handle {
+            opacity: 1;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background: var(--color-primary-faded, rgba(0, 243, 255, 0.1));
+            border: 2px dashed var(--color-primary) !important;
         }
 
         .set-row {
@@ -707,6 +733,7 @@
                     // Exercise header
                     let headerHtml = `
                         ${supersetIndicator}
+                        <div class="drag-handle">⋮⋮</div>
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                             <input type="text" class="exercise-name-input" value="${ex.name}" 
                                    style="flex: 1; padding: 0.5rem; background: var(--color-bg); border: 1px solid var(--color-border); 
@@ -824,6 +851,7 @@
                 const unitLabel = unitService && unitService.getSystem() === 'imperial' ? 'Lbs' : 'Kg';
 
                 exDiv.innerHTML = `
+                    <div class="drag-handle">⋮⋮</div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
                         <input type="text" class="exercise-name-input" value="" 
                                style="flex: 1; padding: 0.5rem; background: var(--color-bg); border: 1px solid var(--color-border); 
@@ -1094,6 +1122,76 @@
                     // Reset Buttons
                     exDiv.querySelector('.create-superset-btn').style.display = 'block';
                     exDiv.querySelector('.remove-superset-btn').style.display = 'none';
+                });
+            }
+
+            function refreshSupersets() {
+                const exercises = Array.from(exerciseInputs.querySelectorAll('.exercise-log-item'));
+                exercises.forEach((ex, idx) => {
+                    const sid = ex.dataset.supersetId;
+                    if (sid) {
+                        const prev = exercises[idx - 1];
+                        const next = exercises[idx + 1];
+
+                        // Decide role based on presence of partner nearby
+                        if (next && next.dataset.supersetId === sid) {
+                            ex.dataset.supersetRole = 'A';
+                        } else if (prev && prev.dataset.supersetId === sid) {
+                            ex.dataset.supersetRole = 'B';
+                        } else {
+                            // Lone superset exercise - break it
+                            delete ex.dataset.supersetId;
+                            delete ex.dataset.supersetRole;
+                            ex.classList.remove('in-superset');
+                        }
+
+                        // Update UI elements
+                        let indicator = ex.querySelector('.superset-indicator');
+                        if (ex.dataset.supersetId) {
+                            const role = ex.dataset.supersetRole;
+                            if (indicator) {
+                                indicator.textContent = `Superset ${role}`;
+                            } else {
+                                indicator = document.createElement('span');
+                                indicator.className = 'superset-indicator';
+                                indicator.textContent = `Superset ${role}`;
+                                ex.insertBefore(indicator, ex.firstChild);
+                            }
+                            ex.classList.add('in-superset');
+
+                            // Hide/show config based on role A
+                            const config = ex.querySelector('.superset-rest-config');
+                            if (config) config.classList.toggle('visible', role === 'A');
+
+                            ex.querySelector('.remove-superset-btn').style.display = 'inline-block';
+                            ex.querySelector('.create-superset-btn').style.display = 'none';
+                            const normalRest = ex.querySelector('.normal-rest-config');
+                            if (normalRest) normalRest.style.display = 'none';
+                        } else {
+                            if (indicator) indicator.remove();
+                            ex.classList.remove('in-superset');
+                            const config = ex.querySelector('.superset-rest-config');
+                            if (config) config.remove(); // Usually we want to remove it and restore normal
+
+                            const normalRest = ex.querySelector('.normal-rest-config');
+                            if (normalRest) normalRest.style.display = 'flex';
+
+                            ex.querySelector('.remove-superset-btn').style.display = 'none';
+                            ex.querySelector('.create-superset-btn').style.display = 'inline-block';
+                        }
+                    }
+                });
+            }
+
+            // Initialize Sortable
+            if (window.Sortable) {
+                Sortable.create(exerciseInputs, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function () {
+                        refreshSupersets();
+                    }
                 });
             }
 
