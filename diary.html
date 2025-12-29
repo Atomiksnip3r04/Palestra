@@ -1126,7 +1126,7 @@
             }
 
             function refreshSupersets() {
-                const exercises = Array.from(exerciseInputs.querySelectorAll('.exercise-log-item'));
+                const exercises = Array.from(exercisesLogContainer.querySelectorAll('.exercise-log-item'));
                 exercises.forEach((ex, idx) => {
                     const sid = ex.dataset.supersetId;
                     if (sid) {
@@ -1185,7 +1185,7 @@
 
             // Initialize Sortable
             if (window.Sortable) {
-                Sortable.create(exerciseInputs, {
+                Sortable.create(exercisesLogContainer, {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'sortable-ghost',
