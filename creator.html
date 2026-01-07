@@ -26,12 +26,80 @@
         .exercise-item {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
-            padding: var(--spacing-sm);
-            margin: 0 auto var(--spacing-sm) auto;
-            border-radius: 12px;
+            padding: 1.25rem 1rem 1rem 1rem;
+            margin: 0 auto 1rem auto;
+            border-radius: 16px;
             position: relative;
             max-width: 100%;
             box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .exercise-item:hover {
+            border-color: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 243, 255, 0.1);
+        }
+
+        /* Exercise Header - Nome e Note più ordinati */
+        .exercise-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-top: 0.5rem;
+        }
+
+        .exercise-name-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .exercise-name-row input[type="text"] {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+        }
+
+        .exercise-notes-rest-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            align-items: start;
+        }
+
+        .exercise-notes-rest-row textarea {
+            min-height: 50px;
+            resize: vertical;
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .rest-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .rest-input-wrapper label {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        .rest-input-wrapper input {
+            width: 70px;
+            text-align: center;
+            padding: 0.6rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
         }
 
         /* Tooltip Info Button */
@@ -118,11 +186,25 @@
 
         .remove-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 12px;
+            right: 12px;
             color: #ff4444;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
+            background: rgba(255, 68, 68, 0.1);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 68, 68, 0.25);
+            transform: scale(1.1);
         }
 
         .form-group {
@@ -200,41 +282,69 @@
 
         .set-item {
             display: grid;
-            grid-template-columns: auto minmax(120px, 1fr) 80px 60px 60px 30px;
-            gap: 8px;
+            grid-template-columns: 30px minmax(100px, 1fr) 70px 55px 55px 28px;
+            gap: 6px;
             align-items: center;
-            padding: 0.5rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.5rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
             margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .set-item:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-color: rgba(0, 243, 255, 0.15);
         }
 
         .set-item .set-number {
-            font-size: 0.8rem;
-            color: var(--color-text-muted);
-            min-width: 25px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+            padding: 0.25rem 0.4rem;
+            border-radius: 6px;
+            text-align: center;
         }
 
         .set-item select,
         .set-item input {
             padding: 0.5rem;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
         }
 
         .set-item select.set-type {
-            min-width: 120px;
+            min-width: 100px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        .set-item input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.75rem;
+        }
+
         .set-item .remove-set-btn {
-            background: none;
+            background: rgba(255, 68, 68, 0.1);
             border: none;
             color: #ff4444;
             cursor: pointer;
             font-size: 1rem;
-            padding: 0;
+            padding: 0.25rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .set-item .remove-set-btn:hover {
+            background: rgba(255, 68, 68, 0.25);
         }
 
         .set-type-badge {
@@ -279,24 +389,34 @@
         .quick-sets-row {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             flex-wrap: wrap;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
         }
 
         .quick-set-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--color-border);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--color-text);
-            padding: 0.4rem 0.8rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .quick-set-btn:hover {
             border-color: var(--color-primary);
-            background: rgba(0, 243, 255, 0.1);
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+
+        .quick-set-btn:active {
+            transform: translateY(0);
         }
 
         /* Superset Styles */
@@ -412,16 +532,26 @@
 
         .drag-handle {
             position: absolute;
-            top: 5px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            color: var(--color-border);
+            color: var(--color-primary);
             cursor: grab;
-            padding: 0.5rem;
+            padding: 0.4rem 1.2rem;
             z-index: 10;
             user-select: none;
-            opacity: 0.5;
-            transition: opacity 0.2s;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            background: linear-gradient(180deg, rgba(0,243,255,0.15) 0%, transparent 100%);
+            border-radius: 0 0 8px 8px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+            background: linear-gradient(180deg, rgba(0,243,255,0.25) 0%, transparent 100%);
+            transform: translateX(-50%) scale(1.1);
         }
 
         .exercise-item:hover .drag-handle {
@@ -787,23 +917,24 @@
 
                 div.innerHTML = `
                     ${supersetId ? `<span class="superset-indicator">Superset ${supersetRole}</span>` : ''}
-                    <div class="drag-handle">⋮⋮</div>
-                    <span class="remove-btn" onclick="this.parentElement.remove(); updateExerciseIndices();">×</span>
-                    <div class="form-group">
-                        <label>Esercizio</label>
-                        <input type="text" class="ex-name" placeholder="es. Panca Piana" value="${data?.name || ''}">
-                    </div>
-                    <div class="form-group" style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
-                        <div>
-                            <label>Note</label>
-                            <input type="text" class="ex-notes" placeholder="Fermo 1s al petto" value="${data?.notes || ''}">
+                    <div class="drag-handle" title="Trascina per riordinare">⋮⋮</div>
+                    <span class="remove-btn" onclick="this.parentElement.remove(); updateExerciseIndices();" title="Rimuovi esercizio">×</span>
+                    
+                    <!-- Exercise Header Section -->
+                    <div class="exercise-header">
+                        <div class="exercise-name-row">
+                            <input type="text" class="ex-name" placeholder="Nome esercizio (es. Panca Piana)" value="${data?.name || ''}">
                         </div>
-                        <div class="normal-rest-config" style="display: ${supersetId ? 'none' : 'block'};">
-                            <label>Recupero (s)</label>
-                            <input type="number" class="ex-rest" value="${data?.rest || 90}" placeholder="90">
+                        <div class="exercise-notes-rest-row">
+                            <textarea class="ex-notes" placeholder="Note opzionali (es. Fermo 1s al petto)" rows="2">${data?.notes || ''}</textarea>
+                            <div class="rest-input-wrapper normal-rest-config" style="${supersetId ? 'display:none;' : ''}">
+                                <label>Recupero (s)</label>
+                                <input type="number" class="ex-rest" value="${data?.rest || 90}" placeholder="90" min="0" max="600" step="5">
+                            </div>
                         </div>
                     </div>
                     
+                    <!-- Sets Section -->
                     <div class="sets-container">
                         <div class="sets-header">
                             <h4>Serie</h4>
@@ -829,6 +960,7 @@
                         </div>
                     </div>
                     
+                    <!-- Superset Controls -->
                     <div class="superset-controls">
                         <button type="button" class="superset-btn create-superset-btn" title="Crea superset con l'esercizio successivo">
                             🔗 Crea Superset

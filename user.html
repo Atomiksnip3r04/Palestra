@@ -2518,7 +2518,11 @@
                             return {
                                 weight: Number(set.weight ?? ex.weight ?? 0) || 0,
                                 reps: set.reps !== undefined && set.reps !== null && set.reps !== '' ? set.reps : targetInfo.numeric,
-                                target: set.target || targetInfo.label
+                                target: set.target || targetInfo.label,
+                                // PRESERVE per-set data
+                                customRest: set.customRest !== undefined && set.customRest !== null && set.customRest !== '' ? parseInt(set.customRest) : null,
+                                type: set.type || 'normal',
+                                rpe: set.rpe !== undefined && set.rpe !== null ? set.rpe : null
                             };
                         })
                         : buildSetsFromPlan(ex);
