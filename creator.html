@@ -27,9 +27,11 @@
             background: var(--color-surface);
             border: 1px solid var(--color-border);
             padding: var(--spacing-sm);
-            margin-bottom: var(--spacing-sm);
-            border-radius: var(--radius-sm);
+            margin: 0 auto var(--spacing-sm) auto;
+            border-radius: 12px;
             position: relative;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .remove-btn {
@@ -379,13 +381,13 @@
             <h1 style="margin-bottom: var(--spacing-md);">Crea Nuova <span class="text-primary">Scheda</span></h1>
 
             <!-- AI Workout Generator Quick Link -->
-            <div class="card" style="margin-bottom: 2rem; border-color: var(--color-primary-dim); background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0,0,0,0) 100%);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div class="card" style="margin-bottom: 2rem; border-color: var(--color-primary-dim); background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0,0,0,0) 100%); border-radius: 16px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; padding: 0.5rem;">
                     <div>
-                        <h3 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <h3 style="font-size: 1.2rem; margin: 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
                             🤖 AI Workout Generator
                         </h3>
-                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0;">
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.5rem 0 0 0;">
                             Genera una scheda personalizzata con l'intelligenza artificiale
                         </p>
                     </div>
@@ -414,7 +416,7 @@
                     <!-- Dynamic exercises will appear here -->
                 </div>
 
-                <button id="addExerciseBtn" class="btn btn-outline" style="width: 100%; border-style: dashed;">
+                <button id="addExerciseBtn" class="btn btn-outline" style="width: 100%; border: 2px dashed var(--color-primary); color: var(--color-primary); background: rgba(0, 243, 255, 0.05); padding: 1rem; font-size: 1rem;">
                     + Aggiungi Esercizio
                 </button>
 
