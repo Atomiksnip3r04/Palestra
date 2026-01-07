@@ -34,6 +34,88 @@
             box-sizing: border-box;
         }
 
+        /* Tooltip Info Button */
+        .info-tooltip-btn {
+            cursor: pointer;
+            border: 1px solid var(--color-primary);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+            transition: all 0.2s;
+        }
+
+        .info-tooltip-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        /* Info Modal Overlay */
+        .info-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .info-modal-overlay.active {
+            display: flex;
+        }
+
+        .info-modal-content {
+            background: var(--color-surface);
+            border: 1px solid var(--color-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);
+        }
+
+        .info-modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .info-modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }
+
+        .info-modal-body {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--color-text-muted);
+        }
+
+        .info-modal-body strong {
+            color: var(--color-text-main);
+        }
+
         .remove-btn {
             position: absolute;
             top: 10px;
@@ -355,6 +437,88 @@
             background: var(--color-primary-faded, rgba(0, 243, 255, 0.1));
             border: 2px dashed var(--color-primary) !important;
         }
+
+        /* Tooltip Info Button */
+        .info-tooltip-btn {
+            cursor: pointer;
+            border: 1px solid var(--color-primary);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+            transition: all 0.2s;
+        }
+
+        .info-tooltip-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        /* Info Modal Overlay */
+        .info-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .info-modal-overlay.active {
+            display: flex;
+        }
+
+        .info-modal-content {
+            background: var(--color-surface);
+            border: 1px solid var(--color-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);
+        }
+
+        .info-modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .info-modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }
+
+        .info-modal-body {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--color-text-muted);
+        }
+
+        .info-modal-body strong {
+            color: var(--color-text-main);
+        }
     </style>
 </head>
 
@@ -429,8 +593,82 @@
         </div>
     </section>
 
+    <!-- Info Tooltip Modal -->
+    <div id="infoModalOverlay" class="info-modal-overlay">
+        <div class="info-modal-content">
+            <button class="info-modal-close" onclick="closeInfoModal()">&times;</button>
+            <div class="info-modal-title" id="infoModalTitle"></div>
+            <div class="info-modal-body" id="infoModalBody"></div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
+    
+    <script>
+        // Info Modal Content Database
+        const INFO_CONTENT = {
+            rpe: {
+                title: '💪 RPE - Rate of Perceived Exertion',
+                body: `
+                    <p><strong>RPE</strong> è una scala (6-10) che misura lo sforzo percepito:</p>
+                    <ul style="margin: 0.75rem 0; padding-left: 1.25rem;">
+                        <li><strong>RPE 6:</strong> Molto facile, potresti fare 4+ ripetizioni extra</li>
+                        <li><strong>RPE 7:</strong> Moderato, 3 ripetizioni extra possibili</li>
+                        <li><strong>RPE 8:</strong> Impegnativo, 2 ripetizioni extra</li>
+                        <li><strong>RPE 9:</strong> Molto duro, solo 1 ripetizione extra</li>
+                        <li><strong>RPE 10:</strong> Massimale, nessuna ripetizione extra</li>
+                    </ul>
+                    <p style="margin-top: 0.75rem; font-style: italic; color: var(--color-primary);">💡 Consiglio: Per la crescita muscolare, lavora tra RPE 7-9 sulla maggior parte delle serie.</p>
+                `
+            },
+            setTypes: {
+                title: '🎯 Tipi di Serie',
+                body: `
+                    <p>I diversi tipi di serie servono a scopi specifici:</p>
+                    <ul style="margin: 0.75rem 0; padding-left: 1.25rem;">
+                        <li><strong>Normale:</strong> Serie standard di lavoro</li>
+                        <li><strong>Warm-up:</strong> Serie di riscaldamento a carico ridotto</li>
+                        <li><strong>Back-off:</strong> Serie con carico ridotto dopo le serie pesanti</li>
+                        <li><strong>Drop Set:</strong> Serie con riduzione progressiva del peso senza pausa</li>
+                        <li><strong>AMRAP:</strong> "As Many Reps As Possible" - Massime ripetizioni</li>
+                        <li><strong>Pausa:</strong> Serie con pausa isometrica durante il movimento</li>
+                    </ul>
+                `
+            },
+            customRest: {
+                title: '⏱️ Recupero Personalizzato',
+                body: `
+                    <p>Imposta un tempo di recupero specifico per questa serie, che sovrascriverà il recupero generale dell'esercizio.</p>
+                    <p style="margin-top: 0.75rem;"><strong>Casi d'uso:</strong></p>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.25rem;">
+                        <li>Serie pesanti che richiedono più recupero</li>
+                        <li>Serie di back-off con recupero ridotto</li>
+                        <li>Giant set con tempi specifici</li>
+                    </ul>
+                `
+            }
+        };
+
+        function openInfoModal(infoKey) {
+            const content = INFO_CONTENT[infoKey];
+            if (!content) return;
+            
+            document.getElementById('infoModalTitle').innerHTML = content.title;
+            document.getElementById('infoModalBody').innerHTML = content.body;
+            document.getElementById('infoModalOverlay').classList.add('active');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModalOverlay').classList.remove('active');
+        }
+
+        // Close on overlay click
+        document.getElementById('infoModalOverlay')?.addEventListener('click', (e) => {
+            if (e.target.id === 'infoModalOverlay') closeInfoModal();
+        });
+    </script>
+    
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
 
@@ -570,8 +808,8 @@
                         <div class="sets-header">
                             <h4>Serie</h4>
                             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                <span style="font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.25rem;" title="Rate of Perceived Exertion: scala 6-10 per misurare lo sforzo percepito">
-                                    <span style="cursor: help; border: 1px solid var(--color-text-muted); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">?</span>
+                                <span style="font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                                    <span class="info-tooltip-btn" onclick="openInfoModal('rpe')">?</span>
                                     RPE 6-10
                                 </span>
                                 <button type="button" class="add-set-btn">+ Aggiungi Serie</button>
