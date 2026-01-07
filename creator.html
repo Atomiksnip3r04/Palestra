@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Creator | GYMBRO</title>
+    <title>Crea Schede | GYMBRO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap"
@@ -116,7 +116,7 @@
 
         .set-item {
             display: grid;
-            grid-template-columns: auto 1fr 80px 80px 80px 30px;
+            grid-template-columns: auto minmax(120px, 1fr) 80px 60px 60px 30px;
             gap: 8px;
             align-items: center;
             padding: 0.5rem;
@@ -135,6 +135,13 @@
         .set-item input {
             padding: 0.5rem;
             font-size: 0.85rem;
+        }
+
+        .set-item select.set-type {
+            min-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .set-item .remove-set-btn {
@@ -294,8 +301,18 @@
 
         @media (max-width: 600px) {
             .set-item {
-                grid-template-columns: auto 1fr 50px 50px 50px 25px;
+                grid-template-columns: auto minmax(100px, 1fr) 55px 45px 45px 28px;
                 gap: 4px;
+            }
+
+            .set-item select.set-type {
+                min-width: 100px;
+                font-size: 0.8rem;
+            }
+
+            .set-item input {
+                font-size: 0.8rem;
+                padding: 0.45rem;
             }
 
             .set-item select,
@@ -347,11 +364,11 @@
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="creator.html" class="text-primary">Creator</a></li>
-                    <li><a href="diary.html">Diario</a></li>
-                    <li><a href="analysis.html">Analisi</a></li>
-                    <li><a href="body.html">Corpo</a></li>
-                    <li><a href="user.html">Profilo</a></li>
+                    <li><a href="creator.html" class="text-primary">📝 Crea Schede</a></li>
+                    <li><a href="diary.html">📓 Diario</a></li>
+                    <li><a href="analysis.html">📈 Analisi</a></li>
+                    <li><a href="body.html">💪 Corpo</a></li>
+                    <li><a href="user.html">👤 Profilo</a></li>
                 </ul>
             </nav>
         </div>
@@ -360,6 +377,23 @@
     <section class="section" style="padding-top: 160px;">
         <div class="container">
             <h1 style="margin-bottom: var(--spacing-md);">Crea Nuova <span class="text-primary">Scheda</span></h1>
+
+            <!-- AI Workout Generator Quick Link -->
+            <div class="card" style="margin-bottom: 2rem; border-color: var(--color-primary-dim); background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0,0,0,0) 100%);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                            🤖 AI Workout Generator
+                        </h3>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0;">
+                            Genera una scheda personalizzata con l'intelligenza artificiale
+                        </p>
+                    </div>
+                    <a href="user.html#ai-generator" class="btn btn-primary btn-compact" style="white-space: nowrap;">
+                        ⚡ Genera con AI
+                    </a>
+                </div>
+            </div>
 
             <div class="grid" style="grid-template-columns: 1fr; gap: 2rem;">
 
@@ -398,14 +432,14 @@
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
 
-        // Set types configuration
+        // Set types configuration with descriptions for tooltips
         const SET_TYPES = {
-            normal: { label: 'Normale', color: 'normal' },
-            warmup: { label: 'Warm-up', color: 'warmup' },
-            backoff: { label: 'Back-off', color: 'backoff' },
-            dropset: { label: 'Drop Set', color: 'dropset' },
-            amrap: { label: 'AMRAP', color: 'amrap' },
-            pause: { label: 'Pausa', color: 'pause' }
+            normal: { label: 'Normale', color: 'normal', desc: 'Serie standard di lavoro' },
+            warmup: { label: 'Warm-up', color: 'warmup', desc: 'Serie di riscaldamento a carico leggero' },
+            backoff: { label: 'Back-off', color: 'backoff', desc: 'Serie scarico: carico ridotto dopo le serie pesanti' },
+            dropset: { label: 'Drop Set', color: 'dropset', desc: 'Serie continua con riduzione progressiva del carico' },
+            amrap: { label: 'AMRAP', color: 'amrap', desc: 'As Many Reps As Possible: massime ripetizioni possibili' },
+            pause: { label: 'Pausa', color: 'pause', desc: 'Serie con pausa isometrica nel punto critico' }
         };
 
         // Superset configuration
@@ -430,10 +464,10 @@
                 console.error('StorageService not available:', e);
             }
 
-            // Generate set type options HTML
+            // Generate set type options HTML with tooltips
             function getSetTypeOptions(selectedType = 'normal') {
                 return Object.entries(SET_TYPES).map(([key, val]) =>
-                    `<option value="${key}" ${key === selectedType ? 'selected' : ''}>${val.label}</option>`
+                    `<option value="${key}" ${key === selectedType ? 'selected' : ''} title="${val.desc || ''}">${val.label}</option>`
                 ).join('');
             }
 
@@ -451,7 +485,8 @@
                         ${getSetTypeOptions(setData?.type || 'normal')}
                     </select>
                     <input type="text" class="set-reps" placeholder="Reps" value="${setData?.target || setData?.reps || ''}">
-                    <input type="number" class="set-rpe-input" placeholder="RPE" value="${setData?.rpe || ''}">
+                    <input type="number" class="set-rpe-input" placeholder="RPE" value="${setData?.rpe || ''}" min="6" max="10" step="0.5" title="Rate of Perceived Exertion (6-10)">
+                    <input type="number" class="set-rest-input" placeholder="Rest" value="${setData?.customRest || ''}" min="0" max="600" step="5" title="Recupero personalizzato (secondi)">
                     <button type="button" class="remove-set-btn" title="Rimuovi serie">×</button>
                 `;
 
@@ -532,7 +567,13 @@
                     <div class="sets-container">
                         <div class="sets-header">
                             <h4>Serie</h4>
-                            <button type="button" class="add-set-btn">+ Aggiungi Serie</button>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.25rem;" title="Rate of Perceived Exertion: scala 6-10 per misurare lo sforzo percepito">
+                                    <span style="cursor: help; border: 1px solid var(--color-text-muted); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.7rem;">?</span>
+                                    RPE 6-10
+                                </span>
+                                <button type="button" class="add-set-btn">+ Aggiungi Serie</button>
+                            </div>
                         </div>
                         
                         <div class="quick-sets-row">
@@ -802,11 +843,13 @@
                             const type = setItem.querySelector('.set-type').value;
                             const reps = setItem.querySelector('.set-reps').value;
                             const rpe = setItem.querySelector('.set-rpe-input').value;
+                            const customRest = setItem.querySelector('.set-rest-input').value;
 
                             sets.push({
                                 type: type,
                                 target: reps,
                                 rpe: rpe ? parseFloat(rpe) : null,
+                                customRest: customRest ? parseInt(customRest) : null,
                                 weight: 0 // Will be filled during workout
                             });
                         });

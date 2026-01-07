@@ -445,11 +445,11 @@
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="creator.html">Creator</a></li>
-                    <li><a href="diary.html">Diario</a></li>
-                    <li><a href="analysis.html">Analisi</a></li>
-                    <li><a href="body.html">Corpo</a></li>
-                    <li><a href="user.html" class="text-primary">Profilo</a></li>
+                    <li><a href="creator.html">📝 Crea Schede</a></li>
+                    <li><a href="diary.html">📓 Diario</a></li>
+                    <li><a href="analysis.html">📈 Analisi</a></li>
+                    <li><a href="body.html">💪 Corpo</a></li>
+                    <li><a href="user.html" class="text-primary">👤 Profilo</a></li>
                 </ul>
             </nav>
         </div>
@@ -543,10 +543,12 @@
 
                     <!-- Settings -->
                     <div class="card">
-                        <h3
-                            style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
-                            Impostazioni</h3>
+                        <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);" id="settingsHeader">
+                            <h3 style="margin: 0;">⚙️ Impostazioni</h3>
+                            <span id="settingsToggle" style="font-size: 1.5rem; transition: transform 0.3s;">▼</span>
+                        </div>
 
+                        <div id="settingsContent" style="display: none; margin-top: 1rem;">
                         <div class="setting-item">
                             <span class="setting-label">Nome Visualizzato</span>
                             <div class="setting-control">
@@ -694,6 +696,7 @@
                         <div class="setting-item" style="border-bottom: none; margin-top: 1rem;">
                             <button id="logoutBtn" class="btn btn-primary"
                                 style="width: 100%; background: #ff4444; border-color: #ff4444; color: white;">Esci</button>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -1007,6 +1010,19 @@
         import { notificationManager } from './js/notification-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
+
+            // Settings Dropdown Toggle
+            const settingsHeader = document.getElementById('settingsHeader');
+            const settingsContent = document.getElementById('settingsContent');
+            const settingsToggle = document.getElementById('settingsToggle');
+
+            if (settingsHeader && settingsContent && settingsToggle) {
+                settingsHeader.addEventListener('click', () => {
+                    const isHidden = settingsContent.style.display === 'none';
+                    settingsContent.style.display = isHidden ? 'block' : 'none';
+                    settingsToggle.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                });
+            }
 
             // Elements
             const authSection = document.getElementById('authSection');
@@ -3131,7 +3147,13 @@
                     }
                 } else {
                     // Standard rest logic for non-superset exercises
-                    if (currentEx.rest) {
+                    const currentSet = currentEx.sets[currentSetIndex];
+                    
+                    // PRIORITY: Check if current set has customRest, otherwise use exercise default
+                    if (currentSet && currentSet.customRest != null && currentSet.customRest > 0) {
+                        restTime = currentSet.customRest;
+                        console.log(`⏱️ Using custom rest time for this set: ${restTime}s`);
+                    } else if (currentEx.rest) {
                         restTime = currentEx.rest;
                     } else if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
                         restTime = 180; // Compounds
