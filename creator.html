@@ -84,6 +84,7 @@
             flex-direction: column;
             align-items: center;
             gap: 0.25rem;
+            transition: all 0.3s ease;
         }
 
         .rest-input-wrapper label {
@@ -91,6 +92,7 @@
             color: var(--color-text-muted);
             margin: 0;
             white-space: nowrap;
+            transition: all 0.3s ease;
         }
 
         .rest-input-wrapper input {
@@ -100,6 +102,38 @@
             border-radius: 10px;
             font-size: 0.95rem;
             font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        /* Visual Override State - quando i recuperi per serie sono attivi */
+        .rest-input-wrapper.overridden {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .rest-input-wrapper.overridden input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: var(--color-text-muted) !important;
+            text-decoration: line-through;
+        }
+
+        .rest-input-wrapper.overridden label {
+            color: rgba(255, 152, 0, 0.8);
+        }
+
+        .rest-override-notice {
+            display: none;
+            font-size: 0.65rem;
+            color: #ff9800;
+            text-align: center;
+            margin-top: 0.25rem;
+            line-height: 1.2;
+            max-width: 90px;
+        }
+
+        .rest-input-wrapper.overridden .rest-override-notice {
+            display: block;
         }
 
         /* Tooltip Info Button */
@@ -864,9 +898,18 @@
                 setDiv.querySelector('.remove-set-btn').addEventListener('click', () => {
                     setDiv.remove();
                     renumberSets(container);
+                    checkRestOverride(container); // Update visual override state
+                });
+
+                // Add listener for rest input changes
+                setDiv.querySelector('.set-rest-input').addEventListener('input', () => {
+                    checkRestOverride(container);
                 });
 
                 setsContainer.appendChild(setDiv);
+                
+                // Check override state after adding
+                checkRestOverride(container);
             }
 
             // Renumber sets after removal
@@ -881,6 +924,32 @@
             function addQuickSets(container, count, type = 'normal') {
                 for (let i = 0; i < count; i++) {
                     addSetRow(container, { type });
+                }
+            }
+
+            // Check if any set has custom rest and toggle visual override
+            function checkRestOverride(exerciseContainer) {
+                const restInputs = exerciseContainer.querySelectorAll('.set-rest-input');
+                const globalRestWrapper = exerciseContainer.querySelector('.rest-input-wrapper.normal-rest-config');
+                
+                if (!globalRestWrapper) return; // Skip if superset (no global rest)
+                
+                // Check if any set has a custom rest value
+                let hasCustomRest = false;
+                restInputs.forEach(input => {
+                    const val = input.value.trim();
+                    if (val !== '' && val !== '0') {
+                        hasCustomRest = true;
+                    }
+                });
+                
+                // Toggle visual override state
+                if (hasCustomRest) {
+                    globalRestWrapper.classList.add('overridden');
+                    globalRestWrapper.querySelector('.ex-rest').disabled = true;
+                } else {
+                    globalRestWrapper.classList.remove('overridden');
+                    globalRestWrapper.querySelector('.ex-rest').disabled = false;
                 }
             }
 
@@ -930,6 +999,7 @@
                             <div class="rest-input-wrapper normal-rest-config" style="${supersetId ? 'display:none;' : ''}">
                                 <label>Recupero (s)</label>
                                 <input type="number" class="ex-rest" value="${data?.rest || 90}" placeholder="90" min="0" max="600" step="5">
+                                <span class="rest-override-notice">⚠️ Override per serie</span>
                             </div>
                         </div>
                     </div>
