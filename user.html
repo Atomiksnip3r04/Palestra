@@ -320,17 +320,90 @@
         .workout-list-item {
             background: var(--color-surface);
             padding: 1rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             border-radius: var(--radius-sm);
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 0.75rem;
         }
 
-        .delete-workout {
-            color: #ff4444;
+        .workout-list-item .workout-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            width: 100%;
+        }
+
+        .workout-list-item .workout-title {
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .workout-list-item .workout-meta {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        .workout-list-item .workout-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .workout-list-item .btn-play {
+            background: var(--color-primary);
+            color: black;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .workout-list-item .btn-play:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 243, 255, 0.4);
+        }
+
+        .workout-list-item .btn-edit {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.85rem;
+            color: var(--color-text);
+            text-decoration: none;
+            border: 1px solid var(--color-border);
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .workout-list-item .btn-edit:hover {
+            border-color: var(--color-primary);
+        }
+
+        .workout-list-item .btn-icon-action {
+            padding: 0.5rem;
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .workout-list-item .btn-icon-action:hover {
+            opacity: 1;
+        }
+
+        .workout-list-item .btn-icon-action.delete {
+            color: #ff4444;
         }
 
         /* Auth Forms */
@@ -3567,17 +3640,20 @@
                             }
                         }
                         div.innerHTML = `
-                            <div style="flex: 1;">
-                                <strong>${workoutName} ${aiBadge}</strong>
-                                <div style="font-size: 0.8rem; color: var(--color-text-muted);">${exercisesCount} Esercizi</div>
+                            <div class="workout-header">
+                                <div class="workout-title">
+                                    ${workoutName}
+                                    ${aiBadge}
+                                </div>
+                                <div class="workout-meta">${exercisesCount} Esercizi</div>
                             </div>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <button class="btn-icon start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode" style="background: var(--color-primary); color: black; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                            <div class="workout-actions">
+                                <button class="btn-play start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode">
                                     ▶
                                 </button>
-                                <a href="creator.html?id=${w.id}" style="padding: 0.5rem; font-size: 0.9rem; color: var(--color-text); text-decoration: none; border: 1px solid var(--color-border); border-radius: 4px;">Modifica</a>
-                                <span class="share-workout" data-index="${index}" title="Condividi Scheda" style="padding: 0.5rem; cursor: pointer; font-size: 1.2rem;">🔗</span>
-                                <span class="delete-workout" data-index="${index}" style="padding: 0.5rem; cursor: pointer;">🗑️</span>
+                                <a href="creator.html?id=${w.id}" class="btn-edit">✏️ Modifica</a>
+                                <span class="btn-icon-action share-workout" data-index="${index}" title="Condividi Scheda">🔗</span>
+                                <span class="btn-icon-action delete delete-workout" data-index="${index}" title="Elimina">🗑️</span>
                             </div>
                         `;
                         list.appendChild(div);
