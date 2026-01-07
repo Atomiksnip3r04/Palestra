@@ -360,29 +360,42 @@
         .workout-list-item .workout-meta {
             font-size: 0.8rem;
             color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .workout-list-item .workout-date {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
         }
 
         .workout-list-item .workout-actions {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
             padding-top: 0.75rem;
             border-top: 1px solid rgba(255, 255, 255, 0.06);
+            overflow-x: auto;
         }
 
         .workout-list-item .btn-play {
             background: linear-gradient(135deg, var(--color-primary) 0%, #00d4e0 100%);
             color: black;
             border: none;
-            width: 48px;
-            height: 48px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             transition: transform 0.2s, box-shadow 0.2s;
             box-shadow: 0 4px 16px rgba(0, 243, 255, 0.35);
             flex-shrink: 0;
@@ -398,17 +411,19 @@
         }
 
         .workout-list-item .btn-edit {
-            padding: 0.6rem 1.1rem;
-            font-size: 0.85rem;
+            padding: 0.45rem 0.8rem;
+            font-size: 0.8rem;
             color: var(--color-text);
             text-decoration: none;
             border: 1px solid rgba(255, 255, 255, 0.18);
-            border-radius: 12px;
+            border-radius: 10px;
             transition: all 0.2s;
             background: rgba(255, 255, 255, 0.05);
             display: flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.3rem;
+            flex-shrink: 0;
+            white-space: nowrap;
         }
 
         .workout-list-item .btn-edit:hover {
@@ -422,12 +437,13 @@
         }
 
         .workout-list-item .btn-icon-action {
-            padding: 0.5rem;
+            padding: 0.4rem;
             cursor: pointer;
-            font-size: 1.15rem;
+            font-size: 1rem;
             opacity: 0.7;
             transition: all 0.2s;
-            border-radius: 8px;
+            border-radius: 6px;
+            flex-shrink: 0;
         }
 
         .workout-list-item .btn-icon-action:hover {
@@ -1024,10 +1040,13 @@
                     <div
                         style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
-                            style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">RPE</label>
-                        <input type="number" id="focusRpeInput" min="1" max="10" step="0.5"
+                            style="display: flex; align-items: center; justify-content: center; gap: 0.3rem; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">
+                            RPE
+                            <span onclick="openRpeInfoModal()" style="cursor: pointer; border: 1px solid var(--color-primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--color-primary); background: rgba(0, 243, 255, 0.1);">?</span>
+                        </label>
+                        <input type="number" id="focusRpeInput" min="6" max="10" step="0.5"
                             style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
-                            value="" placeholder="1-10">
+                            value="" placeholder="6-10">
                     </div>
                 </div>
             </div>
@@ -1154,6 +1173,58 @@
             <button id="closeShareModal" class="btn btn-outline" style="width: 100%;">Chiudi</button>
         </div>
     </div>
+
+    <!-- RPE Info Modal -->
+    <div id="rpeInfoModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10001; justify-content: center; align-items: center; padding: 1rem;">
+        <div
+            style="background: var(--color-surface); padding: 1.5rem; border-radius: 16px; width: 90%; max-width: 380px; border: 1px solid var(--color-primary); box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--color-primary); font-size: 1.1rem;">💪 RPE - Rate of Perceived Exertion</h3>
+                <button onclick="closeRpeInfoModal()" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem;">&times;</button>
+            </div>
+            <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5;">
+                La scala RPE misura lo <strong style="color: white;">sforzo percepito</strong> durante una serie, da 6 a 10:
+            </p>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 0.75rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #4ade80; font-weight: 600;">RPE 6</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto facile, 4+ reps in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #86efac; font-weight: 600;">RPE 7</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Moderato, 3 reps in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #fbbf24; font-weight: 600;">RPE 8</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Impegnativo, 2 reps in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #fb923c; font-weight: 600;">RPE 9</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto duro, 1 rep in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+                    <span style="color: #f87171; font-weight: 600;">RPE 10</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Massimale, nessuna rep extra</span>
+                </div>
+            </div>
+            <p style="color: var(--color-primary); font-size: 0.8rem; font-style: italic; margin: 0;">
+                💡 Per la crescita muscolare, lavora tra RPE 7-9 sulla maggior parte delle serie.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function openRpeInfoModal() {
+            document.getElementById('rpeInfoModal').style.display = 'flex';
+        }
+        function closeRpeInfoModal() {
+            document.getElementById('rpeInfoModal').style.display = 'none';
+        }
+        document.getElementById('rpeInfoModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'rpeInfoModal') closeRpeInfoModal();
+        });
+    </script>
 
     <!-- Module Script for Firebase Logic -->
     <script type="module">
@@ -2681,7 +2752,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_Left" value="${rpeLeft}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_Left" value="${rpeLeft}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -2702,7 +2773,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_Right" value="${rpeRight}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_Right" value="${rpeRight}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -2761,7 +2832,7 @@
                     </div>
                     <div style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">RPE</label>
-                        <input type="number" id="focusRpeInput" min="1" max="10" step="0.5" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="" placeholder="1-10">
+                        <input type="number" id="focusRpeInput" min="6" max="10" step="0.5" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="" placeholder="6-10">
                     </div>
                 </div>
                 `;
@@ -2793,7 +2864,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -2814,7 +2885,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -3680,7 +3751,7 @@
             // --- Existing Workout List Logic (Preserved) ---
             function renderWorkouts() {
                 const list = document.getElementById('savedWorkoutsList');
-                const workouts = getStoredWorkouts();
+                let workouts = getStoredWorkouts();
                 if (!list) return;
 
                 list.innerHTML = '';
@@ -3697,11 +3768,23 @@
                         if (!Array.isArray(w.exercises)) {
                             w.exercises = [];
                         }
+                        // Ensure createdAt timestamp exists
+                        if (!w.createdAt) {
+                            w.createdAt = w.lastModified || new Date().toISOString();
+                            normalized = true;
+                        }
                     });
 
                     if (normalized) {
                         localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
                     }
+
+                    // Sort by creation date (newest first)
+                    workouts.sort((a, b) => {
+                        const dateA = new Date(a.createdAt || 0);
+                        const dateB = new Date(b.createdAt || 0);
+                        return dateB - dateA;
+                    });
 
                     workouts.forEach((w, index) => {
                         const div = document.createElement('div');
@@ -3720,13 +3803,24 @@
                                 aiBadge = '<span class="ai-badge">AI</span>';
                             }
                         }
+                        
+                        // Format creation date
+                        let createdDateStr = '';
+                        if (w.createdAt) {
+                            const createdDate = new Date(w.createdAt);
+                            createdDateStr = createdDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+                        }
+                        
                         div.innerHTML = `
                             <div class="workout-header">
                                 <div class="workout-title">
                                     ${workoutName}
                                     ${aiBadge}
                                 </div>
-                                <div class="workout-meta">${exercisesCount} Esercizi</div>
+                                <div class="workout-meta">
+                                    <span>${exercisesCount} Esercizi</span>
+                                    ${createdDateStr ? `<span class="workout-date">📅 ${createdDateStr}</span>` : ''}
+                                </div>
                             </div>
                             <div class="workout-actions">
                                 <button class="btn-play start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode">
