@@ -724,7 +724,7 @@
                     <select class="set-type">
                         ${getSetTypeOptions(setData?.type || 'normal')}
                     </select>
-                    <input type="text" class="set-reps" placeholder="Reps" value="${setData?.target || setData?.reps || ''}">
+                    <input type="number" class="set-reps" placeholder="Reps" inputmode="numeric" min="1" step="1" value="${setData?.target || setData?.reps || ''}">
                     <input type="number" class="set-rpe-input" placeholder="RPE" value="${setData?.rpe || ''}" min="6" max="10" step="0.5" title="Rate of Perceived Exertion (6-10)">
                     <input type="number" class="set-rest-input" placeholder="Rest" value="${setData?.customRest || ''}" min="0" max="600" step="5" title="Recupero personalizzato (secondi)">
                     <button type="button" class="remove-set-btn" title="Rimuovi serie">×</button>

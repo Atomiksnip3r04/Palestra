@@ -1033,7 +1033,7 @@
                         style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
                             style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">REPS</label>
-                        <input type="text" id="focusRepsInput"
+                        <input type="number" id="focusRepsInput" inputmode="numeric" min="1" step="1"
                             style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
                             value="">
                     </div>
@@ -2748,7 +2748,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS SX</label>
-                                <input type="text" id="focusRepsInput_Left" value="${repsLeft}" placeholder="${targetReps}" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                                <input type="number" id="focusRepsInput_Left" value="${repsLeft}" placeholder="${targetReps}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
@@ -2769,7 +2769,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS DX</label>
-                                <input type="text" id="focusRepsInput_Right" value="${repsRight}" placeholder="${targetReps}" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                                <input type="number" id="focusRepsInput_Right" value="${repsRight}" placeholder="${targetReps}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
@@ -2828,7 +2828,7 @@
                     </div>
                     <div style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">REPS</label>
-                        <input type="text" id="focusRepsInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
+                        <input type="number" id="focusRepsInput" inputmode="numeric" min="1" step="1" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
                     </div>
                     <div style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">RPE</label>
@@ -2860,7 +2860,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS</label>
-                                <input type="text" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || 'Reps'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || 'Reps'}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
@@ -2881,7 +2881,7 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS</label>
-                                <input type="text" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || 'Reps'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || 'Reps'}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
@@ -3374,12 +3374,30 @@
                     // Standard rest logic for non-superset exercises
                     const currentSet = currentEx.sets[currentSetIndex];
                     
-                    // PRIORITY: Check if current set has customRest, otherwise use exercise default
-                    if (currentSet && currentSet.customRest != null && currentSet.customRest > 0) {
-                        restTime = currentSet.customRest;
-                        console.log(`⏱️ Using custom rest time for this set: ${restTime}s`);
-                    } else if (currentEx.rest) {
+                    // PRIORITY LOGIC:
+                    // 1. If current set has customRest defined (any value, including 0), use it EXCLUSIVELY
+                    // 2. Only if customRest is NOT defined (null/undefined), check exercise-level rest
+                    // 3. Fallback to defaults based on exercise type
+                    
+                    const hasCustomRestDefined = currentSet && currentSet.customRest !== null && currentSet.customRest !== undefined && currentSet.customRest !== '';
+                    
+                    if (hasCustomRestDefined) {
+                        // Serie has its own rest time - use it (even if 0 = no rest)
+                        restTime = parseInt(currentSet.customRest) || 0;
+                        console.log(`⏱️ Using custom rest time for this set: ${restTime}s (series override)`);
+                        
+                        if (restTime === 0) {
+                            // Custom rest = 0 means skip rest entirely for this set
+                            console.log('⏱️ Custom rest is 0 - skipping rest for this set');
+                            isResting = false;
+                            focusTimerArea.style.display = 'none';
+                            nextSet();
+                            return;
+                        }
+                    } else if (currentEx.rest && currentEx.rest > 0) {
+                        // Use exercise-level rest only if no custom rest defined for series
                         restTime = currentEx.rest;
+                        console.log(`⏱️ Using exercise-level rest: ${restTime}s`);
                     } else if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
                         restTime = 180; // Compounds
                     } else if (exName.includes('curl') || exName.includes('alzate') || exName.includes('polpacci') || exName.includes('abs')) {
