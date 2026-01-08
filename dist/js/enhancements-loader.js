@@ -907,9 +907,12 @@ function setupShareInterception(sharingHandler) {
         btn.textContent = '⏳';
 
         try {
-            const index = Number(btn.dataset.index);
+            // Use UUID-based lookup (data-id) instead of array index
+            const workoutId = btn.dataset.id;
             const workouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
-            const workout = workouts[index];
+            const workout = workoutId 
+                ? workouts.find(w => String(w.id) === String(workoutId))
+                : null;
 
             if (!workout) throw new Error('Workout non trovato');
 
