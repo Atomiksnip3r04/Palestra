@@ -17,7 +17,8 @@ class HealthConnectService {
             'https://www.googleapis.com/auth/fitness.body.read',
             'https://www.googleapis.com/auth/fitness.heart_rate.read',
             'https://www.googleapis.com/auth/fitness.sleep.read',
-            'https://www.googleapis.com/auth/fitness.nutrition.read'
+            'https://www.googleapis.com/auth/fitness.nutrition.read',
+            'https://www.googleapis.com/auth/fitness.location.read' // Per dati distanza
         ].join(' ');
 
         this.accessToken = null;
@@ -108,34 +109,101 @@ class HealthConnectService {
             `width=${width},height=${height},left=${left},top=${top}`
         );
 
-        // Ascolta il messaggio dal popup
+        // Ascolta il messaggio dal popup E monitora localStorage come fallback per COOP
         return new Promise((resolve, reject) => {
+            let resolved = false;
+            let storageCheckInterval = null;
+            
+            // Cleanup localStorage prima di iniziare
+            localStorage.removeItem('fit_auth_success');
+            localStorage.removeItem('fit_auth_code');
+            localStorage.removeItem('fit_auth_error');
+            
+            const cleanup = () => {
+                if (storageCheckInterval) {
+                    clearInterval(storageCheckInterval);
+                    storageCheckInterval = null;
+                }
+                localStorage.removeItem('fit_auth_success');
+                localStorage.removeItem('fit_auth_code');
+                localStorage.removeItem('fit_auth_error');
+            };
+            
+            const handleSuccess = async (code) => {
+                if (resolved) return;
+                resolved = true;
+                cleanup();
+                try {
+                    popup.close();
+                } catch (e) {
+                    console.log('Popup already closed or blocked by COOP');
+                }
+                await this.handleAuthCode(code);
+                resolve(true);
+            };
+            
+            const handleError = (error) => {
+                if (resolved) return;
+                resolved = true;
+                cleanup();
+                try {
+                    popup.close();
+                } catch (e) {
+                    console.log('Popup already closed or blocked by COOP');
+                }
+                reject(new Error(error));
+            };
+            
+            // Metodo 1: postMessage (funziona se COOP lo permette)
             window.addEventListener('message', async (event) => {
-                // FIX: Allow GitHub Pages origin for Native App flow
                 const allowedOrigins = [window.location.origin, 'https://massimilianociconte.github.io'];
                 if (!allowedOrigins.includes(event.origin) && !event.origin.includes('localhost') && !event.origin.includes('capacitor')) {
-                    // Strict check, but permissive for our app parts
                     console.warn('Blocked message from unknown origin:', event.origin);
                     return;
                 }
 
                 if (event.data.type === 'oauth_success') {
-                    try {
-                        popup.close();
-                    } catch (e) {
-                        console.log('Popup already closed');
-                    }
-                    await this.handleAuthCode(event.data.code);
-                    resolve(true);
+                    await handleSuccess(event.data.code);
                 } else if (event.data.type === 'oauth_error') {
-                    try {
-                        popup.close();
-                    } catch (e) {
-                        console.log('Popup already closed');
-                    }
-                    reject(new Error(event.data.error));
+                    handleError(event.data.error);
                 }
             }, { once: true });
+            
+            // Metodo 2: localStorage polling (fallback per COOP)
+            storageCheckInterval = setInterval(async () => {
+                if (resolved) return;
+                
+                const success = localStorage.getItem('fit_auth_success');
+                const code = localStorage.getItem('fit_auth_code');
+                const error = localStorage.getItem('fit_auth_error');
+                
+                if (success === 'true' && code) {
+                    console.log('✅ OAuth success detected via localStorage (COOP fallback)');
+                    await handleSuccess(code);
+                } else if (error) {
+                    console.log('❌ OAuth error detected via localStorage');
+                    handleError(error);
+                }
+                
+                // Check se popup chiuso senza risposta (utente ha annullato)
+                if (popup.closed && !resolved) {
+                    // Aspetta un attimo per dare tempo al localStorage di aggiornarsi
+                    setTimeout(() => {
+                        if (!resolved) {
+                            cleanup();
+                            reject(new Error('Authorization cancelled by user'));
+                        }
+                    }, 500);
+                }
+            }, 300);
+            
+            // Timeout sicurezza dopo 5 minuti
+            setTimeout(() => {
+                if (!resolved) {
+                    cleanup();
+                    reject(new Error('Authorization timeout'));
+                }
+            }, 5 * 60 * 1000);
         });
     }
 
