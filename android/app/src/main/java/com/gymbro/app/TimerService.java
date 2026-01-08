@@ -136,12 +136,22 @@ public class TimerService extends Service {
     }
     
     public void stopTimer() {
+        Log.d(TAG, "stopTimer called - cancelling timer and removing notification");
         if (countDownTimer != null) {
             countDownTimer.cancel();
             countDownTimer = null;
         }
         isRunning = false;
         remainingTimeMs = 0;
+        
+        // CRITICAL: Remove the foreground notification immediately
+        stopForeground(true);
+        
+        // Also cancel the notification explicitly as backup
+        if (notificationManager != null) {
+            notificationManager.cancel(NOTIFICATION_ID);
+            Log.d(TAG, "Notification cancelled");
+        }
     }
     
     public void pauseTimer() {

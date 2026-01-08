@@ -167,12 +167,43 @@ public class TimerPlugin extends Plugin {
     
     @PluginMethod
     public void stopTimer(PluginCall call) {
-        if (timerService != null) {
-            timerService.stopTimer();
+        Log.d(TAG, "stopTimer called from JavaScript");
+        
+        try {
+            // 1. Stop the timer and remove notification via service
+            if (timerService != null) {
+                timerService.stopTimer();
+                Log.d(TAG, "Timer stopped via service");
+            }
             
-            // Stop the foreground service
+            // 2. Unbind from service first (allows stopService to work)
+            if (isBound) {
+                try {
+                    getContext().unbindService(serviceConnection);
+                    isBound = false;
+                    Log.d(TAG, "Service unbound");
+                } catch (Exception e) {
+                    Log.w(TAG, "Error unbinding service: " + e.getMessage());
+                }
+            }
+            
+            // 3. Stop the foreground service completely
             Intent intent = new Intent(getContext(), TimerService.class);
             getContext().stopService(intent);
+            Log.d(TAG, "Service stop requested");
+            
+            // 4. Cancel any lingering notifications directly
+            android.app.NotificationManager nm = (android.app.NotificationManager) 
+                getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null) {
+                nm.cancel(1001); // NOTIFICATION_ID from TimerService
+                Log.d(TAG, "Notification cancelled directly");
+            }
+            
+            timerService = null;
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error stopping timer: " + e.getMessage());
         }
         
         JSObject ret = new JSObject();

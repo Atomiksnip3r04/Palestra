@@ -173,4 +173,15 @@ self.addEventListener('message', (event) => {
     const { title, options } = event.data;
     self.registration.showNotification(title, options);
   }
+  
+  // 🔴 KILL SWITCH v2.0 - Cancel all timer notifications
+  if (event.data && event.data.type === 'CANCEL_ALL_NOTIFICATIONS') {
+    console.log('Service Worker: Cancelling all notifications');
+    self.registration.getNotifications().then((notifications) => {
+      notifications.forEach((notification) => {
+        notification.close();
+        console.log('Closed notification:', notification.tag);
+      });
+    });
+  }
 });

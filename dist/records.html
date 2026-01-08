@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Record Storici | GymBro</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <meta name="theme-color" content="#00f3ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <style>
+        /* PR Hub Specific Styles */
+        .pr-hub-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .pr-hub-header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pr-hub-subtitle {
+            color: var(--color-text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Stats Summary */
+        .pr-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .pr-stat-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .pr-stat-value {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            line-height: 1;
+        }
+
+        .pr-stat-label {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 0.5rem;
+        }
+
+        /* Tabs */
+        .pr-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            background: rgba(255,255,255,0.03);
+            padding: 0.25rem;
+            border-radius: var(--radius-md);
+        }
+
+        .pr-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--color-text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pr-tab.active {
+            background: var(--color-primary);
+            color: #000;
+        }
+
+        .pr-tab:not(.active):hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--color-text);
+        }
+
+        /* PR Record Card - Binary Comparison Design */
+        .pr-record-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .pr-record-card:hover {
+            border-color: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .pr-record-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--color-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pr-exercise-name {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--color-text);
+        }
+
+        .pr-record-date {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* Binary Comparison Layout */
+        .pr-comparison {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 0;
+        }
+
+        .pr-old-record,
+        .pr-new-record {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .pr-old-record {
+            background: rgba(255, 107, 107, 0.05);
+            border-right: 1px solid var(--color-border);
+        }
+
+        .pr-new-record {
+            background: rgba(0, 243, 255, 0.05);
+            border-left: 1px solid var(--color-border);
+        }
+
+        .pr-record-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .pr-old-record .pr-record-label {
+            color: rgba(255, 107, 107, 0.8);
+        }
+
+        .pr-new-record .pr-record-label {
+            color: var(--color-primary);
+        }
+
+        .pr-record-value {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .pr-old-record .pr-record-value {
+            color: rgba(255, 255, 255, 0.4);
+            text-decoration: line-through;
+            text-decoration-color: rgba(255, 107, 107, 0.5);
+        }
+
+        .pr-new-record .pr-record-value {
+            color: var(--color-primary);
+        }
+
+        .pr-record-unit {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .pr-record-context {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Delta Arrow Section */
+        .pr-delta {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem;
+            background: rgba(0, 255, 136, 0.1);
+            min-width: 70px;
+        }
+
+        .pr-delta-arrow {
+            font-size: 1.5rem;
+            color: #00ff88;
+            animation: pulseArrow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulseArrow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .pr-delta-value {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: #00ff88;
+            margin-top: 0.25rem;
+        }
+
+        .pr-delta-percent {
+            font-size: 0.7rem;
+            color: rgba(0, 255, 136, 0.7);
+        }
+
+        /* Timestamps */
+        .pr-timestamps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            font-size: 0.7rem;
+        }
+
+        .pr-timestamp {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--color-text-muted);
+        }
+
+        .pr-timestamp.new {
+            justify-content: flex-end;
+            color: var(--color-primary);
+        }
+
+        /* Record Type Badge */
+        .pr-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .pr-type-badge.weight {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+        }
+
+        .pr-type-badge.rm {
+            background: rgba(255, 107, 107, 0.15);
+            color: #ff6b6b;
+        }
+
+        .pr-type-badge.reps {
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--color-primary);
+        }
+
+        .pr-type-badge.volume {
+            background: rgba(156, 39, 176, 0.15);
+            color: #ce93d8;
+        }
+
+        /* Empty State */
+        .pr-empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .pr-empty-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .pr-empty-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .pr-empty-text {
+            font-size: 0.9rem;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        /* Session PR Highlight */
+        .pr-session-highlight {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: var(--radius-lg);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pr-session-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .pr-session-icon {
+            font-size: 2rem;
+        }
+
+        .pr-session-title {
+            font-weight: 700;
+            color: #ffd700;
+        }
+
+        .pr-session-subtitle {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+        }
+
+        /* Filter Pills */
+        .pr-filter-pills {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .pr-filter-pill {
+            padding: 0.4rem 0.75rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid transparent;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pr-filter-pill:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--color-text);
+        }
+
+        .pr-filter-pill.active {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: rgba(0, 243, 255, 0.3);
+            color: var(--color-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
+            <nav>
+                <div class="mobile-toggle" id="mobileToggle">☰</div>
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="creator.html">📝 Crea Schede</a></li>
+                    <li><a href="diary.html">📓 Diario</a></li>
+                    <li><a href="analysis.html">📈 Analisi</a></li>
+                    <li><a href="body.html">💪 Corpo</a></li>
+                    <li><a href="user.html">👤 Profilo</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="section" style="padding-top: 100px;">
+        <div class="container">
+            
+            <!-- Header -->
+            <div class="pr-hub-header">
+                <h1>🏆 Record <span class="text-primary">Storici</span></h1>
+                <p class="pr-hub-subtitle">I tuoi Personal Record con analisi comparativa</p>
+            </div>
+
+            <!-- Stats Summary -->
+            <div class="pr-stats-grid">
+                <div class="pr-stat-card">
+                    <div class="pr-stat-value" id="totalPRsCount">0</div>
+                    <div class="pr-stat-label">Record Totali</div>
+                </div>
+                <div class="pr-stat-card">
+                    <div class="pr-stat-value" id="recentPRsCount">0</div>
+                    <div class="pr-stat-label">Ultimi 30gg</div>
+                </div>
+                <div class="pr-stat-card">
+                    <div class="pr-stat-value" id="exercisesWithPRs">0</div>
+                    <div class="pr-stat-label">Esercizi</div>
+                </div>
+            </div>
+
+            <!-- Session PR Highlight (shown only when coming from workout) -->
+            <div class="pr-session-highlight" id="sessionPRHighlight" style="display: none;">
+                <div class="pr-session-header">
+                    <span class="pr-session-icon">🎉</span>
+                    <div>
+                        <div class="pr-session-title">Progressi Straordinari!</div>
+                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record nella sessione</div>
+                    </div>
+                </div>
+                <div id="sessionPRList"></div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="pr-tabs">
+                <button class="pr-tab active" data-tab="history">📜 Cronologia</button>
+                <button class="pr-tab" data-tab="all">🏅 Tutti i PR</button>
+            </div>
+
+            <!-- Filter Pills -->
+            <div class="pr-filter-pills" id="filterPills">
+                <button class="pr-filter-pill active" data-filter="all">Tutti</button>
+                <button class="pr-filter-pill" data-filter="weight">💪 Peso Max</button>
+                <button class="pr-filter-pill" data-filter="1rm">🎯 1RM</button>
+                <button class="pr-filter-pill" data-filter="reps">🔥 Reps</button>
+                <button class="pr-filter-pill" data-filter="volume">📊 Volume</button>
+            </div>
+
+            <!-- PR List -->
+            <div id="prListContainer">
+                <!-- Populated by JS -->
+            </div>
+
+        </div>
+    </section>
+
+    <script src="js/main.js"></script>
+    <script type="module">
+        import { prTracker } from './js/pr-tracker.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentTab = 'history';
+            let currentFilter = 'all';
+
+            // Check if coming from workout with new PRs
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionPRs = urlParams.get('session_prs');
+            
+            if (sessionPRs) {
+                try {
+                    const prs = JSON.parse(decodeURIComponent(sessionPRs));
+                    if (prs.length > 0) {
+                        showSessionPRs(prs);
+                    }
+                    // Clean URL
+                    window.history.replaceState({}, '', window.location.pathname);
+                } catch (e) {
+                    console.warn('Failed to parse session PRs:', e);
+                }
+            }
+
+            // Initialize
+            updateStats();
+            renderPRs();
+            setupEventListeners();
+
+            function updateStats() {
+                const allPRs = prTracker.getAllPRs();
+                const history = prTracker.getPRHistory(100);
+                
+                // Total unique PRs (count of record types across all exercises)
+                let totalRecords = 0;
+                allPRs.forEach(pr => {
+                    if (pr.maxWeight > 0) totalRecords++;
+                    if (pr.max1RM > 0) totalRecords++;
+                    if (pr.maxReps > 0) totalRecords++;
+                    if (pr.maxVolume > 0) totalRecords++;
+                });
+                
+                document.getElementById('totalPRsCount').textContent = totalRecords;
+                document.getElementById('exercisesWithPRs').textContent = allPRs.length;
+                
+                // Recent PRs (last 30 days)
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const recentCount = history.filter(pr => new Date(pr.timestamp) > thirtyDaysAgo).length;
+                document.getElementById('recentPRsCount').textContent = recentCount;
+            }
+
+            function showSessionPRs(prs) {
+                const container = document.getElementById('sessionPRHighlight');
+                const list = document.getElementById('sessionPRList');
+                const subtitle = document.getElementById('sessionPRSubtitle');
+                
+                container.style.display = 'block';
+                subtitle.textContent = `Hai battuto ${prs.reduce((sum, p) => sum + p.records.length, 0)} record in ${prs.length} esercizi!`;
+                
+                list.innerHTML = prs.map(pr => renderPRCard(pr, true)).join('');
+            }
+
+            function renderPRs() {
+                const container = document.getElementById('prListContainer');
+                
+                if (currentTab === 'history') {
+                    const history = prTracker.getPRHistory(50);
+                    const filtered = currentFilter === 'all' 
+                        ? history 
+                        : history.filter(pr => pr.records.some(r => r.type === currentFilter));
+                    
+                    if (filtered.length === 0) {
+                        container.innerHTML = renderEmptyState();
+                        return;
+                    }
+                    
+                    container.innerHTML = filtered.map(pr => renderPRCard(pr)).join('');
+                } else {
+                    // All current PRs grouped by exercise
+                    const allPRs = prTracker.getAllPRs();
+                    
+                    if (allPRs.length === 0) {
+                        container.innerHTML = renderEmptyState();
+                        return;
+                    }
+                    
+                    container.innerHTML = allPRs.map(pr => renderCurrentPRCard(pr)).join('');
+                }
+            }
+
+            function renderPRCard(prData, isSession = false) {
+                const { exercise, date, records, timestamp } = prData;
+                const recordDate = new Date(timestamp || date);
+                const formattedDate = recordDate.toLocaleDateString('it-IT', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+
+                return records.map(record => {
+                    const delta = record.newValue - record.oldValue;
+                    const deltaPercent = record.oldValue > 0 
+                        ? ((delta / record.oldValue) * 100).toFixed(1)
+                        : 100;
+                    
+                    const oldDate = getOldRecordDate(exercise, record.type);
+                    
+                    return `
+                        <div class="pr-record-card ${isSession ? 'session-card' : ''}">
+                            <div class="pr-record-header">
+                                <div>
+                                    <span class="pr-exercise-name">${exercise}</span>
+                                    <span class="pr-type-badge ${record.type}">${record.label}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="pr-comparison">
+                                <div class="pr-old-record">
+                                    <div class="pr-record-label">❌ Vecchio Record</div>
+                                    <div class="pr-record-value">${record.oldValue > 0 ? record.oldValue : '—'}</div>
+                                    <div class="pr-record-unit">${record.unit}</div>
+                                    ${record.context ? `<div class="pr-record-context">${record.context}</div>` : ''}
+                                </div>
+                                
+                                <div class="pr-delta">
+                                    <div class="pr-delta-arrow">→</div>
+                                    <div class="pr-delta-value">+${delta.toFixed(1)}</div>
+                                    <div class="pr-delta-percent">${record.oldValue > 0 ? `+${deltaPercent}%` : 'NUOVO!'}</div>
+                                </div>
+                                
+                                <div class="pr-new-record">
+                                    <div class="pr-record-label">✅ Nuovo PR</div>
+                                    <div class="pr-record-value">${record.newValue}</div>
+                                    <div class="pr-record-unit">${record.unit}</div>
+                                    ${record.context ? `<div class="pr-record-context">${record.context}</div>` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="pr-timestamps">
+                                <div class="pr-timestamp">
+                                    <span>📅</span>
+                                    <span>${oldDate || 'Prima volta'}</span>
+                                </div>
+                                <div class="pr-timestamp new">
+                                    <span>🆕</span>
+                                    <span>${formattedDate}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            function renderCurrentPRCard(pr) {
+                const lastUpdated = pr.lastUpdated 
+                    ? new Date(pr.lastUpdated).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+                    : 'N/A';
+
+                const records = [];
+                if (pr.maxWeight > 0) records.push({ type: 'weight', label: '💪 Peso Max', value: pr.maxWeight, unit: 'kg' });
+                if (pr.max1RM > 0) records.push({ type: '1rm', label: '🎯 1RM Stimato', value: pr.max1RM, unit: 'kg' });
+                if (pr.maxReps > 0) records.push({ type: 'reps', label: '🔥 Max Reps', value: pr.maxReps, unit: 'reps' });
+                if (pr.maxVolume > 0) records.push({ type: 'volume', label: '📊 Volume Max', value: pr.maxVolume, unit: 'kg' });
+
+                if (currentFilter !== 'all') {
+                    const filtered = records.filter(r => r.type === currentFilter);
+                    if (filtered.length === 0) return '';
+                }
+
+                return `
+                    <div class="pr-record-card">
+                        <div class="pr-record-header">
+                            <span class="pr-exercise-name">${pr.displayName}</span>
+                            <span class="pr-record-date">📅 ${lastUpdated}</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 1rem;">
+                            ${records.map(r => `
+                                <div style="text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm);">
+                                    <div style="font-size: 0.7rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">${r.label}</div>
+                                    <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${r.value}</div>
+                                    <div style="font-size: 0.7rem; color: var(--color-text-muted);">${r.unit}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderEmptyState() {
+                return `
+                    <div class="pr-empty-state">
+                        <div class="pr-empty-icon">🏋️</div>
+                        <div class="pr-empty-title">Nessun Record Ancora</div>
+                        <div class="pr-empty-text">
+                            Completa i tuoi allenamenti e i tuoi Personal Record appariranno qui con analisi dettagliate.
+                        </div>
+                    </div>
+                `;
+            }
+
+            function getOldRecordDate(exerciseName, recordType) {
+                // Search through history to find the previous record date
+                const history = prTracker.getPRHistory(100);
+                const normalizedName = exerciseName.toLowerCase().trim();
+                
+                for (let i = 1; i < history.length; i++) {
+                    const pr = history[i];
+                    if (pr.exercise.toLowerCase().trim() === normalizedName) {
+                        const hasMatchingRecord = pr.records.some(r => r.type === recordType);
+                        if (hasMatchingRecord) {
+                            return new Date(pr.timestamp || pr.date).toLocaleDateString('it-IT', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                            });
+                        }
+                    }
+                }
+                return null;
+            }
+
+            function setupEventListeners() {
+                // Tab switching
+                document.querySelectorAll('.pr-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        document.querySelectorAll('.pr-tab').forEach(t => t.classList.remove('active'));
+                        tab.classList.add('active');
+                        currentTab = tab.dataset.tab;
+                        renderPRs();
+                    });
+                });
+
+                // Filter pills
+                document.querySelectorAll('.pr-filter-pill').forEach(pill => {
+                    pill.addEventListener('click', () => {
+                        document.querySelectorAll('.pr-filter-pill').forEach(p => p.classList.remove('active'));
+                        pill.classList.add('active');
+                        currentFilter = pill.dataset.filter;
+                        renderPRs();
+                    });
+                });
+            }
+
+            // Mobile nav
+            document.getElementById('mobileToggle')?.addEventListener('click', () => {
+                document.getElementById('navLinks')?.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>

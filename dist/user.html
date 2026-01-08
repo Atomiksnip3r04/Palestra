@@ -1572,6 +1572,7 @@
     </style>
 
     <script src="js/main.js"></script>
+    <script src="js/pr-tracker.js"></script>
 
     <!-- Share Modal -->
     <div id="shareModal"
@@ -1681,6 +1682,7 @@
         import { aiService } from './js/ai-service.js';
         import { EXERCISE_DB, MUSCLE_GROUPS, isBilateralDumbbell, calculateTotalWeight } from './js/exercise-db.js';
         import { notificationManager } from './js/notification-manager.js';
+        import { mediaSessionManager } from './js/media-session-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -3071,6 +3073,11 @@
             function startFocusSession(workout) {
                 // Ricarica stime 1RM prima di iniziare (per avere dati aggiornati)
                 loadExerciseEstimates();
+                
+                // 🏆 Reset sessione PR per nuovo allenamento Focus Mode
+                if (typeof prTracker !== 'undefined') {
+                    prTracker.resetSessionPRs();
+                }
 
                 const source = typeof workout === 'string'
                     ? findWorkoutById(workout)
@@ -3168,6 +3175,24 @@
                 }
 
                 stopTimer();
+                
+                // 🔴 KILL SWITCH v2.0 - Terminazione su abort/exit (sequenziale)
+                (async () => {
+                    try {
+                        await notificationManager.killAllTimersAndNotifications();
+                        await mediaSessionManager.killSession();
+                        // WEBAPP FIX: Forza pulizia MediaSession
+                        setTimeout(() => {
+                            if ('mediaSession' in navigator) {
+                                navigator.mediaSession.metadata = null;
+                                navigator.mediaSession.playbackState = 'none';
+                            }
+                        }, 100);
+                    } catch (e) {
+                        console.warn('Kill switch on exit error:', e);
+                    }
+                })();
+                
                 // Ripristina scroll del body
                 const scrollY = document.body.style.top;
                 document.body.style.overflow = '';
@@ -4163,9 +4188,31 @@
                 // Mark session as completed for recovery manager
                 window.focusModeSessionCompleted = true;
 
-                // Stop silent audio loop and release wake lock
-                notificationManager.stopSilentLoop();
-                notificationManager.releaseWakeLock();
+                // 🔴 KILL SWITCH v2.0 - Terminazione completa cross-platform
+                // Esegui kill in sequenza per assicurare pulizia completa
+                (async () => {
+                    try {
+                        // 1. Kill notification manager (audio context, oscillator)
+                        await notificationManager.killAllTimersAndNotifications();
+                        console.log('✅ NotificationManager killed');
+                        
+                        // 2. Kill media session manager (audio element, MediaSession)
+                        await mediaSessionManager.killSession();
+                        console.log('✅ MediaSessionManager killed');
+                        
+                        // 3. WEBAPP FIX: Forza pulizia MediaSession con piccolo delay
+                        setTimeout(() => {
+                            if ('mediaSession' in navigator) {
+                                navigator.mediaSession.metadata = null;
+                                navigator.mediaSession.playbackState = 'none';
+                                console.log('✅ MediaSession force-cleared after delay');
+                            }
+                        }, 100);
+                        
+                    } catch (e) {
+                        console.warn('Kill switch error:', e);
+                    }
+                })();
 
                 focusActiveArea.style.display = 'none';
                 focusTimerArea.style.display = 'none';
@@ -4306,6 +4353,25 @@
                 localStorage.setItem('ironflow_logs', JSON.stringify(logs));
                 sessionLogSaved = true;
                 currentWellnessSnapshot = null;
+
+                // 🏆 RILEVAMENTO PR v2.0 - Focus Mode
+                try {
+                    if (typeof prTracker !== 'undefined') {
+                        const newPRs = prTracker.detectPRsFromLog(logEntry);
+                        if (newPRs.length > 0) {
+                            console.log('🏆 [Focus] Nuovi PR rilevati:', newPRs);
+                        }
+                        
+                        // Notifica aggregata post-workout
+                        const sessionPRs = prTracker.getSessionPRs();
+                        if (sessionPRs.length > 0) {
+                            console.log('🏆 [Focus] Sessione completata con PRs:', sessionPRs);
+                            await prTracker.notifyAggregatedPRs();
+                        }
+                    }
+                } catch (prError) {
+                    console.warn('[Focus] PR detection error:', prError);
+                }
 
                 try {
                     await firestoreService.syncToCloud();

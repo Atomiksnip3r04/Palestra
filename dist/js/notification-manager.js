@@ -1,5 +1,6 @@
 // Notification Manager for Focus Mode
 // Enhanced for iOS compatibility with multiple fallback strategies
+// v2.0 - Added Cross-Platform Kill Switch for workout completion/abort
 
 export class NotificationManager {
     constructor() {
@@ -10,9 +11,11 @@ export class NotificationManager {
         this.notificationPermission = 'default';
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        this.isNative = typeof window !== 'undefined' && window.Capacitor?.isNativePlatform?.();
         this.audioElement = null;
         this.notificationSound = null;
         this.wakeLock = null;
+        this.activeTimerWorker = null; // Track Web Worker for timer
 
         this.init();
     }
@@ -195,7 +198,14 @@ export class NotificationManager {
     }
 
     // Call this on "Start Rest" or any button click to ensure AudioContext is active
+    // NOTE: Su APK nativo, NON creiamo AudioContext - interferisce con app musicali
     unlockAudio() {
+        // Su APK nativo, skip AudioContext - lascia le app musicali in pace
+        if (this.isNative) {
+            console.log('📱 Skipping AudioContext on native app');
+            return;
+        }
+        
         if (!this.audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
@@ -230,7 +240,14 @@ export class NotificationManager {
 
     // Start playing a silent loop to keep the session active in background
     // This is crucial for iOS to prevent the OS from suspending the app
+    // NOTE: Su APK nativo, NON usiamo audio silenzioso - interferisce con app musicali
     startSilentLoop() {
+        // Su APK nativo, il TimerService gestisce tutto - non serve audio silenzioso
+        if (this.isNative) {
+            console.log('📱 Skipping silent loop on native app - using TimerService');
+            return;
+        }
+        
         this.unlockAudio();
         if (!this.audioCtx) return;
 
@@ -525,6 +542,7 @@ export class NotificationManager {
         return {
             isIOS: this.isIOS,
             isSafari: this.isSafari,
+            isNative: this.isNative,
             audioUnlocked: this.isAudioUnlocked,
             audioContextState: this.audioCtx?.state || 'not created',
             notificationPermission: this.notificationPermission,
@@ -532,6 +550,219 @@ export class NotificationManager {
             wakeLockSupported: 'wakeLock' in navigator,
             wakeLockActive: !!this.wakeLock
         };
+    }
+
+    // ============================================
+    // CROSS-PLATFORM KILL SWITCH v2.0
+    // Chiamare su workout complete/abort
+    // ============================================
+
+    /**
+     * Kill Switch Totale - Ferma tutto e pulisce le notifiche
+     * Differenziato per piattaforma:
+     * - APK Nativo: Termina Foreground Service
+     * - PWA Android: Service Worker cancel notification
+     * - PWA iOS: Distrugge audio loop + nullifica MediaSession
+     */
+    async killAllTimersAndNotifications() {
+        console.log('🔴 KILL SWITCH ATTIVATO - Piattaforma:', this.isNative ? 'Native' : (this.isIOS ? 'iOS' : 'Web'));
+
+        try {
+            // 1. Stop silent audio loop (CRUCIALE per iOS)
+            this.stopSilentLoop();
+
+            // 2. Release Wake Lock
+            this.releaseWakeLock();
+
+            // 3. Terminate Web Worker timer se attivo
+            if (this.activeTimerWorker) {
+                this.activeTimerWorker.postMessage({ action: 'stop' });
+                this.activeTimerWorker.terminate();
+                this.activeTimerWorker = null;
+                console.log('✅ Timer Web Worker terminato');
+            }
+
+            // 4. Platform-specific notification cleanup
+            if (this.isNative) {
+                await this.killNativeNotifications();
+            } else if (this.isIOS) {
+                await this.killIOSSession();
+            } else {
+                await this.killWebNotifications();
+            }
+
+            // 5. Close AudioContext completamente
+            if (this.audioCtx && this.audioCtx.state !== 'closed') {
+                await this.audioCtx.close();
+                this.audioCtx = null;
+                this.isAudioUnlocked = false;
+                console.log('✅ AudioContext chiuso');
+            }
+
+            // 6. Clear any persistent media session
+            this.clearMediaSession();
+
+            console.log('✅ KILL SWITCH COMPLETATO');
+        } catch (error) {
+            console.error('❌ Kill Switch error:', error);
+        }
+    }
+
+    /**
+     * APK Nativo - Termina Foreground Service
+     */
+    async killNativeNotifications() {
+        try {
+            // Via Capacitor Plugin - TimerNotification
+            if (window.Capacitor?.Plugins?.TimerNotification) {
+                await window.Capacitor.Plugins.TimerNotification.stopTimer();
+                console.log('✅ Native Foreground Service terminato');
+            }
+
+            // Via LocalNotifications - cancel all timer notifications
+            if (window.Capacitor?.Plugins?.LocalNotifications) {
+                const pending = await window.Capacitor.Plugins.LocalNotifications.getPending();
+                if (pending.notifications?.length > 0) {
+                    const ids = pending.notifications.map(n => n.id);
+                    await window.Capacitor.Plugins.LocalNotifications.cancel({ notifications: ids.map(id => ({ id })) });
+                    console.log('✅ Notifiche locali native cancellate:', ids.length);
+                }
+            }
+        } catch (e) {
+            console.warn('Native notification kill failed:', e);
+        }
+    }
+
+    /**
+     * PWA Android - Cancel via Service Worker
+     */
+    async killWebNotifications() {
+        try {
+            // Method 1: Service Worker getNotifications
+            if (navigator.serviceWorker?.controller) {
+                const registration = await navigator.serviceWorker.ready;
+                const notifications = await registration.getNotifications({ tag: 'timer-complete' });
+                notifications.forEach(n => n.close());
+                console.log('✅ SW Notifications chiuse:', notifications.length);
+                
+                // Prova anche senza tag per catturare tutte le notifiche
+                const allNotifications = await registration.getNotifications();
+                allNotifications.forEach(n => n.close());
+
+                // Invia messaggio al SW per cancellare tutto
+                registration.active?.postMessage({ type: 'CANCEL_ALL_NOTIFICATIONS' });
+            }
+
+            // Method 2: Distruggi TUTTI gli elementi audio nella pagina
+            const allAudio = document.querySelectorAll('audio');
+            allAudio.forEach(el => {
+                try {
+                    el.pause();
+                    el.src = '';
+                    el.remove();
+                } catch (e) {}
+            });
+            if (allAudio.length > 0) {
+                console.log(`✅ Destroyed ${allAudio.length} audio elements`);
+            }
+        } catch (e) {
+            console.warn('Web notification kill failed:', e);
+        }
+    }
+
+    /**
+     * iOS Safari - Distrugge audio loop e MediaSession
+     * CRITICO: iOS rimuove automaticamente il widget lockscreen quando non c'è audio attivo
+     */
+    async killIOSSession() {
+        console.log('🍎 iOS Kill Switch...');
+
+        // 1. Stop silent oscillator (MUST do first)
+        this.stopSilentLoop();
+
+        // 2. Stop e rimuovi audio element
+        if (this.notificationSound) {
+            this.notificationSound.pause();
+            this.notificationSound.src = '';
+            this.notificationSound = null;
+        }
+
+        // 3. Distruggi TUTTI gli AudioElement nella pagina
+        const audioElements = document.querySelectorAll('audio');
+        audioElements.forEach(el => {
+            try {
+                el.pause();
+                el.src = '';
+                el.remove();
+            } catch (e) {}
+        });
+        console.log(`✅ Destroyed ${audioElements.length} audio elements`);
+
+        // 4. Nullifica MediaSession metadata (rimuove widget lockscreen)
+        this.clearMediaSession();
+
+        // 5. Close AudioContext se esiste (non solo suspend)
+        if (this.audioCtx) {
+            try {
+                if (this.audioCtx.state !== 'closed') {
+                    await this.audioCtx.close();
+                }
+                this.audioCtx = null;
+                this.isAudioUnlocked = false;
+            } catch (e) {}
+        }
+
+        console.log('✅ iOS session killed - lockscreen widget dovrebbe scomparire');
+    }
+
+    /**
+     * Pulisce MediaSession - Rimuove controlli lockscreen
+     * v2.1 - Pulizia più aggressiva con retry per Chrome Android
+     */
+    clearMediaSession() {
+        if ('mediaSession' in navigator) {
+            try {
+                // Imposta metadata a null per rimuovere dal lockscreen
+                navigator.mediaSession.metadata = null;
+                
+                // Chrome Android a volte richiede la sequenza: paused -> none
+                navigator.mediaSession.playbackState = 'paused';
+                
+                // Rimuovi action handlers
+                const actions = ['play', 'pause', 'previoustrack', 'nexttrack', 'seekbackward', 'seekforward', 'stop'];
+                actions.forEach(action => {
+                    try {
+                        navigator.mediaSession.setActionHandler(action, null);
+                    } catch (e) {
+                        // Ignora se l'azione non è supportata
+                    }
+                });
+                
+                // Prova a resettare position state
+                try {
+                    navigator.mediaSession.setPositionState(null);
+                } catch (e) {}
+
+                // Delay e secondo tentativo per Chrome Android
+                setTimeout(() => {
+                    try {
+                        navigator.mediaSession.metadata = null;
+                        navigator.mediaSession.playbackState = 'none';
+                    } catch (e) {}
+                }, 50);
+
+                console.log('✅ MediaSession cleared');
+            } catch (e) {
+                console.warn('MediaSession clear failed:', e);
+            }
+        }
+    }
+
+    /**
+     * Registra il Web Worker del timer per poterlo terminare
+     */
+    registerTimerWorker(worker) {
+        this.activeTimerWorker = worker;
     }
 }
 

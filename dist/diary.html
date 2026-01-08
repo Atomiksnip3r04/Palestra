@@ -1248,6 +1248,11 @@
                 fabContainer.style.display = 'none';
                 workoutSelector.style.display = 'block';
                 historyList.style.display = 'none';
+                
+                // 🏆 Reset sessione PR per nuovo allenamento
+                if (typeof prTracker !== 'undefined') {
+                    prTracker.resetSessionPRs();
+                }
             });
 
             cancelSelectBtn.addEventListener('click', () => {
@@ -1998,25 +2003,29 @@
 
                 localStorage.setItem('ironflow_logs', JSON.stringify(logs));
 
-                // 🏆 RILEVAMENTO PR - Controlla se ci sono nuovi Personal Record
+                // 🏆 RILEVAMENTO PR v2.0 - Accumula PRs nella sessione
+                // La notifica aggregata viene inviata sotto
                 try {
                     const newPRs = prTracker.detectPRsFromLog(logData);
                     if (newPRs.length > 0) {
-                        console.log('🏆 Nuovi PR rilevati:', newPRs);
-                        // Notifica ogni PR
-                        for (const pr of newPRs) {
-                            await prTracker.notifyPR(pr);
-                            // Piccolo delay tra notifiche multiple
-                            if (newPRs.indexOf(pr) < newPRs.length - 1) {
-                                await new Promise(r => setTimeout(r, 500));
-                            }
-                        }
+                        console.log('🏆 Nuovi PR rilevati in questo salvataggio:', newPRs);
                     }
                 } catch (prError) {
                     console.warn('PR detection error:', prError);
                 }
 
                 await syncLogsToCloud();
+
+                // 🏆 NOTIFICA AGGREGATA POST-WORKOUT - Una sola notifica "Master"
+                try {
+                    const sessionPRs = prTracker.getSessionPRs();
+                    if (sessionPRs.length > 0) {
+                        console.log('🏆 Sessione completata con PRs:', sessionPRs);
+                        await prTracker.notifyAggregatedPRs();
+                    }
+                } catch (prNotifyError) {
+                    console.warn('PR aggregated notification error:', prNotifyError);
+                }
 
                 // Reset UI
                 closeLogging();

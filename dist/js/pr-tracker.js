@@ -2,15 +2,22 @@
  * PR Tracker Service
  * Rileva e notifica automaticamente i Personal Records
  * Cross-platform: APK Android, WebApp Android, WebApp iOS
+ * 
+ * v2.0 - Nuova logica:
+ * - Trigger esclusivo su onWorkoutEnd (fine allenamento)
+ * - Notifica aggregata singola "Master"
+ * - Redirect a PR Hub con analisi comparativa
  */
 
 const PR_STORAGE_KEY = 'ironflow_personal_records';
 const PR_HISTORY_KEY = 'ironflow_pr_history';
+const PR_SESSION_KEY = 'ironflow_session_prs';
 
 export class PRTracker {
     constructor() {
         this.personalRecords = this.loadPRs();
         this.prHistory = this.loadPRHistory();
+        this.sessionPRs = []; // PRs detected in current session
         this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
         this.isAndroid = /Android/.test(navigator.userAgent);
         this.isNativeApp = window.Capacitor?.isNativePlatform?.() || false;
@@ -23,7 +30,7 @@ export class PRTracker {
         // Richiedi permesso notifiche
         await this.requestNotificationPermission();
         
-        console.log(`🏆 PR Tracker inizializzato - Platform: ${this.getPlatformName()}`);
+        console.log(`🏆 PR Tracker v2.0 inizializzato - Platform: ${this.getPlatformName()}`);
     }
 
     getPlatformName() {
@@ -217,7 +224,7 @@ export class PRTracker {
         if (newPRs.length > 0) {
             this.savePRs();
             
-            // Aggiungi allo storico
+            // Aggiungi allo storico con timestamp per tracciamento temporale
             newPRs.forEach(pr => {
                 this.prHistory.unshift({
                     ...pr,
@@ -225,9 +232,230 @@ export class PRTracker {
                 });
             });
             this.savePRHistory();
+            
+            // Accumula PRs della sessione corrente
+            this.sessionPRs.push(...newPRs);
         }
 
         return newPRs;
+    }
+
+    /**
+     * Resetta i PR della sessione corrente
+     * Chiamare all'inizio di un nuovo workout
+     */
+    resetSessionPRs() {
+        this.sessionPRs = [];
+        console.log('🏆 Session PRs reset');
+    }
+
+    /**
+     * Ottieni i PR della sessione corrente
+     */
+    getSessionPRs() {
+        return this.sessionPRs;
+    }
+
+    /**
+     * Notifica aggregata post-workout (v2.0)
+     * Mostra una singola notifica "Master" e reindirizza al PR Hub
+     */
+    async notifyAggregatedPRs() {
+        if (this.sessionPRs.length === 0) {
+            console.log('🏆 Nessun nuovo PR in questa sessione');
+            return false;
+        }
+
+        const totalRecords = this.sessionPRs.reduce((sum, pr) => sum + pr.records.length, 0);
+        const exerciseCount = this.sessionPRs.length;
+
+        console.log(`🏆 Sessione completata: ${totalRecords} record in ${exerciseCount} esercizi`);
+
+        // Costruisci notifica aggregata
+        const title = '🏆 Progressi Straordinari!';
+        const body = `Hai superato ${totalRecords} record personali in ${exerciseCount} esercizi. Tocca per analizzarli.`;
+
+        // 1. Notifica Native (Android APK)
+        if (this.isNativeApp) {
+            await this.sendAggregatedNativeNotification(title, body, totalRecords);
+        }
+
+        // 2. Web Notification
+        if (this.notificationPermission === 'granted') {
+            this.sendAggregatedWebNotification(title, body);
+        }
+
+        // 3. In-App Toast con CTA
+        this.showAggregatedToast(totalRecords, exerciseCount);
+
+        // 4. Vibrazione celebrativa
+        this.vibrateDevice([100, 50, 100, 50, 100, 50, 200]);
+
+        return true;
+    }
+
+    /**
+     * Reindirizza al PR Hub con i dati della sessione
+     */
+    navigateToPRHub() {
+        if (this.sessionPRs.length === 0) return;
+        
+        const encodedPRs = encodeURIComponent(JSON.stringify(this.sessionPRs));
+        window.location.href = `records.html?session_prs=${encodedPRs}`;
+    }
+
+    async sendAggregatedNativeNotification(title, body, count) {
+        try {
+            if (window.Capacitor?.Plugins?.LocalNotifications) {
+                await window.Capacitor.Plugins.LocalNotifications.schedule({
+                    notifications: [{
+                        id: Date.now(),
+                        title: title,
+                        body: body,
+                        channelId: 'pr_notifications',
+                        sound: 'default',
+                        smallIcon: 'ic_stat_icon',
+                        largeIcon: 'ic_launcher',
+                        extra: {
+                            type: 'pr_aggregated',
+                            count: count,
+                            action: 'open_pr_hub'
+                        }
+                    }]
+                });
+                console.log('✅ Aggregated native notification sent');
+            }
+        } catch (error) {
+            console.warn('Native notification failed:', error);
+        }
+    }
+
+    sendAggregatedWebNotification(title, body) {
+        try {
+            const notification = new Notification(title, {
+                body: body,
+                icon: '/assets/icon.svg',
+                badge: '/assets/icon.svg',
+                tag: 'pr-aggregated',
+                renotify: true,
+                requireInteraction: true,
+                vibrate: [100, 50, 100, 50, 200],
+                data: { type: 'pr_aggregated', action: 'open_pr_hub' }
+            });
+
+            notification.onclick = () => {
+                window.focus();
+                this.navigateToPRHub();
+                notification.close();
+            };
+
+            // Auto-close dopo 15 secondi
+            setTimeout(() => notification.close(), 15000);
+        } catch (error) {
+            console.warn('Web notification failed:', error);
+        }
+    }
+
+    showAggregatedToast(totalRecords, exerciseCount) {
+        // Rimuovi toast esistenti
+        const existingToast = document.getElementById('pr-toast');
+        if (existingToast) existingToast.remove();
+
+        const toast = document.createElement('div');
+        toast.id = 'pr-toast';
+        toast.innerHTML = `
+            <div class="pr-toast-content">
+                <div class="pr-toast-icon">🏆</div>
+                <div class="pr-toast-text">
+                    <div class="pr-toast-title">Progressi Straordinari!</div>
+                    <div class="pr-toast-body">${totalRecords} nuovi record in ${exerciseCount} esercizi</div>
+                </div>
+            </div>
+            <button class="pr-toast-cta" id="prToastCTA">Analizza →</button>
+        `;
+
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #1a1a2e;
+            padding: 16px 20px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(255, 215, 0, 0.4);
+            animation: prToastSlide 0.4s ease-out;
+            max-width: 90vw;
+            font-family: var(--font-body, system-ui, sans-serif);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        `;
+
+        // Aggiungi stili se non esistono
+        if (!document.getElementById('pr-toast-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'pr-toast-styles';
+            styles.textContent = `
+                @keyframes prToastSlide {
+                    from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+                .pr-toast-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    flex: 1;
+                }
+                .pr-toast-icon {
+                    font-size: 2rem;
+                    animation: bounce 0.5s ease infinite alternate;
+                }
+                @keyframes bounce {
+                    from { transform: scale(1); }
+                    to { transform: scale(1.2); }
+                }
+                .pr-toast-title {
+                    font-weight: 700;
+                    font-size: 1rem;
+                }
+                .pr-toast-body {
+                    font-size: 0.85rem;
+                    opacity: 0.9;
+                }
+                .pr-toast-cta {
+                    background: rgba(0,0,0,0.2);
+                    border: none;
+                    color: inherit;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    font-weight: 700;
+                    font-size: 0.85rem;
+                    cursor: pointer;
+                    white-space: nowrap;
+                    transition: background 0.2s;
+                }
+                .pr-toast-cta:hover {
+                    background: rgba(0,0,0,0.3);
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+
+        document.body.appendChild(toast);
+
+        // CTA click handler
+        document.getElementById('prToastCTA').addEventListener('click', () => {
+            toast.remove();
+            this.navigateToPRHub();
+        });
+
+        // Auto-remove dopo 12 secondi
+        setTimeout(() => {
+            toast.style.animation = 'prToastSlide 0.3s ease-in reverse';
+            setTimeout(() => toast.remove(), 300);
+        }, 12000);
     }
 
     // --- Notification System ---
@@ -247,7 +475,8 @@ export class PRTracker {
     }
 
     /**
-     * Invia notifica PR - Cross-platform
+     * @deprecated Use notifyAggregatedPRs() instead for post-workout notification
+     * Kept for backward compatibility
      */
     async notifyPR(prDetails) {
         const { exercise, records } = prDetails;
