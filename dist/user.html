@@ -318,19 +318,146 @@
         }
 
         .workout-list-item {
-            background: var(--color-surface);
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: var(--radius-sm);
+            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0,0,0,0.25) 100%);
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            border-radius: 20px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
         }
 
-        .delete-workout {
-            color: #ff4444;
+        .workout-list-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border-color: rgba(0, 243, 255, 0.2);
+        }
+
+        .workout-list-item:active {
+            transform: translateY(-1px);
+        }
+
+        .workout-list-item .workout-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            width: 100%;
+        }
+
+        .workout-list-item .workout-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .workout-list-item .workout-meta {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .workout-list-item .workout-date {
+            font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .workout-list-item .workout-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            overflow-x: auto;
+        }
+
+        .workout-list-item .btn-play {
+            background: linear-gradient(135deg, var(--color-primary) 0%, #00d4e0 100%);
+            color: black;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 1.1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 16px rgba(0, 243, 255, 0.35);
+            flex-shrink: 0;
+        }
+
+        .workout-list-item .btn-play:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 24px rgba(0, 243, 255, 0.5);
+        }
+
+        .workout-list-item .btn-play:active {
+            transform: scale(0.95);
+        }
+
+        .workout-list-item .btn-edit {
+            padding: 0.45rem 0.8rem;
+            font-size: 0.8rem;
+            color: var(--color-text);
+            text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .workout-list-item .btn-edit:hover {
+            border-color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.12);
+            color: var(--color-primary);
+        }
+
+        .workout-list-item .btn-edit:active {
+            transform: scale(0.97);
+        }
+
+        .workout-list-item .btn-icon-action {
+            padding: 0.4rem;
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: all 0.2s;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .workout-list-item .btn-icon-action:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.1);
+        }
+
+        .workout-list-item .btn-icon-action.delete {
+            color: #ff4444;
+        }
+
+        .workout-list-item .btn-icon-action.delete:hover {
+            background: rgba(255, 68, 68, 0.15);
         }
 
         /* Auth Forms */
@@ -445,11 +572,11 @@
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="creator.html">Creator</a></li>
-                    <li><a href="diary.html">Diario</a></li>
-                    <li><a href="analysis.html">Analisi</a></li>
-                    <li><a href="body.html">Corpo</a></li>
-                    <li><a href="user.html" class="text-primary">Profilo</a></li>
+                    <li><a href="creator.html">📝 Crea Schede</a></li>
+                    <li><a href="diary.html">📓 Diario</a></li>
+                    <li><a href="analysis.html">📈 Analisi</a></li>
+                    <li><a href="body.html">💪 Corpo</a></li>
+                    <li><a href="user.html" class="text-primary">👤 Profilo</a></li>
                 </ul>
             </nav>
         </div>
@@ -510,26 +637,45 @@
 
                     <!-- Saved Workouts -->
                     <div>
-                        <!-- AI PREDICTOR WIDGET -->
-                        <div class="card"
-                            style="margin-bottom: 2rem; border-color: var(--color-primary-dim); background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0,0,0,0) 100%);">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
-                                <div>
-                                    <h3 style="font-size: 1.2rem; margin: 0;">⚡ Prossima Sessione</h3>
-                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0;">
-                                        Suggerimenti personalizzati da Gemini AI</p>
+                        <!-- AI PREDICTOR WIDGET - Redesigned -->
+                        <div class="card ai-generator-card"
+                            style="margin-bottom: 2rem; border-radius: 20px; border: 1px solid rgba(0, 243, 255, 0.2); background: linear-gradient(145deg, rgba(0, 243, 255, 0.08) 0%, rgba(0, 150, 170, 0.03) 50%, rgba(0,0,0,0.1) 100%); box-shadow: 0 8px 32px rgba(0, 243, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05); overflow: hidden; position: relative;">
+                            
+                            <!-- Decorative glow -->
+                            <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(0, 243, 255, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+                            
+                            <div style="position: relative; z-index: 1;">
+                                <!-- Header -->
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
+                                    <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, var(--color-primary) 0%, #00c8d4 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0, 243, 255, 0.3);">
+                                        🤖
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h3 style="font-size: 1.15rem; margin: 0; font-weight: 600;">AI Workout Generator</h3>
+                                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0;">
+                                            Powered by Gemini AI
+                                        </p>
+                                    </div>
                                 </div>
-                                <div style="display: flex; gap: 0.5rem;">
-                                    <button id="aiPlanHistoryBtn" class="btn btn-outline btn-compact"
-                                        style="font-size: 0.75rem;">📚 Storico</button>
-                                    <button id="refreshAiPredictor" class="btn btn-primary btn-compact"
-                                        style="font-size: 0.75rem;">🤖 Genera</button>
+                                
+                                <!-- Content Area -->
+                                <div id="aiPredictorContent" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                                    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0; text-align: center;">
+                                        ✨ Chiedi all'IA cosa allenare oggi in base al tuo storico
+                                    </p>
                                 </div>
-                            </div>
-                            <div id="aiPredictorContent">
-                                <p style="color: var(--color-text-muted); font-size: 0.9rem;">Chiedi all'IA cosa
-                                    allenare oggi in base al tuo storico.</p>
+                                
+                                <!-- Action Buttons -->
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button id="aiPlanHistoryBtn" class="btn btn-outline" 
+                                        style="flex: 1; border-radius: 10px; padding: 0.75rem; font-size: 0.85rem; border-color: rgba(255,255,255,0.15);">
+                                        📚 Storico
+                                    </button>
+                                    <button id="refreshAiPredictor" class="btn btn-primary" 
+                                        style="flex: 2; border-radius: 10px; padding: 0.75rem; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0, 243, 255, 0.3);">
+                                        ⚡ Genera Sessione
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -543,10 +689,12 @@
 
                     <!-- Settings -->
                     <div class="card">
-                        <h3
-                            style="margin-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); padding-bottom: 1rem;">
-                            Impostazioni</h3>
+                        <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);" id="settingsHeader">
+                            <h3 style="margin: 0;">⚙️ Impostazioni</h3>
+                            <span id="settingsToggle" style="font-size: 1.5rem; transition: transform 0.3s;">▼</span>
+                        </div>
 
+                        <div id="settingsContent" style="display: none; margin-top: 1rem;">
                         <div class="setting-item">
                             <span class="setting-label">Nome Visualizzato</span>
                             <div class="setting-control">
@@ -695,6 +843,7 @@
                             <button id="logoutBtn" class="btn btn-primary"
                                 style="width: 100%; background: #ff4444; border-color: #ff4444; color: white;">Esci</button>
                         </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -712,6 +861,30 @@
                 Sessioni <span class="text-primary">AI</span></h3>
             <div id="aiPlanHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem;">
                 <!-- history items -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Rest Times Modal -->
+    <div id="editRestModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: clamp(0.5rem, 2vw, 1rem); overflow-y: auto;">
+        <div class="card"
+            style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; margin: auto; border-radius: 20px;">
+            <button id="closeEditRestModal"
+                style="position: sticky; top: 0; right: 0; float: right; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; margin-bottom: -36px;">&times;</button>
+            <h3 style="margin-bottom: 0.5rem; font-size: clamp(1.1rem, 4vw, 1.3rem); padding-right: 40px;">
+                ⏱️ Modifica <span class="text-primary">Recuperi</span>
+            </h3>
+            <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                Imposta i tempi di recupero personalizzati per ogni serie
+            </p>
+            <div id="editRestWorkoutName" style="font-weight: 600; margin-bottom: 1rem; padding: 0.5rem; background: rgba(0,243,255,0.1); border-radius: 8px;"></div>
+            <div id="editRestContent" style="display: flex; flex-direction: column; gap: 1rem;">
+                <!-- Dynamic content -->
+            </div>
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                <button id="cancelEditRest" class="btn btn-outline" style="flex: 1; border-radius: 10px;">Annulla</button>
+                <button id="saveEditRest" class="btn btn-primary" style="flex: 2; border-radius: 10px;">💾 Salva Modifiche</button>
             </div>
         </div>
     </div>
@@ -860,17 +1033,20 @@
                         style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
                             style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">REPS</label>
-                        <input type="text" id="focusRepsInput"
+                        <input type="number" id="focusRepsInput" inputmode="numeric" min="1" step="1"
                             style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
                             value="">
                     </div>
                     <div
                         style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label
-                            style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">RPE</label>
-                        <input type="number" id="focusRpeInput" min="1" max="10" step="0.5"
+                            style="display: flex; align-items: center; justify-content: center; gap: 0.3rem; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">
+                            RPE
+                            <span onclick="openRpeInfoModal()" style="cursor: pointer; border: 1px solid var(--color-primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--color-primary); background: rgba(0, 243, 255, 0.1);">?</span>
+                        </label>
+                        <input type="number" id="focusRpeInput" min="6" max="10" step="0.5"
                             style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
-                            value="" placeholder="1-10">
+                            value="" placeholder="6-10">
                     </div>
                 </div>
             </div>
@@ -998,6 +1174,58 @@
         </div>
     </div>
 
+    <!-- RPE Info Modal -->
+    <div id="rpeInfoModal"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10001; justify-content: center; align-items: center; padding: 1rem;">
+        <div
+            style="background: var(--color-surface); padding: 1.5rem; border-radius: 16px; width: 90%; max-width: 380px; border: 1px solid var(--color-primary); box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--color-primary); font-size: 1.1rem;">💪 RPE - Rate of Perceived Exertion</h3>
+                <button onclick="closeRpeInfoModal()" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem;">&times;</button>
+            </div>
+            <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5;">
+                La scala RPE misura lo <strong style="color: white;">sforzo percepito</strong> durante una serie, da 6 a 10:
+            </p>
+            <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 0.75rem; margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #4ade80; font-weight: 600;">RPE 6</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto facile, 4+ reps in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #86efac; font-weight: 600;">RPE 7</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Moderato, 3 reps in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #fbbf24; font-weight: 600;">RPE 8</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Impegnativo, 2 reps in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span style="color: #fb923c; font-weight: 600;">RPE 9</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto duro, 1 rep in riserva</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0;">
+                    <span style="color: #f87171; font-weight: 600;">RPE 10</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Massimale, nessuna rep extra</span>
+                </div>
+            </div>
+            <p style="color: var(--color-primary); font-size: 0.8rem; font-style: italic; margin: 0;">
+                💡 Per la crescita muscolare, lavora tra RPE 7-9 sulla maggior parte delle serie.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function openRpeInfoModal() {
+            document.getElementById('rpeInfoModal').style.display = 'flex';
+        }
+        function closeRpeInfoModal() {
+            document.getElementById('rpeInfoModal').style.display = 'none';
+        }
+        document.getElementById('rpeInfoModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'rpeInfoModal') closeRpeInfoModal();
+        });
+    </script>
+
     <!-- Module Script for Firebase Logic -->
     <script type="module">
         import { authService } from './js/auth-service.js';
@@ -1007,6 +1235,19 @@
         import { notificationManager } from './js/notification-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
+
+            // Settings Dropdown Toggle
+            const settingsHeader = document.getElementById('settingsHeader');
+            const settingsContent = document.getElementById('settingsContent');
+            const settingsToggle = document.getElementById('settingsToggle');
+
+            if (settingsHeader && settingsContent && settingsToggle) {
+                settingsHeader.addEventListener('click', () => {
+                    const isHidden = settingsContent.style.display === 'none';
+                    settingsContent.style.display = isHidden ? 'block' : 'none';
+                    settingsToggle.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                });
+            }
 
             // Elements
             const authSection = document.getElementById('authSection');
@@ -2277,7 +2518,11 @@
                             return {
                                 weight: Number(set.weight ?? ex.weight ?? 0) || 0,
                                 reps: set.reps !== undefined && set.reps !== null && set.reps !== '' ? set.reps : targetInfo.numeric,
-                                target: set.target || targetInfo.label
+                                target: set.target || targetInfo.label,
+                                // PRESERVE per-set data
+                                customRest: set.customRest !== undefined && set.customRest !== null && set.customRest !== '' ? parseInt(set.customRest) : null,
+                                type: set.type || 'normal',
+                                rpe: set.rpe !== undefined && set.rpe !== null ? set.rpe : null
                             };
                         })
                         : buildSetsFromPlan(ex);
@@ -2507,11 +2752,11 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS SX</label>
-                                <input type="text" id="focusRepsInput_Left" value="${repsLeft}" placeholder="${targetReps}" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                                <input type="number" id="focusRepsInput_Left" value="${repsLeft}" placeholder="${targetReps}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_Left" value="${rpeLeft}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_Left" value="${rpeLeft}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -2528,11 +2773,11 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS DX</label>
-                                <input type="text" id="focusRepsInput_Right" value="${repsRight}" placeholder="${targetReps}" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
+                                <input type="number" id="focusRepsInput_Right" value="${repsRight}" placeholder="${targetReps}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center; font-weight:bold;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_Right" value="${rpeRight}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_Right" value="${rpeRight}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.3rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -2587,11 +2832,11 @@
                     </div>
                     <div style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">REPS</label>
-                        <input type="text" id="focusRepsInput" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
+                        <input type="number" id="focusRepsInput" inputmode="numeric" min="1" step="1" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="">
                     </div>
                     <div style="background: var(--color-surface); padding: 0.75rem 0.5rem; border-radius: var(--radius-md); border: 1px solid var(--color-border); text-align: center;">
                         <label style="display: block; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">RPE</label>
-                        <input type="number" id="focusRpeInput" min="1" max="10" step="0.5" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="" placeholder="1-10">
+                        <input type="number" id="focusRpeInput" min="6" max="10" step="0.5" style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);" value="" placeholder="6-10">
                     </div>
                 </div>
                 `;
@@ -2619,11 +2864,11 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS</label>
-                                <input type="text" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || 'Reps'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || 'Reps'}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -2640,11 +2885,11 @@
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">REPS</label>
-                                <input type="text" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || 'Reps'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || 'Reps'}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                             <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
                                 <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="1-10" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
                             </div>
                         </div>
                     </div>
@@ -3131,8 +3376,32 @@
                     }
                 } else {
                     // Standard rest logic for non-superset exercises
-                    if (currentEx.rest) {
+                    const currentSet = currentEx.sets[currentSetIndex];
+                    
+                    // PRIORITY LOGIC:
+                    // 1. If current set has customRest defined (any value, including 0), use it EXCLUSIVELY
+                    // 2. Only if customRest is NOT defined (null/undefined), check exercise-level rest
+                    // 3. Fallback to defaults based on exercise type
+                    
+                    const hasCustomRestDefined = currentSet && currentSet.customRest !== null && currentSet.customRest !== undefined && currentSet.customRest !== '';
+                    
+                    if (hasCustomRestDefined) {
+                        // Serie has its own rest time - use it (even if 0 = no rest)
+                        restTime = parseInt(currentSet.customRest) || 0;
+                        console.log(`⏱️ Using custom rest time for this set: ${restTime}s (series override)`);
+                        
+                        if (restTime === 0) {
+                            // Custom rest = 0 means skip rest entirely for this set
+                            console.log('⏱️ Custom rest is 0 - skipping rest for this set');
+                            isResting = false;
+                            focusTimerArea.style.display = 'none';
+                            nextSet();
+                            return;
+                        }
+                    } else if (currentEx.rest && currentEx.rest > 0) {
+                        // Use exercise-level rest only if no custom rest defined for series
                         restTime = currentEx.rest;
+                        console.log(`⏱️ Using exercise-level rest: ${restTime}s`);
                     } else if (exName.includes('squat') || exName.includes('stacco') || exName.includes('deadlift') || exName.includes('panca') || exName.includes('bench')) {
                         restTime = 180; // Compounds
                     } else if (exName.includes('curl') || exName.includes('alzate') || exName.includes('polpacci') || exName.includes('abs')) {
@@ -3504,7 +3773,7 @@
             // --- Existing Workout List Logic (Preserved) ---
             function renderWorkouts() {
                 const list = document.getElementById('savedWorkoutsList');
-                const workouts = getStoredWorkouts();
+                let workouts = getStoredWorkouts();
                 if (!list) return;
 
                 list.innerHTML = '';
@@ -3521,11 +3790,23 @@
                         if (!Array.isArray(w.exercises)) {
                             w.exercises = [];
                         }
+                        // Ensure createdAt timestamp exists
+                        if (!w.createdAt) {
+                            w.createdAt = w.lastModified || new Date().toISOString();
+                            normalized = true;
+                        }
                     });
 
                     if (normalized) {
                         localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
                     }
+
+                    // Sort by creation date (newest first)
+                    workouts.sort((a, b) => {
+                        const dateA = new Date(a.createdAt || 0);
+                        const dateB = new Date(b.createdAt || 0);
+                        return dateB - dateA;
+                    });
 
                     workouts.forEach((w, index) => {
                         const div = document.createElement('div');
@@ -3544,18 +3825,33 @@
                                 aiBadge = '<span class="ai-badge">AI</span>';
                             }
                         }
+                        
+                        // Format creation date
+                        let createdDateStr = '';
+                        if (w.createdAt) {
+                            const createdDate = new Date(w.createdAt);
+                            createdDateStr = createdDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+                        }
+                        
                         div.innerHTML = `
-                            <div style="flex: 1;">
-                                <strong>${workoutName} ${aiBadge}</strong>
-                                <div style="font-size: 0.8rem; color: var(--color-text-muted);">${exercisesCount} Esercizi</div>
+                            <div class="workout-header">
+                                <div class="workout-title">
+                                    ${workoutName}
+                                    ${aiBadge}
+                                </div>
+                                <div class="workout-meta">
+                                    <span>${exercisesCount} Esercizi</span>
+                                    ${createdDateStr ? `<span class="workout-date">📅 ${createdDateStr}</span>` : ''}
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <button class="btn-icon start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode" style="background: var(--color-primary); color: black; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                            <div class="workout-actions">
+                                <button class="btn-play start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode">
                                     ▶
                                 </button>
-                                <a href="creator.html?id=${w.id}" style="padding: 0.5rem; font-size: 0.9rem; color: var(--color-text); text-decoration: none; border: 1px solid var(--color-border); border-radius: 4px;">Modifica</a>
-                                <span class="share-workout" data-index="${index}" title="Condividi Scheda" style="padding: 0.5rem; cursor: pointer; font-size: 1.2rem;">🔗</span>
-                                <span class="delete-workout" data-index="${index}" style="padding: 0.5rem; cursor: pointer;">🗑️</span>
+                                <a href="creator.html?id=${w.id}" class="btn-edit">✏️ Modifica</a>
+                                <span class="btn-icon-action edit-rest-times" data-index="${index}" title="Modifica Recuperi">⏱️</span>
+                                <span class="btn-icon-action share-workout" data-index="${index}" title="Condividi Scheda">🔗</span>
+                                <span class="btn-icon-action delete delete-workout" data-index="${index}" title="Elimina">🗑️</span>
                             </div>
                         `;
                         list.appendChild(div);
@@ -3647,6 +3943,17 @@
                             }
                         });
                     });
+
+                    // Edit Rest Times Listener
+                    list.querySelectorAll('.edit-rest-times').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const idx = Number(e.target.dataset.index);
+                            const workouts = getStoredWorkouts();
+                            const workout = workouts[idx];
+                            if (!workout) return;
+                            openEditRestModal(workout, idx);
+                        });
+                    });
                 }
             }
 
@@ -3663,6 +3970,107 @@
                     else window.unitService.toggleSystem('metric');
                 });
             }
+
+            // --- Edit Rest Times Modal Functions ---
+            let currentEditingWorkoutIndex = null;
+
+            function openEditRestModal(workout, index) {
+                currentEditingWorkoutIndex = index;
+                const modal = document.getElementById('editRestModal');
+                const workoutNameEl = document.getElementById('editRestWorkoutName');
+                const contentEl = document.getElementById('editRestContent');
+
+                workoutNameEl.textContent = `📋 ${workout.name || 'Workout'}`;
+                
+                let html = '';
+                if (workout.exercises && workout.exercises.length > 0) {
+                    workout.exercises.forEach((ex, exIdx) => {
+                        html += `<div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 1rem; border: 1px solid rgba(255,255,255,0.08);">`;
+                        html += `<div style="font-weight: 600; margin-bottom: 0.75rem; color: var(--color-primary);">${ex.name || 'Esercizio ' + (exIdx + 1)}</div>`;
+                        
+                        if (ex.sets && ex.sets.length > 0) {
+                            html += `<div style="display: flex; flex-direction: column; gap: 0.5rem;">`;
+                            ex.sets.forEach((set, setIdx) => {
+                                const customRest = set.customRest || '';
+                                html += `
+                                    <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                                        <span style="font-size: 0.85rem; color: var(--color-text-muted); min-width: 60px;">Serie ${setIdx + 1}</span>
+                                        <input type="number" 
+                                               class="rest-input input-compact" 
+                                               data-exercise="${exIdx}" 
+                                               data-set="${setIdx}"
+                                               value="${customRest}"
+                                               placeholder="sec"
+                                               min="0" max="600"
+                                               style="width: 80px; text-align: center;">
+                                        <span style="font-size: 0.75rem; color: var(--color-text-muted);">sec</span>
+                                    </div>
+                                `;
+                            });
+                            html += `</div>`;
+                        } else {
+                            html += `<p style="color: var(--color-text-muted); font-size: 0.85rem;">Nessuna serie definita</p>`;
+                        }
+                        html += `</div>`;
+                    });
+                } else {
+                    html = '<p style="color: var(--color-text-muted);">Nessun esercizio in questa scheda.</p>';
+                }
+                
+                contentEl.innerHTML = html;
+                modal.style.display = 'flex';
+            }
+
+            function closeEditRestModal() {
+                document.getElementById('editRestModal').style.display = 'none';
+                currentEditingWorkoutIndex = null;
+            }
+
+            async function saveRestTimes() {
+                if (currentEditingWorkoutIndex === null) return;
+                
+                const workouts = getStoredWorkouts();
+                const workout = workouts[currentEditingWorkoutIndex];
+                if (!workout) return;
+
+                // Gather all rest inputs
+                const inputs = document.querySelectorAll('#editRestContent .rest-input');
+                inputs.forEach(input => {
+                    const exIdx = parseInt(input.dataset.exercise);
+                    const setIdx = parseInt(input.dataset.set);
+                    const value = input.value.trim();
+                    
+                    if (workout.exercises[exIdx] && workout.exercises[exIdx].sets[setIdx]) {
+                        workout.exercises[exIdx].sets[setIdx].customRest = value ? parseInt(value) : null;
+                    }
+                });
+
+                // Save to localStorage
+                localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
+                
+                // Sync to cloud if logged in
+                if (authService.getCurrentUser()) {
+                    await firestoreService.syncToCloud();
+                }
+
+                closeEditRestModal();
+                renderWorkouts();
+                
+                // Show feedback
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: black; padding: 0.75rem 1.5rem; border-radius: 999px; font-weight: 600; z-index: 9999; animation: fadeIn 0.3s;';
+                toast.textContent = '✓ Recuperi salvati!';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }
+
+            // Event listeners for Edit Rest Modal
+            document.getElementById('closeEditRestModal')?.addEventListener('click', closeEditRestModal);
+            document.getElementById('cancelEditRest')?.addEventListener('click', closeEditRestModal);
+            document.getElementById('saveEditRest')?.addEventListener('click', saveRestTimes);
+            document.getElementById('editRestModal')?.addEventListener('click', (e) => {
+                if (e.target.id === 'editRestModal') closeEditRestModal();
+            });
         });
     </script>
 

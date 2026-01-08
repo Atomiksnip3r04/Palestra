@@ -449,16 +449,19 @@ function setupMediaSessionIntegration() {
         // Could be used to pause/resume timer in future
     });
 
+    // FIXED: Disabilitare Next/Previous per evitare conflitto con controlli musicali su iOS
+    // Il doppio tap sulle cuffie Bluetooth dovrebbe controllare la musica, non il timer
     mediaSessionManager.onNextCallback(() => {
-        console.log('🎮 Lockscreen next pressed');
-        // Skip rest if available
-        if (typeof window.skipRest === 'function') {
-            window.skipRest();
-        }
+        console.log('🎮 Lockscreen next pressed - comando ignorato per compatibilità iOS');
+        // Skip rest disabilitato per evitare conflitto con controlli musicali
+        // Utenti iOS possono usare il pulsante "Salta" nell'interfaccia
+        // if (typeof window.skipRest === 'function') {
+        //     window.skipRest();
+        // }
     });
 
     mediaSessionManager.onPreviousCallback(() => {
-        console.log('🎮 Lockscreen previous pressed');
+        console.log('🎮 Lockscreen previous pressed - comando ignorato per compatibilità iOS');
         // Could go to previous exercise in future
     });
 

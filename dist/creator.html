@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Creator | GYMBRO</title>
+    <title>Crea Schede | GYMBRO</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap"
@@ -26,19 +26,219 @@
         .exercise-item {
             background: var(--color-surface);
             border: 1px solid var(--color-border);
-            padding: var(--spacing-sm);
-            margin-bottom: var(--spacing-sm);
-            border-radius: var(--radius-sm);
+            padding: 1.25rem 1rem 1rem 1rem;
+            margin: 0 auto 1rem auto;
+            border-radius: 16px;
             position: relative;
+            max-width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .exercise-item:hover {
+            border-color: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 243, 255, 0.1);
+        }
+
+        /* Exercise Header - Nome e Note più ordinati */
+        .exercise-header {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-top: 0.5rem;
+        }
+
+        .exercise-name-row {
+            display: flex;
+            gap: 0.75rem;
+            align-items: stretch;
+        }
+
+        .exercise-name-row input[type="text"] {
+            flex: 1;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+        }
+
+        .exercise-notes-rest-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            align-items: start;
+        }
+
+        .exercise-notes-rest-row textarea {
+            min-height: 50px;
+            resize: vertical;
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        .rest-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .rest-input-wrapper label {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            margin: 0;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .rest-input-wrapper input {
+            width: 70px;
+            text-align: center;
+            padding: 0.6rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        /* Visual Override State - quando i recuperi per serie sono attivi */
+        .rest-input-wrapper.overridden {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .rest-input-wrapper.overridden input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: var(--color-text-muted) !important;
+            text-decoration: line-through;
+        }
+
+        .rest-input-wrapper.overridden label {
+            color: rgba(255, 152, 0, 0.8);
+        }
+
+        .rest-override-notice {
+            display: none;
+            font-size: 0.65rem;
+            color: #ff9800;
+            text-align: center;
+            margin-top: 0.25rem;
+            line-height: 1.2;
+            max-width: 90px;
+        }
+
+        .rest-input-wrapper.overridden .rest-override-notice {
+            display: block;
+        }
+
+        /* Tooltip Info Button */
+        .info-tooltip-btn {
+            cursor: pointer;
+            border: 1px solid var(--color-primary);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+            transition: all 0.2s;
+        }
+
+        .info-tooltip-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        /* Info Modal Overlay */
+        .info-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .info-modal-overlay.active {
+            display: flex;
+        }
+
+        .info-modal-content {
+            background: var(--color-surface);
+            border: 1px solid var(--color-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);
+        }
+
+        .info-modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .info-modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }
+
+        .info-modal-body {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--color-text-muted);
+        }
+
+        .info-modal-body strong {
+            color: var(--color-text-main);
         }
 
         .remove-btn {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 12px;
+            right: 12px;
             color: #ff4444;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
+            background: rgba(255, 68, 68, 0.1);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .remove-btn:hover {
+            background: rgba(255, 68, 68, 0.25);
+            transform: scale(1.1);
         }
 
         .form-group {
@@ -116,34 +316,69 @@
 
         .set-item {
             display: grid;
-            grid-template-columns: auto 1fr 80px 80px 80px 30px;
-            gap: 8px;
+            grid-template-columns: 30px minmax(100px, 1fr) 70px 55px 55px 28px;
+            gap: 6px;
             align-items: center;
-            padding: 0.5rem;
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.5rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
             margin-bottom: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .set-item:hover {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-color: rgba(0, 243, 255, 0.15);
         }
 
         .set-item .set-number {
-            font-size: 0.8rem;
-            color: var(--color-text-muted);
-            min-width: 25px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+            padding: 0.25rem 0.4rem;
+            border-radius: 6px;
+            text-align: center;
         }
 
         .set-item select,
         .set-item input {
             padding: 0.5rem;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        .set-item select.set-type {
+            min-width: 100px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .set-item input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.75rem;
         }
 
         .set-item .remove-set-btn {
-            background: none;
+            background: rgba(255, 68, 68, 0.1);
             border: none;
             color: #ff4444;
             cursor: pointer;
             font-size: 1rem;
-            padding: 0;
+            padding: 0.25rem;
+            border-radius: 6px;
+            transition: all 0.2s;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .set-item .remove-set-btn:hover {
+            background: rgba(255, 68, 68, 0.25);
         }
 
         .set-type-badge {
@@ -188,24 +423,34 @@
         .quick-sets-row {
             display: flex;
             gap: 0.5rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             flex-wrap: wrap;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
         }
 
         .quick-set-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--color-border);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--color-text);
-            padding: 0.4rem 0.8rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.8rem;
+            padding: 0.45rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .quick-set-btn:hover {
             border-color: var(--color-primary);
-            background: rgba(0, 243, 255, 0.1);
+            background: rgba(0, 243, 255, 0.15);
+            color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+
+        .quick-set-btn:active {
+            transform: translateY(0);
         }
 
         /* Superset Styles */
@@ -294,8 +539,18 @@
 
         @media (max-width: 600px) {
             .set-item {
-                grid-template-columns: auto 1fr 50px 50px 50px 25px;
+                grid-template-columns: auto minmax(100px, 1fr) 55px 45px 45px 28px;
                 gap: 4px;
+            }
+
+            .set-item select.set-type {
+                min-width: 100px;
+                font-size: 0.8rem;
+            }
+
+            .set-item input {
+                font-size: 0.8rem;
+                padding: 0.45rem;
             }
 
             .set-item select,
@@ -311,16 +566,26 @@
 
         .drag-handle {
             position: absolute;
-            top: 5px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            color: var(--color-border);
+            color: var(--color-primary);
             cursor: grab;
-            padding: 0.5rem;
+            padding: 0.4rem 1.2rem;
             z-index: 10;
             user-select: none;
-            opacity: 0.5;
-            transition: opacity 0.2s;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+            background: linear-gradient(180deg, rgba(0,243,255,0.15) 0%, transparent 100%);
+            border-radius: 0 0 8px 8px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .drag-handle:hover {
+            opacity: 1;
+            background: linear-gradient(180deg, rgba(0,243,255,0.25) 0%, transparent 100%);
+            transform: translateX(-50%) scale(1.1);
         }
 
         .exercise-item:hover .drag-handle {
@@ -336,6 +601,88 @@
             background: var(--color-primary-faded, rgba(0, 243, 255, 0.1));
             border: 2px dashed var(--color-primary) !important;
         }
+
+        /* Tooltip Info Button */
+        .info-tooltip-btn {
+            cursor: pointer;
+            border: 1px solid var(--color-primary);
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--color-primary);
+            background: rgba(0, 243, 255, 0.1);
+            transition: all 0.2s;
+        }
+
+        .info-tooltip-btn:hover {
+            background: rgba(0, 243, 255, 0.25);
+            transform: scale(1.1);
+        }
+
+        /* Info Modal Overlay */
+        .info-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .info-modal-overlay.active {
+            display: flex;
+        }
+
+        .info-modal-content {
+            background: var(--color-surface);
+            border: 1px solid var(--color-primary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);
+        }
+
+        .info-modal-close {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .info-modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }
+
+        .info-modal-body {
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--color-text-muted);
+        }
+
+        .info-modal-body strong {
+            color: var(--color-text-main);
+        }
     </style>
 </head>
 
@@ -347,11 +694,11 @@
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
-                    <li><a href="creator.html" class="text-primary">Creator</a></li>
-                    <li><a href="diary.html">Diario</a></li>
-                    <li><a href="analysis.html">Analisi</a></li>
-                    <li><a href="body.html">Corpo</a></li>
-                    <li><a href="user.html">Profilo</a></li>
+                    <li><a href="creator.html" class="text-primary">📝 Crea Schede</a></li>
+                    <li><a href="diary.html">📓 Diario</a></li>
+                    <li><a href="analysis.html">📈 Analisi</a></li>
+                    <li><a href="body.html">💪 Corpo</a></li>
+                    <li><a href="user.html">👤 Profilo</a></li>
                 </ul>
             </nav>
         </div>
@@ -360,6 +707,23 @@
     <section class="section" style="padding-top: 160px;">
         <div class="container">
             <h1 style="margin-bottom: var(--spacing-md);">Crea Nuova <span class="text-primary">Scheda</span></h1>
+
+            <!-- AI Workout Generator Quick Link -->
+            <div class="card" style="margin-bottom: 2rem; border-color: var(--color-primary-dim); background: linear-gradient(135deg, rgba(0, 243, 255, 0.05) 0%, rgba(0,0,0,0) 100%); border-radius: 16px;">
+                <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1rem; padding: 0.5rem;">
+                    <div>
+                        <h3 style="font-size: 1.2rem; margin: 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            🤖 AI Workout Generator
+                        </h3>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted); margin: 0.5rem 0 0 0;">
+                            Genera una scheda personalizzata con l'intelligenza artificiale
+                        </p>
+                    </div>
+                    <a href="user.html#ai-generator" class="btn btn-primary btn-compact" style="white-space: nowrap;">
+                        ⚡ Genera con AI
+                    </a>
+                </div>
+            </div>
 
             <div class="grid" style="grid-template-columns: 1fr; gap: 2rem;">
 
@@ -376,11 +740,11 @@
                 </div>
 
                 <!-- Exercises List -->
-                <div id="exercisesList">
+                <div id="exercisesList" style="margin-bottom: 1.5rem;">
                     <!-- Dynamic exercises will appear here -->
                 </div>
 
-                <button id="addExerciseBtn" class="btn btn-outline" style="width: 100%; border-style: dashed;">
+                <button id="addExerciseBtn" class="btn btn-outline" style="width: 100%; border: 2px dashed var(--color-primary); color: var(--color-primary); background: rgba(0, 243, 255, 0.08); padding: 1.25rem; font-size: 1rem; margin-bottom: 1rem; position: relative; z-index: 10;">
                     + Aggiungi Esercizio
                 </button>
 
@@ -393,19 +757,93 @@
         </div>
     </section>
 
+    <!-- Info Tooltip Modal -->
+    <div id="infoModalOverlay" class="info-modal-overlay">
+        <div class="info-modal-content">
+            <button class="info-modal-close" onclick="closeInfoModal()">&times;</button>
+            <div class="info-modal-title" id="infoModalTitle"></div>
+            <div class="info-modal-body" id="infoModalBody"></div>
+        </div>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
+    
+    <script>
+        // Info Modal Content Database
+        const INFO_CONTENT = {
+            rpe: {
+                title: '💪 RPE - Rate of Perceived Exertion',
+                body: `
+                    <p><strong>RPE</strong> è una scala (6-10) che misura lo sforzo percepito:</p>
+                    <ul style="margin: 0.75rem 0; padding-left: 1.25rem;">
+                        <li><strong>RPE 6:</strong> Molto facile, potresti fare 4+ ripetizioni extra</li>
+                        <li><strong>RPE 7:</strong> Moderato, 3 ripetizioni extra possibili</li>
+                        <li><strong>RPE 8:</strong> Impegnativo, 2 ripetizioni extra</li>
+                        <li><strong>RPE 9:</strong> Molto duro, solo 1 ripetizione extra</li>
+                        <li><strong>RPE 10:</strong> Massimale, nessuna ripetizione extra</li>
+                    </ul>
+                    <p style="margin-top: 0.75rem; font-style: italic; color: var(--color-primary);">💡 Consiglio: Per la crescita muscolare, lavora tra RPE 7-9 sulla maggior parte delle serie.</p>
+                `
+            },
+            setTypes: {
+                title: '🎯 Tipi di Serie',
+                body: `
+                    <p>I diversi tipi di serie servono a scopi specifici:</p>
+                    <ul style="margin: 0.75rem 0; padding-left: 1.25rem;">
+                        <li><strong>Normale:</strong> Serie standard di lavoro</li>
+                        <li><strong>Warm-up:</strong> Serie di riscaldamento a carico ridotto</li>
+                        <li><strong>Back-off:</strong> Serie con carico ridotto dopo le serie pesanti</li>
+                        <li><strong>Drop Set:</strong> Serie con riduzione progressiva del peso senza pausa</li>
+                        <li><strong>AMRAP:</strong> "As Many Reps As Possible" - Massime ripetizioni</li>
+                        <li><strong>Pausa:</strong> Serie con pausa isometrica durante il movimento</li>
+                    </ul>
+                `
+            },
+            customRest: {
+                title: '⏱️ Recupero Personalizzato',
+                body: `
+                    <p>Imposta un tempo di recupero specifico per questa serie, che sovrascriverà il recupero generale dell'esercizio.</p>
+                    <p style="margin-top: 0.75rem;"><strong>Casi d'uso:</strong></p>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.25rem;">
+                        <li>Serie pesanti che richiedono più recupero</li>
+                        <li>Serie di back-off con recupero ridotto</li>
+                        <li>Giant set con tempi specifici</li>
+                    </ul>
+                `
+            }
+        };
+
+        function openInfoModal(infoKey) {
+            const content = INFO_CONTENT[infoKey];
+            if (!content) return;
+            
+            document.getElementById('infoModalTitle').innerHTML = content.title;
+            document.getElementById('infoModalBody').innerHTML = content.body;
+            document.getElementById('infoModalOverlay').classList.add('active');
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModalOverlay').classList.remove('active');
+        }
+
+        // Close on overlay click
+        document.getElementById('infoModalOverlay')?.addEventListener('click', (e) => {
+            if (e.target.id === 'infoModalOverlay') closeInfoModal();
+        });
+    </script>
+    
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
 
-        // Set types configuration
+        // Set types configuration with descriptions for tooltips
         const SET_TYPES = {
-            normal: { label: 'Normale', color: 'normal' },
-            warmup: { label: 'Warm-up', color: 'warmup' },
-            backoff: { label: 'Back-off', color: 'backoff' },
-            dropset: { label: 'Drop Set', color: 'dropset' },
-            amrap: { label: 'AMRAP', color: 'amrap' },
-            pause: { label: 'Pausa', color: 'pause' }
+            normal: { label: 'Normale', color: 'normal', desc: 'Serie standard di lavoro' },
+            warmup: { label: 'Warm-up', color: 'warmup', desc: 'Serie di riscaldamento a carico leggero' },
+            backoff: { label: 'Back-off', color: 'backoff', desc: 'Serie scarico: carico ridotto dopo le serie pesanti' },
+            dropset: { label: 'Drop Set', color: 'dropset', desc: 'Serie continua con riduzione progressiva del carico' },
+            amrap: { label: 'AMRAP', color: 'amrap', desc: 'As Many Reps As Possible: massime ripetizioni possibili' },
+            pause: { label: 'Pausa', color: 'pause', desc: 'Serie con pausa isometrica nel punto critico' }
         };
 
         // Superset configuration
@@ -430,10 +868,10 @@
                 console.error('StorageService not available:', e);
             }
 
-            // Generate set type options HTML
+            // Generate set type options HTML with tooltips
             function getSetTypeOptions(selectedType = 'normal') {
                 return Object.entries(SET_TYPES).map(([key, val]) =>
-                    `<option value="${key}" ${key === selectedType ? 'selected' : ''}>${val.label}</option>`
+                    `<option value="${key}" ${key === selectedType ? 'selected' : ''} title="${val.desc || ''}">${val.label}</option>`
                 ).join('');
             }
 
@@ -450,8 +888,9 @@
                     <select class="set-type">
                         ${getSetTypeOptions(setData?.type || 'normal')}
                     </select>
-                    <input type="text" class="set-reps" placeholder="Reps" value="${setData?.target || setData?.reps || ''}">
-                    <input type="number" class="set-rpe-input" placeholder="RPE" value="${setData?.rpe || ''}">
+                    <input type="number" class="set-reps" placeholder="Reps" inputmode="numeric" min="1" step="1" value="${setData?.target || setData?.reps || ''}">
+                    <input type="number" class="set-rpe-input" placeholder="RPE" value="${setData?.rpe || ''}" min="6" max="10" step="0.5" title="Rate of Perceived Exertion (6-10)">
+                    <input type="number" class="set-rest-input" placeholder="Rest" value="${setData?.customRest || ''}" min="0" max="600" step="5" title="Recupero personalizzato (secondi)">
                     <button type="button" class="remove-set-btn" title="Rimuovi serie">×</button>
                 `;
 
@@ -459,9 +898,18 @@
                 setDiv.querySelector('.remove-set-btn').addEventListener('click', () => {
                     setDiv.remove();
                     renumberSets(container);
+                    checkRestOverride(container); // Update visual override state
+                });
+
+                // Add listener for rest input changes
+                setDiv.querySelector('.set-rest-input').addEventListener('input', () => {
+                    checkRestOverride(container);
                 });
 
                 setsContainer.appendChild(setDiv);
+                
+                // Check override state after adding
+                checkRestOverride(container);
             }
 
             // Renumber sets after removal
@@ -476,6 +924,32 @@
             function addQuickSets(container, count, type = 'normal') {
                 for (let i = 0; i < count; i++) {
                     addSetRow(container, { type });
+                }
+            }
+
+            // Check if any set has custom rest and toggle visual override
+            function checkRestOverride(exerciseContainer) {
+                const restInputs = exerciseContainer.querySelectorAll('.set-rest-input');
+                const globalRestWrapper = exerciseContainer.querySelector('.rest-input-wrapper.normal-rest-config');
+                
+                if (!globalRestWrapper) return; // Skip if superset (no global rest)
+                
+                // Check if any set has a custom rest value
+                let hasCustomRest = false;
+                restInputs.forEach(input => {
+                    const val = input.value.trim();
+                    if (val !== '' && val !== '0') {
+                        hasCustomRest = true;
+                    }
+                });
+                
+                // Toggle visual override state
+                if (hasCustomRest) {
+                    globalRestWrapper.classList.add('overridden');
+                    globalRestWrapper.querySelector('.ex-rest').disabled = true;
+                } else {
+                    globalRestWrapper.classList.remove('overridden');
+                    globalRestWrapper.querySelector('.ex-rest').disabled = false;
                 }
             }
 
@@ -512,27 +986,35 @@
 
                 div.innerHTML = `
                     ${supersetId ? `<span class="superset-indicator">Superset ${supersetRole}</span>` : ''}
-                    <div class="drag-handle">⋮⋮</div>
-                    <span class="remove-btn" onclick="this.parentElement.remove(); updateExerciseIndices();">×</span>
-                    <div class="form-group">
-                        <label>Esercizio</label>
-                        <input type="text" class="ex-name" placeholder="es. Panca Piana" value="${data?.name || ''}">
-                    </div>
-                    <div class="form-group" style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
-                        <div>
-                            <label>Note</label>
-                            <input type="text" class="ex-notes" placeholder="Fermo 1s al petto" value="${data?.notes || ''}">
+                    <div class="drag-handle" title="Trascina per riordinare">⋮⋮</div>
+                    <span class="remove-btn" onclick="this.parentElement.remove(); updateExerciseIndices();" title="Rimuovi esercizio">×</span>
+                    
+                    <!-- Exercise Header Section -->
+                    <div class="exercise-header">
+                        <div class="exercise-name-row">
+                            <input type="text" class="ex-name" placeholder="Nome esercizio (es. Panca Piana)" value="${data?.name || ''}">
                         </div>
-                        <div class="normal-rest-config" style="display: ${supersetId ? 'none' : 'block'};">
-                            <label>Recupero (s)</label>
-                            <input type="number" class="ex-rest" value="${data?.rest || 90}" placeholder="90">
+                        <div class="exercise-notes-rest-row">
+                            <textarea class="ex-notes" placeholder="Note opzionali (es. Fermo 1s al petto)" rows="2">${data?.notes || ''}</textarea>
+                            <div class="rest-input-wrapper normal-rest-config" style="${supersetId ? 'display:none;' : ''}">
+                                <label>Recupero (s)</label>
+                                <input type="number" class="ex-rest" value="${data?.rest || 90}" placeholder="90" min="0" max="600" step="5">
+                                <span class="rest-override-notice">⚠️ Override per serie</span>
+                            </div>
                         </div>
                     </div>
                     
+                    <!-- Sets Section -->
                     <div class="sets-container">
                         <div class="sets-header">
                             <h4>Serie</h4>
-                            <button type="button" class="add-set-btn">+ Aggiungi Serie</button>
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <span style="font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.25rem;">
+                                    <span class="info-tooltip-btn" onclick="openInfoModal('rpe')">?</span>
+                                    RPE 6-10
+                                </span>
+                                <button type="button" class="add-set-btn">+ Aggiungi Serie</button>
+                            </div>
                         </div>
                         
                         <div class="quick-sets-row">
@@ -548,6 +1030,7 @@
                         </div>
                     </div>
                     
+                    <!-- Superset Controls -->
                     <div class="superset-controls">
                         <button type="button" class="superset-btn create-superset-btn" title="Crea superset con l'esercizio successivo">
                             🔗 Crea Superset
@@ -802,11 +1285,13 @@
                             const type = setItem.querySelector('.set-type').value;
                             const reps = setItem.querySelector('.set-reps').value;
                             const rpe = setItem.querySelector('.set-rpe-input').value;
+                            const customRest = setItem.querySelector('.set-rest-input').value;
 
                             sets.push({
                                 type: type,
                                 target: reps,
                                 rpe: rpe ? parseFloat(rpe) : null,
+                                customRest: customRest ? parseInt(customRest) : null,
                                 weight: 0 // Will be filled during workout
                             });
                         });
