@@ -3334,51 +3334,170 @@
                 const suggestA = getSuggestedWeight(exA.name, targetA);
                 const suggestB = getSuggestedWeight(exB.name, targetB);
 
+                // Senior Design: Clean grid layout, no box-in-box, large data numbers
                 const htmlA = `
-                    <div class="superset-block-a" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed rgba(255,255,255,0.1);">
-                        <div style="font-size: 1rem; color: var(--color-primary); margin-bottom: 0.5rem;">A: ${exA.name}</div>
-                        ${suggestA ? `<div style="font-size: 0.75rem; color: #aaa; margin-bottom: 0.5rem;">💡 Suggerito: <span style="color:var(--color-primary)">${suggestA.weight}kg</span></div>` : ''}
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
-                                <label style="font-size: 0.6rem; color: #888;">KG</label>
-                                <input type="number" id="focusWeightInput_A" value="${setA.weight || ''}" placeholder="${setA.weight || 'Kg'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                    <div class="superset-block-a" style="
+                        background: rgba(0, 243, 255, 0.04);
+                        border-radius: 16px;
+                        padding: 1rem 1rem 1.25rem;
+                        margin-bottom: 0.75rem;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <span style="
+                                background: var(--color-primary);
+                                color: #000;
+                                font-weight: 800;
+                                font-size: 0.7rem;
+                                padding: 0.2rem 0.5rem;
+                                border-radius: 4px;
+                                letter-spacing: 0.5px;
+                            ">A</span>
+                            <span style="font-size: 0.95rem; font-weight: 600; color: #fff; flex: 1; line-height: 1.2;">${exA.name}</span>
+                            ${suggestA ? `<span style="font-size: 0.7rem; color: rgba(0,243,255,0.7); white-space: nowrap;">💡 ${suggestA.weight}kg</span>` : ''}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 0.75rem;">
+                            <div style="text-align: center;">
+                                <label style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.25rem;">Kg</label>
+                                <input type="number" id="focusWeightInput_A" value="${setA.weight || ''}" placeholder="${suggestA?.weight || '—'}" style="
+                                    width: 100%;
+                                    background: transparent;
+                                    border: none;
+                                    border-bottom: 2px solid rgba(0,243,255,0.3);
+                                    color: white;
+                                    font-size: 1.75rem;
+                                    font-weight: 700;
+                                    text-align: center;
+                                    font-family: var(--font-display);
+                                    padding: 0.25rem 0;
+                                ">
                             </div>
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
-                                <label style="font-size: 0.6rem; color: #888;">REPS</label>
-                                <input type="number" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || 'Reps'}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            <div style="text-align: center;">
+                                <label style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.25rem;">Reps</label>
+                                <input type="number" id="focusRepsInput_A" value="${setA.reps || ''}" placeholder="${targetA || '—'}" inputmode="numeric" min="1" step="1" style="
+                                    width: 100%;
+                                    background: transparent;
+                                    border: none;
+                                    border-bottom: 2px solid rgba(0,243,255,0.3);
+                                    color: var(--color-primary);
+                                    font-size: 2rem;
+                                    font-weight: 800;
+                                    text-align: center;
+                                    font-family: var(--font-display);
+                                    padding: 0.25rem 0;
+                                ">
                             </div>
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
-                                <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            <div style="text-align: center;">
+                                <label style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.25rem;">RPE</label>
+                                <input type="number" id="focusRpeInput_A" value="${setA.rpe || ''}" placeholder="—" min="6" max="10" step="0.5" style="
+                                    width: 100%;
+                                    background: transparent;
+                                    border: none;
+                                    border-bottom: 2px solid rgba(255,255,255,0.15);
+                                    color: rgba(255,255,255,0.7);
+                                    font-size: 1.5rem;
+                                    font-weight: 600;
+                                    text-align: center;
+                                    font-family: var(--font-display);
+                                    padding: 0.25rem 0;
+                                ">
                             </div>
                         </div>
                     </div>
                 `;
 
                 const htmlB = `
-                    <div class="superset-block-b">
-                        <div style="font-size: 1rem; color: #ff6b6b; margin-bottom: 0.5rem;">B: ${exB.name}</div>
-                        ${suggestB ? `<div style="font-size: 0.75rem; color: #aaa; margin-bottom: 0.5rem;">💡 Suggerito: <span style="color:#ff6b6b">${suggestB.weight}kg</span></div>` : ''}
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem;">
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
-                                <label style="font-size: 0.6rem; color: #888;">KG</label>
-                                <input type="number" id="focusWeightInput_B" value="${setB.weight || ''}" placeholder="${setB.weight || 'Kg'}" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                    <div class="superset-block-b" style="
+                        background: rgba(0, 0, 0, 0.3);
+                        border-radius: 16px;
+                        padding: 1rem 1rem 1.25rem;
+                    ">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <span style="
+                                background: #9c27b0;
+                                color: #fff;
+                                font-weight: 800;
+                                font-size: 0.7rem;
+                                padding: 0.2rem 0.5rem;
+                                border-radius: 4px;
+                                letter-spacing: 0.5px;
+                            ">B</span>
+                            <span style="font-size: 0.95rem; font-weight: 600; color: #fff; flex: 1; line-height: 1.2;">${exB.name}</span>
+                            ${suggestB ? `<span style="font-size: 0.7rem; color: rgba(156,39,176,0.8); white-space: nowrap;">💡 ${suggestB.weight}kg</span>` : ''}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 0.8fr; gap: 0.75rem;">
+                            <div style="text-align: center;">
+                                <label style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.25rem;">Kg</label>
+                                <input type="number" id="focusWeightInput_B" value="${setB.weight || ''}" placeholder="${suggestB?.weight || '—'}" style="
+                                    width: 100%;
+                                    background: transparent;
+                                    border: none;
+                                    border-bottom: 2px solid rgba(156,39,176,0.3);
+                                    color: white;
+                                    font-size: 1.75rem;
+                                    font-weight: 700;
+                                    text-align: center;
+                                    font-family: var(--font-display);
+                                    padding: 0.25rem 0;
+                                ">
                             </div>
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
-                                <label style="font-size: 0.6rem; color: #888;">REPS</label>
-                                <input type="number" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || 'Reps'}" inputmode="numeric" min="1" step="1" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            <div style="text-align: center;">
+                                <label style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.25rem;">Reps</label>
+                                <input type="number" id="focusRepsInput_B" value="${setB.reps || ''}" placeholder="${targetB || '—'}" inputmode="numeric" min="1" step="1" style="
+                                    width: 100%;
+                                    background: transparent;
+                                    border: none;
+                                    border-bottom: 2px solid rgba(156,39,176,0.3);
+                                    color: #ce93d8;
+                                    font-size: 2rem;
+                                    font-weight: 800;
+                                    text-align: center;
+                                    font-family: var(--font-display);
+                                    padding: 0.25rem 0;
+                                ">
                             </div>
-                            <div style="background: rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 6px;">
-                                <label style="font-size: 0.6rem; color: #888;">RPE</label>
-                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="6-10" min="6" max="10" step="0.5" style="width:100%; background:transparent; border:none; color:white; font-size:1.2rem; text-align:center;">
+                            <div style="text-align: center;">
+                                <label style="font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 0.25rem;">RPE</label>
+                                <input type="number" id="focusRpeInput_B" value="${setB.rpe || ''}" placeholder="—" min="6" max="10" step="0.5" style="
+                                    width: 100%;
+                                    background: transparent;
+                                    border: none;
+                                    border-bottom: 2px solid rgba(255,255,255,0.15);
+                                    color: rgba(255,255,255,0.7);
+                                    font-size: 1.5rem;
+                                    font-weight: 600;
+                                    text-align: center;
+                                    font-family: var(--font-display);
+                                    padding: 0.25rem 0;
+                                ">
                             </div>
                         </div>
                     </div>
                 `;
 
+                // Senior Design: Unified accent color (purple gradient), clean container
                 focusActiveArea.innerHTML = `
-                    <div class="superset-container" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,107,107,0.3); border-radius: 12px; padding: 1rem;">
-                        <div style="text-align:center; margin-bottom:1rem; color:#ff6b6b; font-size:0.8rem; font-weight:bold; letter-spacing:1px;">🔗 SUPERSET COMBINATO</div>
+                    <div class="superset-container" style="
+                        background: linear-gradient(180deg, rgba(156,39,176,0.08) 0%, rgba(0,0,0,0.2) 100%);
+                        border: 1px solid rgba(156,39,176,0.25);
+                        border-radius: 20px;
+                        padding: 1rem;
+                        position: relative;
+                    ">
+                        <div style="
+                            position: absolute;
+                            top: -10px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+                            color: white;
+                            font-size: 0.65rem;
+                            font-weight: 700;
+                            padding: 0.3rem 0.75rem;
+                            border-radius: 20px;
+                            letter-spacing: 1.5px;
+                            text-transform: uppercase;
+                            box-shadow: 0 2px 8px rgba(156,39,176,0.4);
+                        ">🔗 Superset</div>
                         ${htmlA}
                         ${htmlB}
                     </div>
@@ -3443,9 +3562,17 @@
 
                         const historyItem = document.createElement('div');
                         historyItem.innerHTML = `
-                            <div style="display:flex; flex-direction:column; gap:4px; border-left: 3px solid #ff6b6b; padding-left: 8px; margin-bottom: 6px; background: rgba(255,107,107,0.05); padding: 6px; border-radius: 0 6px 6px 0;">
-                                <div style="font-size:0.85rem;">✅ <strong style="color:var(--color-primary)">A:</strong> ${valWA}kg x ${valRA}</div>
-                                <div style="font-size:0.85rem;">✅ <strong style="color:#ff6b6b">B:</strong> ${valWB}kg x ${valRB}</div>
+                            <div style="display:flex; flex-direction:column; gap:6px; border-left: 3px solid #9c27b0; padding-left: 10px; margin-bottom: 8px; background: linear-gradient(90deg, rgba(156,39,176,0.08), transparent); padding: 8px 8px 8px 10px; border-radius: 0 8px 8px 0;">
+                                <div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+                                    <span style="background:var(--color-primary); color:#000; font-size:0.6rem; font-weight:700; padding:2px 5px; border-radius:3px;">A</span>
+                                    <span style="color:#fff; font-weight:600;">${valWA}kg</span>
+                                    <span style="color:var(--color-primary); font-weight:700;">× ${valRA}</span>
+                                </div>
+                                <div style="font-size:0.85rem; display:flex; align-items:center; gap:6px;">
+                                    <span style="background:#9c27b0; color:#fff; font-size:0.6rem; font-weight:700; padding:2px 5px; border-radius:3px;">B</span>
+                                    <span style="color:#fff; font-weight:600;">${valWB}kg</span>
+                                    <span style="color:#ce93d8; font-weight:700;">× ${valRB}</span>
+                                </div>
                             </div>
                         `;
                         focusHistoryList.prepend(historyItem);
