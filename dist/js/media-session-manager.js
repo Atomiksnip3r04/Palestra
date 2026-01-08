@@ -438,6 +438,15 @@ export class MediaSessionManager {
         }
         
         // Fallback: Web-based timer with Media Session API
+        // REINIT: Se l'audio element è stato distrutto dal kill switch, ricrealo
+        if (!this.audioElement && !this.isNative) {
+            console.log('🔄 Recreating persistent audio after kill...');
+            this.createPersistentAudio();
+            this.setupActionHandlers();
+            // Aspetta che l'audio sia pronto
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
         // Initial update
         this.updateTimer(remainingSeconds);
         

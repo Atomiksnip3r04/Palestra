@@ -206,10 +206,13 @@ export class NotificationManager {
             return;
         }
         
-        if (!this.audioCtx) {
+        // Crea nuovo AudioContext se non esiste O se è stato chiuso dal kill switch
+        if (!this.audioCtx || this.audioCtx.state === 'closed') {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
                 this.audioCtx = new AudioContext();
+                this.isAudioUnlocked = false; // Reset flag per nuovo context
+                console.log('🔊 New AudioContext created');
             }
         }
 
