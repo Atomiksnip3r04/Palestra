@@ -48,13 +48,62 @@ class ExportService {
     /**
      * Download come file
      */
-    downloadAsFile(content, filename, format = 'markdown') {
+    async downloadAsFile(content, filename, format = 'markdown') {
         try {
             const formattedContent = this.formatContent(content, format);
             const extension = format === 'html' ? 'html' : (format === 'markdown' ? 'md' : 'txt');
             const mimeType = format === 'html' ? 'text/html' : 'text/plain';
             
             const blob = new Blob([formattedContent], { type: mimeType });
+            
+            // Check if running in Capacitor (native app)
+            const isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
+            
+            if (isCapacitor) {
+                console.log('🔧 Rilevato ambiente Capacitor nativo per file', format);
+                try {
+                    const Filesystem = window.Capacitor.Plugins.Filesystem;
+                    const Share = window.Capacitor.Plugins.Share;
+                    
+                    if (!Filesystem || !Share) {
+                        throw new Error('Filesystem or Share plugin not available');
+                    }
+                    
+                    // Convert blob to base64
+                    const reader = new FileReader();
+                    const base64Promise = new Promise((resolve, reject) => {
+                        reader.onloadend = () => {
+                            const base64 = reader.result.split(',')[1];
+                            resolve(base64);
+                        };
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    const base64Data = await base64Promise;
+                    
+                    // Save to cache directory
+                    const savedFile = await Filesystem.writeFile({
+                        path: `${filename}.${extension}`,
+                        data: base64Data,
+                        directory: 'CACHE'
+                    });
+                    console.log('💾 File salvato:', savedFile.uri);
+                    
+                    // Share the file
+                    await Share.share({
+                        title: filename,
+                        url: savedFile.uri,
+                        dialogTitle: 'Salva o condividi il file'
+                    });
+                    
+                    return { success: true, message: 'File pronto per il salvataggio!' };
+                } catch (capacitorError) {
+                    console.warn('⚠️ Capacitor plugins error:', capacitorError);
+                    // Fall through to web download
+                }
+            }
+            
+            // Web download fallback
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -85,13 +134,19 @@ class ExportService {
             const blob = new Blob([rtfContent], { type: 'application/rtf' });
             
             // Check if running in Capacitor (native app)
-            const isCapacitor = typeof window.Capacitor !== 'undefined';
+            const isCapacitor = typeof window.Capacitor !== 'undefined' && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform();
             
-            if (isCapacitor && window.Capacitor.isNativePlatform()) {
+            if (isCapacitor) {
+                console.log('🔧 Rilevato ambiente Capacitor nativo');
                 // Use Capacitor Filesystem plugin for native download
                 try {
-                    const { Filesystem, Directory } = await import('@capacitor/filesystem');
-                    const { Share } = await import('@capacitor/share');
+                    // Capacitor plugins are registered on window.Capacitor.Plugins
+                    const Filesystem = window.Capacitor.Plugins.Filesystem;
+                    const Share = window.Capacitor.Plugins.Share;
+                    
+                    if (!Filesystem || !Share) {
+                        throw new Error('Filesystem or Share plugin not available');
+                    }
                     
                     // Convert blob to base64
                     const reader = new FileReader();
@@ -104,13 +159,15 @@ class ExportService {
                         reader.readAsDataURL(blob);
                     });
                     const base64Data = await base64Promise;
+                    console.log('📄 Base64 generato, lunghezza:', base64Data.length);
                     
-                    // Save to cache directory
+                    // Save to cache directory (Directory enum: Cache = 'CACHE')
                     const savedFile = await Filesystem.writeFile({
                         path: `${filename}.doc`,
                         data: base64Data,
-                        directory: Directory.Cache
+                        directory: 'CACHE'
                     });
+                    console.log('💾 File salvato:', savedFile.uri);
                     
                     // Share the file (this opens the native share dialog)
                     await Share.share({
@@ -122,12 +179,14 @@ class ExportService {
                     
                     return { success: true, message: 'File pronto per il salvataggio!' };
                 } catch (capacitorError) {
-                    console.warn('Capacitor plugins not available, falling back to web download:', capacitorError);
+                    console.warn('⚠️ Capacitor plugins error:', capacitorError);
+                    console.warn('Falling back to web download...');
                     // Fall through to web download
                 }
             }
             
             // Web download fallback
+            console.log('📥 Usando download web standard');
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;

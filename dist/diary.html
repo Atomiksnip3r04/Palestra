@@ -2069,9 +2069,9 @@
         <div class="log-entry-header">
             <span class="log-date">${date}</span>
             <div class="log-actions">
-                <button class="log-action-btn share-log-btn" data-index="${index}" title="Condividi">🔗</button>
-                <button class="log-action-btn edit-log-btn" data-index="${index}" title="Modifica">✏️</button>
-                <button class="log-action-btn delete-btn delete-log-btn" data-index="${index}" title="Elimina">🗑️</button>
+                <button class="log-action-btn share-log-btn" data-id="${log.id}" title="Condividi">🔗</button>
+                <button class="log-action-btn edit-log-btn" data-id="${log.id}" title="Modifica">✏️</button>
+                <button class="log-action-btn delete-btn delete-log-btn" data-id="${log.id}" title="Elimina">🗑️</button>
             </div>
         </div>
         <!-- Livello 2: Titolo -->
@@ -2089,22 +2089,22 @@
                 // Attach Listeners
                 document.querySelectorAll('.delete-log-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const index = e.target.closest('button').dataset.index;
-                        deleteLog(index);
+                        const logId = e.target.closest('button').dataset.id;
+                        deleteLogById(logId);
                     });
                 });
 
                 document.querySelectorAll('.edit-log-btn').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const index = e.target.closest('button').dataset.index;
-                        editLog(index);
+                        const logId = e.target.closest('button').dataset.id;
+                        editLogById(logId);
                     });
                 });
 
                 document.querySelectorAll('.share-log-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
-                        const index = e.target.closest('button').dataset.index;
-                        await shareLog(index);
+                        const logId = e.target.closest('button').dataset.id;
+                        await shareLogById(logId);
                     });
                 });
             }
@@ -2130,13 +2130,16 @@
                 }
             });
 
-            // 7. Share Log
-            async function shareLog(index) {
+            // 7. Share Log by ID (UUID-based lookup)
+            async function shareLogById(logId) {
                 const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
-                const log = logs[index];
-                if (!log) return;
+                const log = logs.find(l => String(l.id) === String(logId));
+                if (!log) {
+                    alert('Log non trovato. Aggiorna la pagina.');
+                    return;
+                }
 
-                const btn = document.querySelector(`.share-log-btn[data-index="${index}"]`);
+                const btn = document.querySelector(`.share-log-btn[data-id="${logId}"]`);
                 const originalText = btn.textContent;
                 btn.textContent = '⏳';
                 btn.disabled = true;
@@ -2458,10 +2461,15 @@
             // Check for shared log on init
             checkForSharedLog();
 
-            // 8. Delete Log
-            async function deleteLog(index) {
+            // 8. Delete Log by ID (UUID-based)
+            async function deleteLogById(logId) {
                 if (confirm('Sei sicuro di voler eliminare questo allenamento dal diario?')) {
                     const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+                    const index = logs.findIndex(l => String(l.id) === String(logId));
+                    if (index === -1) {
+                        alert('Log non trovato. Aggiorna la pagina.');
+                        return;
+                    }
                     logs.splice(index, 1);
                     localStorage.setItem('ironflow_logs', JSON.stringify(logs));
 
@@ -2475,11 +2483,15 @@
                 }
             }
 
-            // 8. Edit Log
-            function editLog(index) {
+            // 8. Edit Log by ID (UUID-based)
+            function editLogById(logId) {
                 const logs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+                const index = logs.findIndex(l => String(l.id) === String(logId));
+                if (index === -1) {
+                    alert('Log non trovato. Aggiorna la pagina.');
+                    return;
+                }
                 const log = logs[index];
-                if (!log) return;
 
                 editingLogIndex = index;
 
