@@ -3,11 +3,73 @@ require('dotenv').config();
 
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 const { google } = require('googleapis');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Inizializza Firebase Admin
 admin.initializeApp();
+
+// ============================================
+// SECURITY: Rate Limiting Implementation
+// ============================================
+
+/**
+ * Simple in-memory rate limiter for Cloud Functions
+ * In production, consider using Firebase Realtime Database or Redis for distributed rate limiting
+ */
+const rateLimitStore = new Map();
+const RATE_LIMIT_WINDOW = 60000; // 1 minute
+const RATE_LIMITS = {
+  generateContent: { maxCalls: 10, windowMs: 60000 },  // 10 calls per minute
+  exchangeHealthCode: { maxCalls: 5, windowMs: 60000 }, // 5 calls per minute
+  default: { maxCalls: 30, windowMs: 60000 }            // 30 calls per minute
+};
+
+function checkRateLimit(uid, functionName) {
+  const key = `${uid}:${functionName}`;
+  const now = Date.now();
+  const limits = RATE_LIMITS[functionName] || RATE_LIMITS.default;
+  
+  let record = rateLimitStore.get(key);
+  
+  // Clean old entries periodically
+  if (!record || now - record.windowStart > limits.windowMs) {
+    record = { windowStart: now, count: 0 };
+  }
+  
+  record.count++;
+  rateLimitStore.set(key, record);
+  
+  if (record.count > limits.maxCalls) {
+    return false; // Rate limit exceeded
+  }
+  
+  return true;
+}
+
+// ============================================
+// SECURITY: Input Validation Helpers
+// ============================================
+
+function validateCode(code) {
+  if (!code || typeof code !== 'string') return false;
+  if (code.length > 500 || code.length < 10) return false;
+  // OAuth codes are typically alphanumeric with some special chars
+  if (!/^[a-zA-Z0-9\/_\-\.]+$/.test(code)) return false;
+  return true;
+}
+
+function validateRedirectUri(uri) {
+  if (!uri || typeof uri !== 'string') return false;
+  if (uri.length > 500) return false;
+  try {
+    const url = new URL(uri);
+    return url.protocol === 'https:' || url.hostname === 'localhost';
+  } catch {
+    return false;
+  }
+}
 
 // Configurazione OAuth2 (supporta sia .env che functions.config per retrocompatibilità)
 const getOAuth2Client = (overrideRedirectUri = null) => {
@@ -16,11 +78,12 @@ const getOAuth2Client = (overrideRedirectUri = null) => {
   // Usa l'URI passato dal client se presente, altrimenti fallback alle variabili d'ambiente
   const redirectUri = overrideRedirectUri || process.env.GOOGLE_REDIRECT_URI || functions.config().google?.redirect_uri;
 
-  // Log per debug (rimuovi in produzione)
-  console.log('OAuth Config:', {
-    clientId: clientId ? `${clientId.substring(0, 20)}...` : 'MISSING',
-    clientSecret: clientSecret ? `${clientSecret.substring(0, 10)}...` : 'MISSING',
-    redirectUri: redirectUri || 'MISSING',
+  // SECURITY FIX: Remove credential logging in production
+  // Only log config status, never actual values
+  console.log('OAuth Config Status:', {
+    clientIdConfigured: !!clientId,
+    clientSecretConfigured: !!clientSecret,
+    redirectUriConfigured: !!redirectUri,
     source: overrideRedirectUri ? 'client-dynamic' : (process.env.GOOGLE_CLIENT_ID ? '.env' : 'functions.config()')
   });
 
@@ -34,6 +97,7 @@ const getOAuth2Client = (overrideRedirectUri = null) => {
 /**
  * Scambia authorization code per access token e refresh token
  * Updated: 2025-11-23 - Fixed OAuth credentials
+ * Updated: 2026-01-08 - Added input validation and rate limiting
  */
 exports.exchangeHealthCode = functions.https.onCall(async (data, context) => {
   // Verifica autenticazione
@@ -41,16 +105,28 @@ exports.exchangeHealthCode = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
   }
 
+  // SECURITY: Rate limiting
+  if (!checkRateLimit(context.auth.uid, 'exchangeHealthCode')) {
+    throw new functions.https.HttpsError('resource-exhausted', 'Too many requests. Please try again later.');
+  }
+
   try {
     const { code, redirectUri, redirect_uri } = data;
 
-    if (!code) {
-      throw new functions.https.HttpsError('invalid-argument', 'Code is required');
+    // SECURITY FIX: Validate input format and length
+    if (!validateCode(code)) {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid code format');
     }
 
     // Usa l'URI inviato dal client (supporta camelCase e snake_case)
     const dynamicUri = redirectUri || redirect_uri;
-    console.log('Using dynamic redirect URI from client:', dynamicUri);
+    
+    // SECURITY FIX: Validate redirect URI
+    if (dynamicUri && !validateRedirectUri(dynamicUri)) {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid redirect URI format');
+    }
+    
+    console.log('Processing OAuth exchange for user:', context.auth.uid);
 
     // Crea OAuth2 client con URI dinamico
     const oauth2Client = getOAuth2Client(dynamicUri);
@@ -526,6 +602,29 @@ exports.deauthTerraUser = functions.https.onCall(async (data, context) => {
 // ============================================
 
 /**
+ * SECURITY: Verify webhook signature using HMAC-SHA256
+ */
+function verifyWebhookSignature(payload, signature, secret) {
+  if (!signature || !secret) return false;
+  try {
+    const expectedSig = crypto
+      .createHmac('sha256', secret)
+      .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
+      .digest('hex');
+    
+    // Use timing-safe comparison to prevent timing attacks
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    const expectedBuffer = Buffer.from(expectedSig, 'hex');
+    
+    if (signatureBuffer.length !== expectedBuffer.length) return false;
+    return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
+
+/**
  * Webhook endpoint for Health Auto Export app
  * Receives health data from iOS devices via the Health Auto Export app
  * 
@@ -534,14 +633,16 @@ exports.deauthTerraUser = functions.https.onCall(async (data, context) => {
  * 2. Set destination: REST API
  * 3. URL: https://<region>-<project>.cloudfunctions.net/healthAutoExportWebhook
  * 4. Method: POST
- * 5. Headers: x-user-id: <firebase_user_id>, x-api-key: <your_secret_key>
+ * 5. Headers: x-user-id: <firebase_user_id>, x-api-key: <your_secret_key>, x-signature: <hmac_signature>
  * 6. Format: JSON
+ * 
+ * SECURITY: Signature verification is MANDATORY when webhookSecret is configured
  */
 exports.healthAutoExportWebhook = functions.https.onRequest(async (req, res) => {
   // Enable CORS
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, x-user-id, x-api-key');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, x-user-id, x-api-key, x-signature');
 
   if (req.method === 'OPTIONS') {
     res.status(204).send('');
@@ -557,20 +658,38 @@ exports.healthAutoExportWebhook = functions.https.onRequest(async (req, res) => 
     // Get user ID from header or body
     const userId = req.headers['x-user-id'] || req.body?.userId;
     const apiKey = req.headers['x-api-key'];
+    const signature = req.headers['x-signature'];
 
-    // Validate API key (optional - configure in Firestore config/healthAutoExport)
+    // SECURITY FIX: Load config and enforce validation
     const configDoc = await admin.firestore().collection('config').doc('healthAutoExport').get();
     const config = configDoc.exists ? configDoc.data() : {};
 
-    if (config.apiKey && apiKey !== config.apiKey) {
-      console.warn('Health Auto Export: Invalid API key');
+    // SECURITY FIX: Mandatory API key verification (no longer optional)
+    if (!config.apiKey) {
+      console.error('Health Auto Export: API key not configured in Firestore');
+      res.status(500).send('Webhook not configured');
+      return;
+    }
+    
+    if (apiKey !== config.apiKey) {
+      console.warn('Health Auto Export: Invalid API key attempt');
       res.status(401).send('Unauthorized');
       return;
     }
 
-    if (!userId) {
-      console.warn('Health Auto Export: Missing user ID');
-      res.status(400).send('Missing x-user-id header or userId in body');
+    // SECURITY FIX: Verify webhook signature if secret is configured
+    if (config.webhookSecret) {
+      if (!verifyWebhookSignature(req.rawBody || req.body, signature, config.webhookSecret)) {
+        console.warn('Health Auto Export: Invalid webhook signature');
+        res.status(401).send('Invalid signature');
+        return;
+      }
+    }
+
+    // SECURITY FIX: Validate userId format (Firebase UIDs are alphanumeric, 28 chars)
+    if (!userId || typeof userId !== 'string' || userId.length > 128 || !/^[a-zA-Z0-9]+$/.test(userId)) {
+      console.warn('Health Auto Export: Invalid user ID format');
+      res.status(400).send('Invalid user ID format');
       return;
     }
 
@@ -584,7 +703,7 @@ exports.healthAutoExportWebhook = functions.https.onRequest(async (req, res) => 
 
     const payload = req.body;
     console.log('Health Auto Export webhook received:', {
-      userId,
+      userId: userId.substring(0, 8) + '...', // Don't log full userId
       dataKeys: Object.keys(payload?.data || payload?.metrics || payload || {}),
       timestamp: new Date().toISOString()
     });
@@ -943,6 +1062,8 @@ exports.terraWebhook = functions.https.onRequest(async (req, res) => {
 /**
  * Generate content using Gemini AI safely from the backend.
  * This prevents exposing the API key to the client.
+ * 
+ * SECURITY: Includes rate limiting and input validation
  */
 exports.generateContentWithGemini = functions
   .runWith({
@@ -956,19 +1077,31 @@ exports.generateContentWithGemini = functions
       throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated to use AI features.');
     }
 
+    // SECURITY: Rate limiting - 10 calls per minute per user
+    if (!checkRateLimit(context.auth.uid, 'generateContent')) {
+      throw new functions.https.HttpsError('resource-exhausted', 'Rate limit exceeded. Please wait before making more AI requests.');
+    }
+
     try {
       const { prompt, config, modelName } = data;
 
-      if (!prompt) {
-        throw new functions.https.HttpsError('invalid-argument', 'Prompt is required.');
+      // SECURITY: Validate prompt
+      if (!prompt || typeof prompt !== 'string') {
+        throw new functions.https.HttpsError('invalid-argument', 'Prompt is required and must be a string.');
+      }
+      
+      // SECURITY: Limit prompt length to prevent abuse (100KB max)
+      if (prompt.length > 100000) {
+        throw new functions.https.HttpsError('invalid-argument', 'Prompt exceeds maximum length.');
       }
 
       // 2. Secure API Key Retrieval from secret
       const apiKey = process.env.GEMINI_API_KEY;
 
       if (!apiKey) {
-        console.error('Gemini API Key missing in backend configuration.');
-        throw new functions.https.HttpsError('internal', 'AI service not configured correctly.');
+        // SECURITY: Don't expose internal details
+        console.error('[INTERNAL] Gemini API Key missing in backend configuration.');
+        throw new functions.https.HttpsError('internal', 'AI service temporarily unavailable.');
       }
 
       // 3. Initialize Gemini

@@ -76,15 +76,31 @@ export class PRTracker {
     }
 
     /**
-     * Calcola 1RM stimato usando la formula di Brzycki
+     * Calcola 1RM stimato usando formule appropriate al numero di ripetizioni.
+     * - Brzycki per reps 1-10 (più accurato per basse ripetizioni)
+     * - Epley per reps 11-30 (più adatto per alti range)
+     * - Oltre 30 reps: troppo aerobico per stimare forza massimale
      */
     calculate1RM(weight, reps) {
         if (reps <= 0 || weight <= 0) return 0;
         if (reps === 1) return weight;
-        if (reps > 12) return weight; // Oltre 12 reps non è affidabile per 1RM
         
-        // Formula Brzycki: 1RM = weight * (36 / (37 - reps))
-        return Math.round(weight * (36 / (37 - reps)));
+        // Oltre 30 reps è troppo aerobico per una stima affidabile
+        if (reps > 30) {
+            console.debug(`[PRTracker] ${reps} reps troppo alto per stima 1RM, usando formula conservativa`);
+            // Usa una stima molto conservativa per evitare valori gonfiati
+            return Math.round(weight * 1.15);
+        }
+        
+        // Per 2-10 reps: Formula Brzycki (più accurata per basse rep)
+        // 1RM = weight * (36 / (37 - reps))
+        if (reps <= 10) {
+            return Math.round(weight * (36 / (37 - reps)));
+        }
+        
+        // Per 11-30 reps: Formula Epley (migliore per alti range)
+        // 1RM = weight * (1 + reps/30)
+        return Math.round(weight * (1 + reps / 30));
     }
 
     /**

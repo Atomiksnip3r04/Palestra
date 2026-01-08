@@ -35,6 +35,7 @@ class BFAIService {
 
     /**
      * Analizza una foto per calcolare body fat e misure
+     * Prima verifica che il servizio sia disponibile per evitare richieste inutili.
      * @param {File} imageFile - File immagine da analizzare
      * @param {Object} params - Parametri dell'atleta
      * @param {number} params.height_cm - Altezza in cm
@@ -47,6 +48,13 @@ class BFAIService {
      */
     async analyzePhoto(imageFile, params) {
         try {
+            // Pre-flight health check to avoid sending large payloads to unavailable service
+            const healthStatus = await this.checkHealth();
+            if (!healthStatus.available) {
+                console.warn('[BF-AI] Service unavailable, skipping analysis');
+                throw new Error('Il servizio BF-AI non è al momento disponibile. Riprova più tardi.');
+            }
+            
             const formData = new FormData();
             
             // Aggiungi immagine

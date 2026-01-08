@@ -24,7 +24,9 @@ export class ExerciseNormalizer {
                     if (ex.name) exercises.add(ex.name.trim());
                 });
             });
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[ExerciseNormalizer] Failed to parse ironflow_logs:', e.message);
+        }
 
         // Da workout salvati
         try {
@@ -34,7 +36,9 @@ export class ExerciseNormalizer {
                     if (ex.name) exercises.add(ex.name.trim());
                 });
             });
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[ExerciseNormalizer] Failed to parse ironflow_workouts:', e.message);
+        }
 
         // Da PR tracker
         try {
@@ -42,7 +46,9 @@ export class ExerciseNormalizer {
             Object.values(prs).forEach(pr => {
                 if (pr.displayName) exercises.add(pr.displayName);
             });
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[ExerciseNormalizer] Failed to parse ironflow_personal_records:', e.message);
+        }
 
         this.existingExercises = Array.from(exercises).sort();
         return this.existingExercises;

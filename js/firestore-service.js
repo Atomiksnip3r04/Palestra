@@ -5,6 +5,9 @@ import { computeDomsInsights } from './doms-insights.js';
 export class FirestoreService {
     constructor() {
         this.collectionName = 'users';
+        // Mutex flags to prevent concurrent sync operations
+        this._syncInProgress = false;
+        this._loadInProgress = false;
     }
 
     // Get current user ID or throw error
@@ -114,8 +117,15 @@ export class FirestoreService {
         });
     }
 
-    // Save all local data to Firestore
+    // Save all local data to Firestore with mutex protection
     async syncToCloud() {
+        // Prevent concurrent sync operations (race condition protection)
+        if (this._syncInProgress) {
+            console.warn('[FirestoreService] Sync already in progress, skipping duplicate call');
+            return { success: false, message: 'Sync already in progress' };
+        }
+        
+        this._syncInProgress = true;
         try {
             const uid = this.getUid();
             const localWorkouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
@@ -143,10 +153,19 @@ export class FirestoreService {
         } catch (error) {
             console.error("Error syncing to Firestore:", error);
             return { success: false, message: error.message };
+        } finally {
+            this._syncInProgress = false; // Always release mutex
         }
     }
 
     async loadFromCloud() {
+        // Prevent concurrent load operations (race condition protection)
+        if (this._loadInProgress) {
+            console.warn('[FirestoreService] Load already in progress, skipping duplicate call');
+            return { success: false, message: 'Load already in progress' };
+        }
+        
+        this._loadInProgress = true;
         try {
             const uid = this.getUid();
             const docRef = doc(db, this.collectionName, uid);
@@ -174,6 +193,8 @@ export class FirestoreService {
         } catch (error) {
             console.error("Error loading from Firestore:", error);
             return { success: false, message: error.message };
+        } finally {
+            this._loadInProgress = false; // Always release mutex
         }
     }
 
@@ -776,21 +797,37 @@ export class FirestoreService {
     }
 
     // Create a shared workout with short link
+    // SECURITY FIX: Added creatorId for Firestore Rules validation
     async createSharedWorkout(workoutData) {
         try {
+            // Ensure user is authenticated
+            const uid = this.getUid();
+            if (!uid) {
+                throw new Error('Utente non autenticato');
+            }
+
             // Clean data before saving
             const cleanData = JSON.parse(JSON.stringify(workoutData));
             delete cleanData.id; // Remove local ID
 
+            // Validate workout name (required by Firestore rules)
+            if (!cleanData.name || typeof cleanData.name !== 'string' || cleanData.name.length === 0) {
+                throw new Error('Nome workout non valido');
+            }
+            if (cleanData.name.length > 100) {
+                cleanData.name = cleanData.name.substring(0, 100);
+            }
+
             // Generate unique short ID
             const shortId = await this.generateUniqueShortId();
 
-            // Use short ID as document ID
+            // SECURITY FIX: Use creatorId instead of createdBy for Firestore Rules
             await setDoc(doc(db, 'shared_workouts', shortId), {
                 workoutData: cleanData,
+                name: cleanData.name, // Required by Firestore rules
                 createdAt: serverTimestamp(),
-                createdBy: this.getUid() || 'anonymous',
-                shortId: shortId // Store for reference
+                creatorId: uid, // SECURITY: Required for ownership validation
+                shortId: shortId
             });
 
             return shortId; // Return just the short ID
@@ -834,22 +871,29 @@ export class FirestoreService {
 
     /**
      * Create a shared workout log (from diary) with short link
+     * SECURITY FIX: Added creatorId for Firestore Rules validation
      * @param {Object} logData - The workout log data to share
      * @returns {string} - The short ID for the share link
      */
     async createSharedWorkoutLog(logData) {
         try {
+            // Ensure user is authenticated
+            const uid = this.getUid();
+            if (!uid) {
+                throw new Error('Utente non autenticato');
+            }
+
             // Clean data before saving
             const cleanData = JSON.parse(JSON.stringify(logData));
 
             // Generate unique short ID (different prefix for logs)
             const shortId = await this.generateUniqueShortId('L'); // L prefix for logs
 
-            // Use short ID as document ID
+            // SECURITY FIX: Use creatorId for ownership validation
             await setDoc(doc(db, 'shared_logs', shortId), {
                 logData: cleanData,
                 createdAt: serverTimestamp(),
-                createdBy: this.getUid() || 'anonymous',
+                creatorId: uid, // SECURITY: Required for ownership validation
                 shortId: shortId,
                 type: 'workout_log'
             });

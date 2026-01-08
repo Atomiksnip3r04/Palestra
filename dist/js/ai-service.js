@@ -3,6 +3,123 @@ import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/
 import { exerciseNormalizer } from './exercise-normalizer.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_AI_TIMEOUT_MS = 90000; // 90 seconds timeout for AI calls
+
+// ============================================
+// SECURITY: Input Sanitization & Validation
+// ============================================
+
+/**
+ * Sanitizes user input to prevent prompt injection attacks.
+ * Removes or neutralizes patterns that could manipulate AI behavior.
+ * @param {string} text - User input text
+ * @param {number} maxLength - Maximum allowed length (default 1000)
+ * @returns {string} Sanitized text
+ */
+const sanitizeUserInput = (text, maxLength = 1000) => {
+    if (!text || typeof text !== 'string') return '';
+    
+    // Normalize whitespace and trim
+    let sanitized = text.trim().replace(/\s+/g, ' ');
+    
+    // Remove potential prompt injection patterns (case-insensitive)
+    const injectionPatterns = [
+        /ignor[ae]\s*(tutt[oiae]|le|i|quest[oiae])?\s*(istruzion[ie]|prompt|regol[ae]|precedent[ie])?/gi,
+        /forget\s*(all|previous|above|everything)?/gi,
+        /disregard\s*(all|previous|above|everything)?/gi,
+        /new\s*instruction[s]?\s*:/gi,
+        /system\s*prompt\s*:/gi,
+        /\[\s*SYSTEM\s*\]/gi,
+        /\{\{.*?\}\}/g, // Template injection
+        /<\s*script.*?>.*?<\s*\/\s*script\s*>/gi, // Script tags
+        /javascript\s*:/gi,
+        /data\s*:/gi,
+    ];
+    
+    injectionPatterns.forEach(pattern => {
+        sanitized = sanitized.replace(pattern, '[FILTERED]');
+    });
+    
+    // Limit length to prevent payload attacks
+    if (sanitized.length > maxLength) {
+        sanitized = sanitized.substring(0, maxLength) + '...';
+    }
+    
+    return sanitized;
+};
+
+/**
+ * Validates and sanitizes health data to ensure values are within expected ranges.
+ * @param {Object} healthData - Raw health data object
+ * @returns {Object} Validated health data with safe defaults
+ */
+const validateHealthData = (healthData) => {
+    if (!healthData || typeof healthData !== 'object') {
+        return null;
+    }
+    
+    const validated = {};
+    
+    // Steps: 0 - 500,000 (reasonable weekly max)
+    if (healthData.steps !== undefined && healthData.steps !== null) {
+        const steps = parseInt(healthData.steps, 10);
+        validated.steps = (isNaN(steps) || steps < 0) ? null : Math.min(steps, 500000);
+    }
+    
+    // Heart Rate: 30-220 bpm
+    if (healthData.heartRate !== undefined && healthData.heartRate !== null) {
+        const hr = parseInt(healthData.heartRate, 10);
+        validated.heartRate = (isNaN(hr) || hr < 30 || hr > 220) ? null : hr;
+    }
+    
+    // Calories: 0 - 50,000 (reasonable weekly max)
+    if (healthData.calories !== undefined && healthData.calories !== null) {
+        const cal = parseInt(healthData.calories, 10);
+        validated.calories = (isNaN(cal) || cal < 0) ? null : Math.min(cal, 50000);
+    }
+    
+    // Sleep: 0-24 hours
+    if (healthData.sleep !== undefined && healthData.sleep !== null) {
+        const sleep = parseFloat(healthData.sleep);
+        validated.sleep = (isNaN(sleep) || sleep < 0 || sleep > 24) ? null : sleep;
+    }
+    
+    // Distance: 0-500 km (reasonable weekly max)
+    if (healthData.distance !== undefined && healthData.distance !== null) {
+        const dist = parseFloat(healthData.distance);
+        validated.distance = (isNaN(dist) || dist < 0) ? null : Math.min(dist, 500);
+    }
+    
+    // Weight: 20-500 kg
+    if (healthData.weight !== undefined && healthData.weight !== null) {
+        const weight = parseFloat(healthData.weight);
+        validated.weight = (isNaN(weight) || weight < 20 || weight > 500) ? null : weight;
+    }
+    
+    // Preserve source and timestamp
+    validated.source = healthData.source || 'unknown';
+    validated.syncTimestamp = healthData.syncTimestamp || null;
+    
+    return validated;
+};
+
+/**
+ * Creates a timeout-wrapped promise for AI calls.
+ * @param {Promise} promise - The promise to wrap
+ * @param {number} timeoutMs - Timeout in milliseconds
+ * @param {string} operationName - Name of the operation for error messages
+ * @returns {Promise} Promise that rejects on timeout
+ */
+const withTimeout = (promise, timeoutMs, operationName = 'Operation') => {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+            setTimeout(() => {
+                reject(new Error(`${operationName} timed out after ${timeoutMs / 1000}s. Please try again.`));
+            }, timeoutMs);
+        })
+    ]);
+};
 
 const daysSince = (isoDate) => {
     if (!isoDate) return null;
@@ -78,17 +195,43 @@ export class AIService {
         console.warn('AI Key is now managed server-side. This method is deprecated.');
     }
 
-    // Helper: Call the Cloud Function for AI generation
-    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-3-flash-preview') {
+    /**
+     * Helper: Call the Cloud Function for AI generation with timeout protection.
+     * @param {string} prompt - The prompt to send to AI
+     * @param {Object} config - Generation config (temperature, maxTokens, etc.)
+     * @param {string} modelName - Model identifier
+     * @param {number} timeoutMs - Timeout in milliseconds (default 90s)
+     * @returns {Promise<Object>} AI response data
+     */
+    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-3-flash-preview', timeoutMs = DEFAULT_AI_TIMEOUT_MS) {
         try {
-            const result = await this.generateContentCallable({
-                prompt: prompt,
-                config: config,
-                modelName: modelName
-            });
+            // Wrap the API call with timeout protection
+            const result = await withTimeout(
+                this.generateContentCallable({
+                    prompt: prompt,
+                    config: config,
+                    modelName: modelName
+                }),
+                timeoutMs,
+                'AI Generation'
+            );
             return result.data;
         } catch (error) {
-            console.error('Cloud Function AI Error:', error);
+            // Log with context but don't expose internal details to user
+            console.error('[AIService] Cloud Function Error:', {
+                errorMessage: error.message,
+                errorCode: error.code,
+                modelName: modelName,
+                promptLength: prompt?.length || 0
+            });
+            
+            // Re-throw with user-friendly message
+            if (error.message.includes('timed out')) {
+                throw new Error('La richiesta AI ha impiegato troppo tempo. Riprova.');
+            }
+            if (error.code === 'resource-exhausted') {
+                throw new Error('Limite richieste AI raggiunto. Attendi qualche minuto.');
+            }
             throw error;
         }
     }
@@ -612,9 +755,9 @@ ${data.healthData ? `
 ` : '- Dati salute non disponibili'}
 
 **RICHIESTA SPECIFICA UTENTE (PRIORITÀ MASSIMA):**
-${data.userRequest?.style ? `- L'utente vuole allenare: **${data.userRequest.style}** (Rispetta questa scelta a meno che non ci siano controindicazioni mediche gravi).` : ''}
-${data.userRequest?.customText ? `- Note Utente: "${data.userRequest.customText}" (Integra questa richiesta nel workout).` : ''}
-${data.userRequest?.targetInstruction || ''}
+${data.userRequest?.style ? `- L'utente vuole allenare: **${sanitizeUserInput(data.userRequest.style, 100)}** (Rispetta questa scelta a meno che non ci siano controindicazioni mediche gravi).` : ''}
+${data.userRequest?.customText ? `- Note Utente: "${sanitizeUserInput(data.userRequest.customText, 500)}" (Integra questa richiesta nel workout).` : ''}
+${data.userRequest?.targetInstruction ? sanitizeUserInput(data.userRequest.targetInstruction, 300) : ''}
 
 **ANALISI STILE E STRUTTURA:**
 1. Identifica la "Split" o lo stile abituale dell'utente guardando gli ultimi workout (es. fa Push/Pull/Legs? Upper/Lower? Full Body? O split per gruppi muscolari singoli?).

@@ -154,6 +154,43 @@ class ExportService {
     }
 
     /**
+     * Sanitizza HTML per prevenire XSS
+     * @param {string} html - HTML da sanitizzare
+     * @returns {string} HTML sanitizzato
+     */
+    sanitizeHTML(html) {
+        // Lista di tag consentiti per i report
+        const allowedTags = ['h1', 'h2', 'h3', 'h4', 'p', 'ul', 'ol', 'li', 'strong', 'b', 'em', 'i', 'code', 'table', 'tr', 'td', 'th', 'thead', 'tbody', 'br', 'blockquote', 'span', 'div'];
+        const allowedAttributes = ['style', 'class'];
+        
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        
+        // Rimuovi script e elementi pericolosi
+        const dangerousElements = temp.querySelectorAll('script, iframe, object, embed, form, input, link, meta, base');
+        dangerousElements.forEach(el => el.remove());
+        
+        // Rimuovi event handlers da tutti gli elementi
+        const allElements = temp.querySelectorAll('*');
+        allElements.forEach(el => {
+            // Rimuovi tutti gli attributi on*
+            Array.from(el.attributes).forEach(attr => {
+                if (attr.name.toLowerCase().startsWith('on') || 
+                    attr.value.toLowerCase().includes('javascript:')) {
+                    el.removeAttribute(attr.name);
+                }
+            });
+            
+            // Rimuovi href con javascript:
+            if (el.hasAttribute('href') && el.getAttribute('href').toLowerCase().includes('javascript:')) {
+                el.removeAttribute('href');
+            }
+        });
+        
+        return temp.innerHTML;
+    }
+
+    /**
      * Converte HTML in formato RTF
      */
     htmlToRTF(htmlContent, title) {
@@ -180,9 +217,10 @@ class ExportService {
         }) + '\\cf0\\fs22\\par\n';
         rtf += '\\pard\\sa200\\sl276\\slmult1\\par\n';
         
-        // Parse HTML content
+        // SECURITY FIX: Sanitize HTML content before parsing
+        const sanitizedHTML = this.sanitizeHTML(htmlContent);
         const temp = document.createElement('div');
-        temp.innerHTML = htmlContent;
+        temp.innerHTML = sanitizedHTML;
         
         // Convert HTML to RTF
         rtf += this.parseHtmlToRTF(temp);
