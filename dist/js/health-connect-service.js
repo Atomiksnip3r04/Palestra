@@ -26,6 +26,7 @@ class HealthConnectService {
         this.isConnected = false;
         this.tokenLoadPromise = null;
         this.autoRefreshInterval = null;
+        this.tokenRevoked = false; // Flag per evitare loop di refresh quando token invalido
 
         // Base URL Google Fit API
         this.apiBase = 'https://www.googleapis.com/fitness/v1/users/me';
@@ -63,8 +64,8 @@ class HealthConnectService {
         // Controlla ogni 5 minuti
         this.autoRefreshInterval = setInterval(async () => {
             try {
-                // Se non siamo connessi, salta
-                if (!this.isConnected || !this.accessToken) {
+                // Se non siamo connessi o token revocato, salta
+                if (!this.isConnected || !this.accessToken || this.tokenRevoked) {
                     return;
                 }
 
@@ -191,6 +192,11 @@ class HealthConnectService {
      * Refresh access token quando scade (tramite Firebase Function)
      */
     async refreshAccessToken() {
+        // Se già sappiamo che il token è revocato, non riprovare
+        if (this.tokenRevoked) {
+            throw new Error('Token revoked - user needs to reconnect');
+        }
+        
         try {
             console.log('Refreshing access token...');
 
@@ -205,6 +211,7 @@ class HealthConnectService {
             if (result.data.success) {
                 this.accessToken = result.data.accessToken;
                 this.tokenExpiry = result.data.expiryDate;
+                this.tokenRevoked = false; // Reset flag
 
                 const minutesUntilExpiry = Math.round((this.tokenExpiry - Date.now()) / (60 * 1000));
                 console.log(`✅ Token refreshed successfully! New expiry in ${minutesUntilExpiry} minutes (${new Date(this.tokenExpiry).toLocaleString()})`);
@@ -216,15 +223,24 @@ class HealthConnectService {
         } catch (error) {
             console.error('❌ Error refreshing token:', error);
 
-            // Se il refresh fallisce, potrebbe essere che il refresh token sia scaduto
-            // In questo caso, l'utente deve riconnettersi
+            // Se il refresh fallisce con invalid_grant, il refresh token è scaduto/revocato
             if (error.message.includes('invalid_grant') || error.message.includes('Token has been expired or revoked')) {
-                console.error('Refresh token expired or revoked. User needs to reconnect.');
+                console.error('🚫 Refresh token expired or revoked. User needs to reconnect.');
                 this.isConnected = false;
+                this.tokenRevoked = true; // Flag per evitare loop
                 // Pulisci i token locali
                 this.accessToken = null;
                 this.refreshToken = null;
                 this.tokenExpiry = null;
+                
+                // Pulisci anche da Firestore
+                try {
+                    const { firestoreService } = await import('./firestore-service.js');
+                    await firestoreService.removeHealthToken();
+                    console.log('⚠️ Health token removed from Firestore. User must reconnect.');
+                } catch (e) {
+                    console.error('Error clearing token from Firestore:', e);
+                }
             }
 
             throw error;
@@ -235,6 +251,11 @@ class HealthConnectService {
      * Verifica e refresh token se necessario
      */
     async ensureValidToken() {
+        // Se il token è stato revocato, non provare più
+        if (this.tokenRevoked) {
+            throw new Error('Token revoked - please reconnect to Google Fit');
+        }
+        
         if (!this.accessToken) {
             throw new Error('Not connected to Google Fit');
         }

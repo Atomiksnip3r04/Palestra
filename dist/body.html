@@ -24,25 +24,117 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .measure-card {
+
+        .chart-container {
             background: var(--color-surface);
             padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            height: 280px;
+        }
+        
+        /* Chart Toggle Controls */
+        .chart-toggle-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .chart-toggle-btn {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: var(--color-text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .chart-toggle-btn.active {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+        
+        .chart-toggle-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Measures Grid 2x2 */
+        .measures-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+        }
+        
+        .measure-card {
+            background: var(--color-surface);
+            padding: 0.6rem 0.75rem;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-sm);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .measure-val {
+        
+        /* Uniform Measures Grid 2x2 */
+        .measures-grid-uniform {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .measure-card-uniform {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-sm);
+            padding: 0.6rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .measure-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        
+        .measure-icon {
+            font-size: 0.85rem;
+        }
+        
+        .measure-label {
+            font-size: 0.75rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        
+        .measure-val-centered {
+            display: flex;
+            align-items: baseline;
+            gap: 0.25rem;
+        }
+        
+        .measure-value {
             font-family: var(--font-display);
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: var(--color-primary);
+            line-height: 1;
         }
 
+        .measure-unit {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+        }
+        
+        /* Photo Grid Improved */
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: var(--spacing-sm);
             margin-top: var(--spacing-sm);
         }
@@ -57,27 +149,47 @@
 
         .photo-card img {
             width: 100%;
-            height: 200px;
+            height: 180px;
             object-fit: cover;
             display: block;
         }
 
         .photo-info {
-            padding: 0.5rem;
-            font-size: 0.8rem;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.75rem;
             color: var(--color-text-muted);
-            background: rgba(0, 0, 0, 0.8);
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-        }
-
-        .chart-container {
             background: var(--color-surface);
-            padding: var(--spacing-md);
-            border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-md);
-            height: 300px;
+            border-top: 1px solid var(--color-border);
+        }
+        
+        .photo-info-date {
+            font-weight: 500;
+            color: var(--color-text);
+        }
+        
+        .photo-info-note {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* Athlete Params Uniform Heights */
+        .athlete-params-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+        
+        .athlete-params-grid .form-group {
+            margin-bottom: 0;
+        }
+        
+        .athlete-params-grid input,
+        .athlete-params-grid select {
+            height: 44px;
+            padding: 0 0.75rem;
         }
 
         /* Modal Styles */
@@ -355,20 +467,28 @@
                             <!-- Dynamic health cards -->
                         </div>
 
-                        <!-- Not Connected Message -->
-                        <div id="healthNotConnected" style="display: none; text-align: center; padding: 3rem 1rem; background: rgba(255,255,255,0.02); border: 1px dashed var(--color-border); border-radius: var(--radius-md);">
-                            <div style="font-size: 3rem; margin-bottom: 1rem;">🏥</div>
-                            <h3 style="margin-bottom: 0.5rem;">Connetti Google Fit</h3>
-                            <p style="color: var(--color-text-muted); margin-bottom: 1.5rem;">
-                                Sincronizza i tuoi dati fitness per un monitoraggio completo
-                            </p>
-                            <a href="user.html" class="btn btn-primary">Vai alle Impostazioni</a>
+                        <!-- Not Connected Message - Compact Banner -->
+                        <div id="healthNotConnected" style="display: none; padding: 0.75rem 1rem; background: rgba(0, 243, 255, 0.05); border: 1px solid rgba(0, 243, 255, 0.2); border-radius: var(--radius-sm);">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 0.6rem;">
+                                    <span style="font-size: 1.2rem;">🏥</span>
+                                    <span style="font-size: 0.85rem; color: var(--color-text-muted);">Connetti Google Fit per dati salute</span>
+                                </div>
+                                <a href="user.html#healthConnect" class="btn btn-outline btn-sm" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;">Impostazioni →</a>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Chart Section -->
-                    <div class="chart-container">
-                        <canvas id="progressChart"></canvas>
+                    <!-- Chart Section with Toggle -->
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <div class="chart-toggle-container">
+                            <button class="chart-toggle-btn active" data-metric="all">📊 Tutti</button>
+                            <button class="chart-toggle-btn" data-metric="weight">⚖️ Peso</button>
+                            <button class="chart-toggle-btn" data-metric="fat">📉 Grasso</button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="progressChart"></canvas>
+                        </div>
                     </div>
 
                     <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
@@ -389,39 +509,39 @@
                         <!-- Photos -->
                         <div>
                             <div class="card" style="margin-bottom: 2rem;">
-                                <h3 style="margin-bottom: 1rem;">Parametri Atleta</h3>
-                                <p style="font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 1rem;">
-                                    Dati per calcoli futuri (BMR, TDEE, AI).
+                                <h3 style="margin-bottom: 0.5rem; font-size: 1rem;">Parametri Atleta</h3>
+                                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">
+                                    Dati per BMR, TDEE e AI
                                 </p>
-                                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div class="athlete-params-grid">
                                     <div class="form-group">
-                                        <label>Età</label>
-                                        <input type="number" id="athleteAge" placeholder="es. 25">
+                                        <label style="font-size: 0.75rem;">Età</label>
+                                        <input type="number" id="athleteAge" placeholder="25">
                                     </div>
                                     <div class="form-group">
-                                        <label>Altezza (cm)</label>
-                                        <input type="number" id="athleteHeight" placeholder="es. 180">
+                                        <label style="font-size: 0.75rem;">Altezza (cm)</label>
+                                        <input type="number" id="athleteHeight" placeholder="180">
                                     </div>
                                     <div class="form-group">
-                                        <label>Sesso</label>
-                                        <select id="athleteGender" style="width: 100%; padding: 0.8rem; background: var(--color-bg); border: 1px solid var(--color-border); color: white; border-radius: var(--radius-sm);">
+                                        <label style="font-size: 0.75rem;">Sesso</label>
+                                        <select id="athleteGender" style="width: 100%; background: var(--color-bg); border: 1px solid var(--color-border); color: white; border-radius: var(--radius-sm);">
                                             <option value="M">Maschio</option>
                                             <option value="F">Femmina</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label>Livello Attività</label>
-                                        <select id="athleteActivity" style="width: 100%; padding: 0.8rem; background: var(--color-bg); border: 1px solid var(--color-border); color: white; border-radius: var(--radius-sm);">
+                                        <label style="font-size: 0.75rem;">Attività</label>
+                                        <select id="athleteActivity" style="width: 100%; background: var(--color-bg); border: 1px solid var(--color-border); color: white; border-radius: var(--radius-sm);">
                                             <option value="sedentary">Sedentario</option>
-                                            <option value="light">Leggero (1-3gg)</option>
-                                            <option value="moderate">Moderato (3-5gg)</option>
-                                            <option value="active">Attivo (6-7gg)</option>
-                                            <option value="athlete">Atleta (2x/die)</option>
+                                            <option value="light">Leggero</option>
+                                            <option value="moderate">Moderato</option>
+                                            <option value="active">Attivo</option>
+                                            <option value="athlete">Atleta</option>
                                         </select>
                                     </div>
                                 </div>
-                                <button id="saveParamsBtn" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Salva Parametri</button>
-                                <p id="paramsStatus" style="margin-top: 0.5rem; font-size: 0.9rem; text-align: center; color: var(--color-primary); min-height: 1.2em;"></p>
+                                <button id="saveParamsBtn" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem; padding: 0.65rem;">Salva Parametri</button>
+                                <p id="paramsStatus" style="margin-top: 0.4rem; font-size: 0.8rem; text-align: center; color: var(--color-primary); min-height: 1em;"></p>
                             </div>
 
                             <div
@@ -974,6 +1094,17 @@
                     // --- Chart.js Setup ---
                     const ctx = document.getElementById('progressChart').getContext('2d');
                     let chart;
+                    let currentChartMetric = 'all'; // 'all', 'weight', 'fat'
+
+                    // Chart toggle buttons
+                    document.querySelectorAll('.chart-toggle-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.chart-toggle-btn').forEach(b => b.classList.remove('active'));
+                            btn.classList.add('active');
+                            currentChartMetric = btn.dataset.metric;
+                            initChart();
+                        });
+                    });
 
                     function initChart() {
                         // Sort stats by date
@@ -986,29 +1117,68 @@
                         const fatData = bodyStats.map(s => s.fat);
 
                         if (chart) chart.destroy();
+                        
+                        // Build datasets based on toggle
+                        const datasets = [];
+                        let scales = {
+                            x: { ticks: { color: '#aaa' }, grid: { color: '#333' } }
+                        };
+                        
+                        if (currentChartMetric === 'all' || currentChartMetric === 'weight') {
+                            datasets.push({
+                                label: `Peso (${weightUnit})`,
+                                data: weightData,
+                                borderColor: '#e0ff00',
+                                backgroundColor: 'rgba(224, 255, 0, 0.1)',
+                                tension: 0.4,
+                                yAxisID: 'y',
+                                fill: currentChartMetric === 'weight'
+                            });
+                            scales.y = {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                ticks: { color: '#e0ff00' },
+                                grid: { color: '#333' }
+                            };
+                        }
+                        
+                        if (currentChartMetric === 'all' || currentChartMetric === 'fat') {
+                            datasets.push({
+                                label: 'Grasso (%)',
+                                data: fatData,
+                                borderColor: currentChartMetric === 'fat' ? '#00f3ff' : '#ffffff',
+                                borderDash: currentChartMetric === 'all' ? [5, 5] : [],
+                                backgroundColor: 'rgba(0, 243, 255, 0.1)',
+                                tension: 0.4,
+                                yAxisID: currentChartMetric === 'all' ? 'y1' : 'y',
+                                fill: currentChartMetric === 'fat'
+                            });
+                            
+                            if (currentChartMetric === 'all') {
+                                scales.y1 = {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+                                    grid: { drawOnChartArea: false },
+                                    ticks: { color: '#aaa' }
+                                };
+                            } else if (currentChartMetric === 'fat') {
+                                scales.y = {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    ticks: { color: '#00f3ff' },
+                                    grid: { color: '#333' }
+                                };
+                            }
+                        }
 
                         chart = new Chart(ctx, {
                             type: 'line',
                             data: {
                                 labels: labels,
-                                datasets: [
-                                    {
-                                        label: `Peso (${weightUnit})`,
-                                        data: weightData,
-                                        borderColor: '#e0ff00',
-                                        backgroundColor: 'rgba(224, 255, 0, 0.1)',
-                                        tension: 0.4,
-                                        yAxisID: 'y'
-                                    },
-                                    {
-                                        label: 'Grasso (%)',
-                                        data: fatData,
-                                        borderColor: '#ffffff',
-                                        borderDash: [5, 5],
-                                        tension: 0.4,
-                                        yAxisID: 'y1'
-                                    }
-                                ]
+                                datasets: datasets
                             },
                             options: {
                                 responsive: true,
@@ -1018,7 +1188,10 @@
                                     intersect: false,
                                 },
                                 plugins: {
-                                    legend: { labels: { color: '#aaa' } },
+                                    legend: { 
+                                        display: currentChartMetric === 'all',
+                                        labels: { color: '#aaa' } 
+                                    },
                                     tooltip: {
                                         callbacks: {
                                             afterBody: function (context) {
@@ -1039,23 +1212,7 @@
                                         }
                                     }
                                 },
-                                scales: {
-                                    x: { ticks: { color: '#aaa' }, grid: { color: '#333' } },
-                                    y: {
-                                        type: 'linear',
-                                        display: true,
-                                        position: 'left',
-                                        ticks: { color: '#aaa' },
-                                        grid: { color: '#333' }
-                                    },
-                                    y1: {
-                                        type: 'linear',
-                                        display: true,
-                                        position: 'right',
-                                        grid: { drawOnChartArea: false },
-                                        ticks: { color: '#aaa' }
-                                    }
-                                }
+                                scales: scales
                             }
                         });
                     }
@@ -1074,21 +1231,32 @@
                             l = unitService.convertLength(l);
                         }
 
-                        const items = [
-                            { label: 'Peso Corporeo', val: w, unit: weightUnit },
-                            { label: '% Grasso', val: latest.fat, unit: '%' },
-                            { label: 'Torace', val: c, unit: lengthUnit },
-                            { label: 'Braccio', val: a, unit: lengthUnit },
-                            { label: 'Vita', val: wa, unit: lengthUnit },
-                            { label: 'Gambe', val: l, unit: lengthUnit }
+                        // All metrics in uniform 2x2 grid (3 rows)
+                        const allItems = [
+                            { label: 'Peso', val: w, unit: weightUnit, icon: '⚖️' },
+                            { label: 'Grasso', val: latest.fat, unit: '%', icon: '📉' },
+                            { label: 'Torace', val: c, unit: lengthUnit, icon: '📏' },
+                            { label: 'Braccio', val: a, unit: lengthUnit, icon: '💪' },
+                            { label: 'Vita', val: wa, unit: lengthUnit, icon: '📐' },
+                            { label: 'Gambe', val: l, unit: lengthUnit, icon: '🦵' }
                         ];
 
-                        statsDisplay.innerHTML = items.map(item => `
-                    <div class="measure-card">
-                        <span>${item.label}</span>
-                        <span class="measure-val">${item.val || '-'} <span style="font-size: 0.8rem; color: var(--color-text-muted);">${item.unit}</span></span>
-                    </div>
-                `).join('');
+                        statsDisplay.innerHTML = `
+                            <div class="measures-grid-uniform">
+                                ${allItems.map(item => `
+                                    <div class="measure-card-uniform">
+                                        <div class="measure-card-header">
+                                            <span class="measure-icon">${item.icon}</span>
+                                            <span class="measure-label">${item.label}</span>
+                                        </div>
+                                        <div class="measure-val-centered">
+                                            <span class="measure-value">${item.val || '-'}</span>
+                                            <span class="measure-unit">${item.unit}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
                     }
 
                     // --- Render Photos ---
@@ -1101,13 +1269,16 @@
                         photoGallery.innerHTML = photos.map((p, idx) => {
                             const hasBfai = p.bfai && p.bfai.bodyFat !== undefined;
                             const bfValue = hasBfai ? Number(p.bfai.bodyFat).toFixed(1) : null;
+                            const photoDate = new Date(p.date).toLocaleDateString('it-IT', { day: '2-digit', month: 'short' });
                             return `
-                            <div class="photo-card ${hasBfai ? 'has-bfai' : ''}" data-idx="${idx}" style="position:relative; cursor:pointer;">
-                                <img src="${p.thumb || p.url}" alt="Progress Photo" style="width:100%; height:200px; object-fit:cover; display:block;">
-                                ${hasBfai ? `<div style="position:absolute; top:8px; right:8px; background:rgba(0,243,255,0.95); color:#000; padding:4px 10px; border-radius:12px; font-size:0.8rem; font-weight:700;">${bfValue}%</div>` : ''}
+                            <div class="photo-card ${hasBfai ? 'has-bfai' : ''}" data-idx="${idx}" style="cursor:pointer;">
+                                <div style="position: relative;">
+                                    <img src="${p.thumb || p.url}" alt="Progress Photo">
+                                    ${hasBfai ? `<div style="position:absolute; top:6px; right:6px; background:rgba(0,243,255,0.95); color:#000; padding:3px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">${bfValue}%</div>` : ''}
+                                </div>
                                 <div class="photo-info">
-                                    <div>${new Date(p.date).toLocaleDateString('it-IT')}</div>
-                                    <div>${p.note || ''}${hasBfai ? ' 📊' : ''}</div>
+                                    <div class="photo-info-date">${photoDate}</div>
+                                    ${p.note ? `<div class="photo-info-note">${p.note}</div>` : ''}
                                 </div>
                             </div>
                             `;
