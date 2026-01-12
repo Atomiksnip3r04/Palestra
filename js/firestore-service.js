@@ -217,11 +217,20 @@ export class FirestoreService {
     this._loadInProgress = true;
     try {
       const uid = this.getUid();
+      console.log("📥 [FirestoreService] Caricamento da cloud per UID:", uid);
+      
       const docRef = doc(db, this.collectionName, uid);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
+        
+        console.log("📥 [FirestoreService] Dati cloud ricevuti:", {
+          workouts: data.workouts?.length || 0,
+          logs: data.logs?.length || 0,
+          lastUpdated: data.lastUpdated
+        });
+        
         if (data.workouts)
           localStorage.setItem(
             "ironflow_workouts",
@@ -234,9 +243,27 @@ export class FirestoreService {
         const localLogs = JSON.parse(
           localStorage.getItem("ironflow_logs") || "[]",
         );
+        
+        console.log("📥 [FirestoreService] Pre-merge:", {
+          localLogs: localLogs.length,
+          cloudLogs: cloudLogs.length,
+          localIds: localLogs.slice(0, 5).map(l => l.id),
+          cloudIds: cloudLogs.slice(0, 5).map(l => l.id)
+        });
+        
         const mergedLogs = this.mergeLogs(localLogs, cloudLogs);
         localStorage.setItem("ironflow_logs", JSON.stringify(mergedLogs));
         data.logs = mergedLogs; // Update data object for return
+        
+        // IMPORTANTE: Se il merge ha aggiunto log locali che non erano nel cloud,
+        // sincronizza subito per non perderli
+        if (mergedLogs.length > cloudLogs.length) {
+          console.log("📤 [FirestoreService] Merge ha aggiunto log locali, sync immediata...");
+          // Rilascia il mutex prima di chiamare syncToCloud
+          this._loadInProgress = false;
+          await this.syncToCloud();
+          this._loadInProgress = true; // Riprendi per il finally
+        }
 
         if (data.profile)
           localStorage.setItem(
@@ -266,12 +293,14 @@ export class FirestoreService {
         );
         data.aiPlanHistory = mergedAiHistory; // Update data object for return
 
+        console.log("✅ [FirestoreService] Load completato - logs finali:", mergedLogs.length);
         return { success: true, data };
       } else {
+        console.log("📥 [FirestoreService] Nessun documento trovato, utente nuovo");
         return { success: true, data: null, isNew: true };
       }
     } catch (error) {
-      console.error("Error loading from Firestore:", error);
+      console.error("❌ [FirestoreService] Error loading from Firestore:", error);
       return { success: false, message: error.message };
     } finally {
       this._loadInProgress = false; // Always release mutex

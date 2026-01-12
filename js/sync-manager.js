@@ -89,6 +89,11 @@ class SyncManager {
             if (result.success) {
                 console.log('✅ [SyncManager] Dati cloud caricati');
                 this.notifyListeners('load', result);
+                
+                // Dopo il load, fai sempre una sync per assicurarti che i dati locali siano nel cloud
+                // Questo è importante per evitare perdita di dati
+                console.log('🔄 [SyncManager] Sync post-load per sicurezza...');
+                await this.syncToCloud(true);
             }
             
             return result;
