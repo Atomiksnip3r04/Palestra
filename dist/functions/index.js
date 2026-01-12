@@ -30,21 +30,21 @@ function checkRateLimit(uid, functionName) {
   const key = `${uid}:${functionName}`;
   const now = Date.now();
   const limits = RATE_LIMITS[functionName] || RATE_LIMITS.default;
-  
+
   let record = rateLimitStore.get(key);
-  
+
   // Clean old entries periodically
   if (!record || now - record.windowStart > limits.windowMs) {
     record = { windowStart: now, count: 0 };
   }
-  
+
   record.count++;
   rateLimitStore.set(key, record);
-  
+
   if (record.count > limits.maxCalls) {
     return false; // Rate limit exceeded
   }
-  
+
   return true;
 }
 
@@ -120,12 +120,12 @@ exports.exchangeHealthCode = functions.https.onCall(async (data, context) => {
 
     // Usa l'URI inviato dal client (supporta camelCase e snake_case)
     const dynamicUri = redirectUri || redirect_uri;
-    
+
     // SECURITY FIX: Validate redirect URI
     if (dynamicUri && !validateRedirectUri(dynamicUri)) {
       throw new functions.https.HttpsError('invalid-argument', 'Invalid redirect URI format');
     }
-    
+
     console.log('Processing OAuth exchange for user:', context.auth.uid);
 
     // Crea OAuth2 client con URI dinamico
@@ -611,11 +611,11 @@ function verifyWebhookSignature(payload, signature, secret) {
       .createHmac('sha256', secret)
       .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
       .digest('hex');
-    
+
     // Use timing-safe comparison to prevent timing attacks
     const signatureBuffer = Buffer.from(signature, 'hex');
     const expectedBuffer = Buffer.from(expectedSig, 'hex');
-    
+
     if (signatureBuffer.length !== expectedBuffer.length) return false;
     return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
   } catch (error) {
@@ -670,7 +670,7 @@ exports.healthAutoExportWebhook = functions.https.onRequest(async (req, res) => 
       res.status(500).send('Webhook not configured');
       return;
     }
-    
+
     if (apiKey !== config.apiKey) {
       console.warn('Health Auto Export: Invalid API key attempt');
       res.status(401).send('Unauthorized');
@@ -1089,7 +1089,7 @@ exports.generateContentWithGemini = functions
       if (!prompt || typeof prompt !== 'string') {
         throw new functions.https.HttpsError('invalid-argument', 'Prompt is required and must be a string.');
       }
-      
+
       // SECURITY: Limit prompt length to prevent abuse (100KB max)
       if (prompt.length > 100000) {
         throw new functions.https.HttpsError('invalid-argument', 'Prompt exceeds maximum length.');
@@ -1107,16 +1107,35 @@ exports.generateContentWithGemini = functions
       // 3. Initialize Gemini
       const genAI = new GoogleGenerativeAI(apiKey);
 
-      // Use specified model or default to Flash for speed/cost
-      const model = genAI.getGenerativeModel({
-        model: modelName || "gemini-3-flash-preview",
-        generationConfig: config || {}
-      });
-
       // 4. Generate Content
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      let text = '';
+
+      if (data.contents && data.contents.length > 0) {
+        // Chat mode (multi-turn)
+        const model = genAI.getGenerativeModel({
+          model: modelName || "gemini-3-flash-preview",
+          systemInstruction: data.systemInstruction || undefined
+        });
+
+        const chat = model.startChat({
+          history: data.contents,
+          generationConfig: config || {}
+        });
+
+        const result = await chat.sendMessage(prompt);
+        const response = await result.response;
+        text = response.text();
+      } else {
+        // Standard generation (single-turn)
+        const model = genAI.getGenerativeModel({
+          model: modelName || "gemini-3-flash-preview",
+          generationConfig: config || {}
+        });
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        text = response.text();
+      }
 
       return { success: true, text: text };
 

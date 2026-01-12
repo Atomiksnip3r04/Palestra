@@ -203,14 +203,16 @@ export class AIService {
      * @param {number} timeoutMs - Timeout in milliseconds (default 90s)
      * @returns {Promise<Object>} AI response data
      */
-    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-3-flash-preview', timeoutMs = DEFAULT_AI_TIMEOUT_MS) {
+    async callGeminiBackend(prompt, config = {}, modelName = 'gemini-3-flash-preview', timeoutMs = DEFAULT_AI_TIMEOUT_MS, systemInstruction = null, contents = null) {
         try {
             // Wrap the API call with timeout protection
             const result = await withTimeout(
                 this.generateContentCallable({
                     prompt: prompt,
                     config: config,
-                    modelName: modelName
+                    modelName: modelName,
+                    systemInstruction: systemInstruction,
+                    contents: contents
                 }),
                 timeoutMs,
                 'AI Generation'
@@ -955,10 +957,8 @@ Rispondi all'utente in modo naturale, mantenendo la cronologia della conversazio
 
             // Call Gemini
             const result = await this.callGeminiBackend(sanitizedInput, {
-                temperature: 0.8,
-                systemInstruction: systemPrompt,
-                contents: chatHistory
-            }, 'gemini-3-flash-preview');
+                temperature: 0.8
+            }, 'gemini-3-flash-preview', 30000, systemPrompt, chatHistory);
 
             return { success: true, text: result.text };
         } catch (error) {

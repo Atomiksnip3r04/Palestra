@@ -1109,12 +1109,16 @@ exports.generateContentWithGemini = functions
 
       // 4. Generate Content
       let text = '';
+      const promptText = prompt || '';
 
-      if (data.contents && data.contents.length > 0) {
+      if (data.contents && Array.isArray(data.contents) && data.contents.length > 0) {
         // Chat mode (multi-turn)
+        // Compatibility check: systemInstruction can be string or object
+        const systemInst = typeof data.systemInstruction === 'object' ? data.systemInstruction : (data.systemInstruction ? { parts: [{ text: data.systemInstruction }] } : undefined);
+
         const model = genAI.getGenerativeModel({
           model: modelName || "gemini-3-flash-preview",
-          systemInstruction: data.systemInstruction || undefined
+          systemInstruction: systemInst
         });
 
         const chat = model.startChat({
@@ -1122,17 +1126,20 @@ exports.generateContentWithGemini = functions
           generationConfig: config || {}
         });
 
-        const result = await chat.sendMessage(prompt);
+        const result = await chat.sendMessage(promptText);
         const response = await result.response;
         text = response.text();
       } else {
         // Standard generation (single-turn)
+        const systemInst = typeof data.systemInstruction === 'object' ? data.systemInstruction : (data.systemInstruction ? { parts: [{ text: data.systemInstruction }] } : undefined);
+
         const model = genAI.getGenerativeModel({
           model: modelName || "gemini-3-flash-preview",
+          systemInstruction: systemInst,
           generationConfig: config || {}
         });
 
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(promptText);
         const response = await result.response;
         text = response.text();
       }
