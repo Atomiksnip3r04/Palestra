@@ -13,6 +13,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-cyan': '#00f3ff',
+                        'neon-green': '#00ff88',
+                        'neon-gold': '#ffd700',
+                        'neon-purple': '#9945FF',
+                        'surface': 'rgba(255, 255, 255, 0.03)',
+                        'surface-hover': 'rgba(255, 255, 255, 0.06)',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.03);
@@ -1037,32 +1056,40 @@
                 <p class="pr-page-subtitle">TRACCIA OGNI TUA VITTORIA</p>
             </div>
 
-            <!-- Stats Summary (Glass Cards) -->
-            <div class="pr-stats-container"
-                style="display:grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap:1rem; margin-bottom:2rem;">
-                <div class="pr-card" style="margin:0; padding:1.5rem; text-align:center;">
-                    <div class="pr-stat-value" id="totalPRsCount"
-                        style="font-family:var(--font-display); font-size:2rem; font-weight:700; color:#fff">0
+            <!-- Stats Summary - Modern Tailwind Cards -->
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <!-- Total Records -->
+                <div
+                    class="group relative bg-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/10 hover:border-neon-cyan/30 transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,243,255,0.1)]">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-neon-cyan/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
                     </div>
-                    <div class="pr-stat-label"
-                        style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-top:0.5rem">
-                        Record Totali</div>
+                    <div class="relative">
+                        <div id="totalPRsCount" class="text-3xl font-black text-white tracking-tight">0</div>
+                        <div class="text-[0.65rem] text-gray-500 uppercase tracking-widest mt-1">Record Totali</div>
+                    </div>
                 </div>
-                <div class="pr-card" style="margin:0; padding:1.5rem; text-align:center;">
-                    <div class="pr-stat-value" id="recentPRsCount"
-                        style="font-family:var(--font-display); font-size:2rem; font-weight:700; color:var(--neon-cyan)">
-                        0</div>
-                    <div class="pr-stat-label"
-                        style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-top:0.5rem">
-                        Ultimi 30gg</div>
+                <!-- Recent PRs -->
+                <div
+                    class="group relative bg-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/10 hover:border-neon-cyan/30 transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,243,255,0.1)]">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-neon-cyan/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <div class="relative">
+                        <div id="recentPRsCount" class="text-3xl font-black text-neon-cyan tracking-tight">0</div>
+                        <div class="text-[0.65rem] text-gray-500 uppercase tracking-widest mt-1">Ultimi 30gg</div>
+                    </div>
                 </div>
-                <div class="pr-card" style="margin:0; padding:1.5rem; text-align:center;">
-                    <div class="pr-stat-value" id="exercisesWithPRs"
-                        style="font-family:var(--font-display); font-size:2rem; font-weight:700; color:var(--neon-purple)">
-                        0</div>
-                    <div class="pr-stat-label"
-                        style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-top:0.5rem">
-                        Esercizi</div>
+                <!-- Exercises -->
+                <div
+                    class="group relative bg-white/5 backdrop-blur-xl rounded-2xl p-5 border border-white/10 hover:border-neon-purple/30 transition-all duration-300 hover:shadow-[0_0_30px_rgba(153,69,255,0.1)]">
+                    <div
+                        class="absolute inset-0 bg-gradient-to-br from-neon-purple/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
+                    </div>
+                    <div class="relative">
+                        <div id="exercisesWithPRs" class="text-3xl font-black text-neon-purple tracking-tight">0</div>
+                        <div class="text-[0.65rem] text-gray-500 uppercase tracking-widest mt-1">Esercizi</div>
+                    </div>
                 </div>
             </div>
 
@@ -1082,12 +1109,16 @@
             </div>
             <div id="sessionPRList"></div>
 
-            <!-- Navigation Tabs -->
-            <div class="pr-tabs-wrapper">
-                <button class="pr-tab-btn active" data-tab="history">
+            <!-- Navigation Tabs - Tailwind Pill Style -->
+            <div class="flex gap-2 p-1.5 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 mb-6">
+                <button
+                    class="pr-tab-btn active flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200"
+                    data-tab="history">
                     Cronologia
                 </button>
-                <button class="pr-tab-btn" data-tab="all">
+                <button
+                    class="pr-tab-btn flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200 text-gray-500 hover:text-white hover:bg-white/5"
+                    data-tab="all">
                     Tutti i PR
                 </button>
             </div>
@@ -1105,26 +1136,52 @@
                     </div>
                 </div>
 
-                <!-- Horizontal Scrollable Chips -->
-                <div class="pr-chip-scroller" style="display:flex; flex-direction:column; gap:1rem;">
+                <!-- Horizontal Scrollable Chips - Tailwind Style -->
+                <div class="flex flex-col gap-4">
 
                     <!-- Type Filters -->
-                    <div class="pr-filter-row" id="categoryFilters"
-                        style="display:flex; gap:0.8rem; overflow-x:auto; padding:0.5rem 0;">
-                        <button class="pr-filter-chip active" data-filter="all">Tutti</button>
-                        <button class="pr-filter-chip" data-filter="weight">Peso Max</button>
-                        <button class="pr-filter-chip" data-filter="1rm">1RM</button>
-                        <button class="pr-filter-chip" data-filter="reps">Reps</button>
-                        <button class="pr-filter-chip" data-filter="volume">Volume</button>
+                    <div id="categoryFilters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        <button
+                            class="pr-filter-chip active px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50"
+                            data-filter="all">
+                            <span class="flex items-center gap-1.5">✨ Tutti</span>
+                        </button>
+                        <button
+                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50"
+                            data-filter="weight">
+                            <span class="flex items-center gap-1.5">🏋️ Peso Max</span>
+                        </button>
+                        <button
+                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50"
+                            data-filter="1rm">
+                            <span class="flex items-center gap-1.5">💪 1RM</span>
+                        </button>
+                        <button
+                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50"
+                            data-filter="reps">
+                            <span class="flex items-center gap-1.5">🔁 Reps</span>
+                        </button>
+                        <button
+                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-neon-cyan/50"
+                            data-filter="volume">
+                            <span class="flex items-center gap-1.5">📊 Volume</span>
+                        </button>
                     </div>
 
                     <!-- Time Filters -->
-                    <div class="pr-filter-row" id="dateFilters"
-                        style="display:flex; gap:0.8rem; overflow-x:auto; padding:0.5rem 0;">
-                        <button class="pr-filter-chip pr-date-chip active" data-date="all">Sempre</button>
-                        <button class="pr-filter-chip pr-date-chip" data-date="30">30gg</button>
-                        <button class="pr-filter-chip pr-date-chip" data-date="90">3 Mesi</button>
-                        <button class="pr-filter-chip pr-date-chip" data-date="365">1 Anno</button>
+                    <div id="dateFilters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        <button
+                            class="pr-filter-chip pr-date-chip active px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                            data-date="all">Sempre</button>
+                        <button
+                            class="pr-filter-chip pr-date-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                            data-date="30">30gg</button>
+                        <button
+                            class="pr-filter-chip pr-date-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                            data-date="90">3 Mesi</button>
+                        <button
+                            class="pr-filter-chip pr-date-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border border-white/10 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"
+                            data-date="365">1 Anno</button>
                     </div>
                 </div>
             </div>
@@ -1271,10 +1328,12 @@
 
                 for (const [dateLabel, prs] of Object.entries(grouped)) {
                     html += `
-                        <div class="pr-date-group">
-                            <div class="pr-date-group-header">
-                                <span class="pr-date-group-label">${dateLabel}</span>
-                                <div class="pr-date-group-line"></div>
+                        <div class="mb-8">
+                            <div class="sticky top-0 z-10 flex items-center gap-4 py-3 mb-4 backdrop-blur-md bg-black/60">
+                                <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
+                                    <span class="text-neon-cyan">📅</span> ${dateLabel}
+                                </span>
+                                <div class="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
                             </div>
                             ${prs.map(pr => {
                         let records = pr.records;
@@ -1376,46 +1435,55 @@
 
 
                 // Dynamic Classes
-                const cardClass = isSession ? 'pr-card session-highlight' : 'pr-card';
+                const cardClass = isSession
+                    ? 'group relative bg-gradient-to-br from-neon-gold/10 to-transparent border-neon-gold/30'
+                    : 'group relative bg-white/5 hover:bg-white/[0.07] border-white/10 hover:border-neon-cyan/20';
+
+                // Highlight matching text if searching
+                const highlightMatch = (text) => {
+                    if (!searchQuery) return text;
+                    const regex = new RegExp(`(${searchQuery})`, 'gi');
+                    return text.replace(regex, '<mark class="bg-neon-cyan/30 text-white px-0.5 rounded">$1</mark>');
+                };
 
                 return `
-                    <div class="${cardClass}">
+                    <div class="${cardClass} backdrop-blur-xl rounded-2xl border mb-4 overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_rgba(0,243,255,0.08)]">
                         <!-- Card Header -->
-                        <div class="pr-card-header">
-                            <div class="pr-exercise-info">
-                                <div class="pr-exercise-name">${exercise}</div>
-                                <div class="pr-type-badge ${record.type}">
+                        <div class="flex items-start justify-between p-4 pb-3">
+                            <div class="flex-1">
+                                <div class="text-white font-bold text-sm mb-1.5 leading-tight">${highlightMatch(exercise)}</div>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.6rem] font-bold uppercase tracking-wider ${record.type === '1rm' ? 'bg-neon-cyan/20 text-neon-cyan' : 'bg-white/10 text-gray-400'}">
                                     ${record.label.replace(/[^a-zA-Z ]/g, "").trim().toUpperCase()}
-                                </div>
+                                </span>
                             </div>
-                            <span class="pr-timestamp">${formattedDate}</span>
+                            <span class="text-[0.65rem] text-gray-500 font-medium">${formattedDate}</span>
                         </div>
 
                         <!-- Comparison Grid -->
-                        <div class="pr-comparison-grid">
+                        <div class="grid grid-cols-3 gap-2 px-4 pb-4">
                             <!-- OLD VALUE (Dimmed) -->
-                            <div class="pr-val-col-old">
-                                <span class="pr-label-mini">Precedente</span>
-                                <div class="pr-number-big">${oldValue > 0 ? oldValue : '-'}</div>
-                                <span class="pr-unit-mini">${oldValue > 0 ? record.unit : ''}</span>
+                            <div class="text-center p-3 rounded-xl bg-black/20 opacity-50">
+                                <div class="text-[0.55rem] text-gray-500 uppercase tracking-wider mb-1">Prec.</div>
+                                <div class="text-xl font-black text-white/60">${oldValue > 0 ? oldValue : '-'}</div>
+                                <div class="text-[0.55rem] text-gray-600">${oldValue > 0 ? record.unit : ''}</div>
                             </div>
 
                             <!-- DELTA (The Bridge) -->
-                            <div class="pr-delta-container">
-                                <div class="pr-delta-pill">
-                                    ${isNew ?
-                        `<span class="pr-delta-new-badge">NEW</span>` :
-                        `<span class="pr-delta-val">+${delta.toFixed(1)}</span>
-                                         <span class="pr-delta-pct">+${deltaPercent}%</span>`
+                            <div class="flex items-center justify-center">
+                                <div class="${isNew ? 'bg-neon-green/20 border-neon-green/30' : 'bg-neon-cyan/10 border-neon-cyan/20'} border rounded-full px-3 py-1.5 text-center">
+                                    ${isNew
+                        ? '<span class="text-neon-green text-xs font-black">NEW</span>'
+                        : `<div class="text-neon-cyan text-sm font-black">+${delta.toFixed(1)}</div>
+                                           <div class="text-neon-cyan/60 text-[0.55rem] font-semibold">+${deltaPercent}%</div>`
                     }
                                 </div>
                             </div>
 
                             <!-- NEW VALUE (Neon Highlight) -->
-                            <div class="pr-val-col-new">
-                                <span class="pr-label-mini">Nuovo Record</span>
-                                <div class="pr-number-big">${newValue}</div>
-                                <span class="pr-unit-mini">${record.unit}</span>
+                            <div class="text-center p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/10">
+                                <div class="text-[0.55rem] text-neon-cyan/60 uppercase tracking-wider mb-1">Nuovo</div>
+                                <div class="text-2xl font-black text-neon-cyan">${newValue}</div>
+                                <div class="text-[0.55rem] text-neon-cyan/50">${record.unit}</div>
                             </div>
                         </div>
                     </div>
@@ -1450,10 +1518,23 @@
 
             function renderEmptyState() {
                 return `
-                    <div class="pr-empty-state">
-                        <div class="pr-empty-icon" style="filter: drop-shadow(0 0 10px var(--neon-cyan));">⚡</div>
-                        <h3 style="color:white; margin-bottom:0.5rem">NESSUN RECORD TROVATO</h3>
-                        <p style="color:var(--text-secondary)">Non ci sono ancora dati per questa selezione.</p>
+                    <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                        <div class="relative mb-6">
+                            <div class="text-6xl animate-pulse">⚡</div>
+                            <div class="absolute inset-0 bg-neon-cyan/20 blur-3xl rounded-full"></div>
+                        </div>
+                        <h3 class="text-xl font-black text-white uppercase tracking-wider mb-2">Nessun Record</h3>
+                        <p class="text-sm text-gray-500 max-w-xs">
+                            ${searchQuery
+                        ? `Nessun risultato per "<span class="text-neon-cyan">${searchQuery}</span>"`
+                        : 'Non ci sono ancora dati per questa selezione.'}
+                        </p>
+                        ${searchQuery ? `
+                            <button onclick="document.getElementById('searchInput').value=''; searchQuery=''; renderPRs();" 
+                                    class="mt-6 px-4 py-2 rounded-full text-xs font-semibold bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20 hover:bg-neon-cyan/20 transition-all">
+                                Cancella ricerca
+                            </button>
+                        ` : ''}
                     </div>
                 `;
             }
@@ -1495,11 +1576,16 @@
                     });
                 });
 
-                // LIVE SEARCH
+                // LIVE SEARCH with Debounce
                 const searchInput = document.getElementById('searchInput');
+                let debounceTimer;
+
                 searchInput.addEventListener('input', (e) => {
-                    searchQuery = e.target.value.toLowerCase().trim();
-                    renderPRs();
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        searchQuery = e.target.value.toLowerCase().trim();
+                        renderPRs();
+                    }, 150); // 150ms debounce for smooth typing
                 });
             }
 
