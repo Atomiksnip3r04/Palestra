@@ -209,6 +209,203 @@
             font-weight: 500;
         }
 
+        /* --- USER PROVIDED COMPONENTS --- */
+        /* From Uiverse.io by Smit-Prajapati */
+        .search-container {
+            position: relative;
+            width: 100%;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%);
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .search-container::after,
+        .search-container::before {
+            content: "";
+            width: 100%;
+            height: 100%;
+            border-radius: inherit;
+            position: absolute;
+        }
+
+        .search-container::before {
+            top: -1px;
+            left: -1px;
+            background: linear-gradient(0deg, rgb(218, 232, 247) 0%, rgb(255, 255, 255) 100%);
+            z-index: 1;
+        }
+
+        .search-container::after {
+            bottom: -1px;
+            right: -1px;
+            background: linear-gradient(0deg, rgb(163, 206, 255) 0%, rgb(211, 232, 255) 100%);
+            box-shadow: rgba(79, 156, 232, 0.7019607843) 3px 3px 5px 0px, rgba(79, 156, 232, 0.7019607843) 5px 5px 20px 0px;
+            z-index: 0;
+        }
+
+        .input {
+            padding: 10px;
+            width: 100%;
+            background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%);
+            border: none;
+            color: #5a7a99;
+            font-size: 16px;
+            border-radius: 50px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .input:focus {
+            outline: none;
+            background: linear-gradient(135deg, rgb(239, 247, 255) 0%, rgb(214, 229, 247) 100%);
+        }
+
+        .search__icon {
+            width: 50px;
+            aspect-ratio: 1;
+            border-left: 2px solid white;
+            border-top: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            border-radius: 50%;
+            padding-left: 12px;
+            margin-right: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .search__icon:hover {
+            border-left: 3px solid white;
+        }
+
+        .search__icon path {
+            fill: white;
+        }
+
+        /* From Uiverse.io by alexruix */
+        .loader {
+            width: 80px;
+            height: 50px;
+            position: relative;
+            margin: 2rem auto;
+        }
+
+        .loader-text {
+            position: absolute;
+            top: 0;
+            padding: 0;
+            margin: 0;
+            color: #C8B6FF;
+            animation: text_713 3.5s ease both infinite;
+            font-size: .8rem;
+            letter-spacing: 1px;
+        }
+
+        .load {
+            background-color: #9A79FF;
+            border-radius: 50px;
+            display: block;
+            height: 16px;
+            width: 16px;
+            bottom: 0;
+            position: absolute;
+            transform: translateX(64px);
+            animation: loading_713 3.5s ease both infinite;
+        }
+
+        .load::before {
+            position: absolute;
+            content: "";
+            width: 100%;
+            height: 100%;
+            background-color: #D1C2FF;
+            border-radius: inherit;
+            animation: loading2_713 3.5s ease both infinite;
+        }
+
+        @keyframes text_713 {
+            0% {
+                letter-spacing: 1px;
+                transform: translateX(0px);
+            }
+
+            40% {
+                letter-spacing: 2px;
+                transform: translateX(26px);
+            }
+
+            80% {
+                letter-spacing: 1px;
+                transform: translateX(32px);
+            }
+
+            90% {
+                letter-spacing: 2px;
+                transform: translateX(0px);
+            }
+
+            100% {
+                letter-spacing: 1px;
+                transform: translateX(0px);
+            }
+        }
+
+        @keyframes loading_713 {
+            0% {
+                width: 16px;
+                transform: translateX(0px);
+            }
+
+            40% {
+                width: 100%;
+                transform: translateX(0px);
+            }
+
+            80% {
+                width: 16px;
+                transform: translateX(64px);
+            }
+
+            90% {
+                width: 100%;
+                transform: translateX(0px);
+            }
+
+            100% {
+                width: 16px;
+                transform: translateX(0px);
+            }
+        }
+
+        @keyframes loading2_713 {
+            0% {
+                transform: translateX(0px);
+                width: 16px;
+            }
+
+            40% {
+                transform: translateX(0%);
+                width: 80%;
+            }
+
+            80% {
+                width: 100%;
+                transform: translateX(0px);
+            }
+
+            90% {
+                width: 80%;
+                transform: translateX(15px);
+            }
+
+            100% {
+                transform: translateX(0px);
+                width: 16px;
+            }
+        }
+
         /* --- Input & Navigation System --- */
         .pr-tabs-wrapper {
             background: var(--surface-glass);
@@ -343,6 +540,16 @@
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             user-select: none;
+        }
+
+        /* Specificity Fix for Active State */
+        button.pr-filter-chip.active,
+        .pr-filter-chip.active {
+            background: var(--neon-cyan) !important;
+            color: #000 !important;
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 4px 15px var(--neon-cyan-dim) !important;
+            opacity: 1 !important;
         }
 
         .pr-filter-chip:hover {
@@ -789,6 +996,9 @@
     <header class="header">
         <div class="container">
             <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
+            <div style="position:absolute; right:15px; top:25px; z-index:1000;">
+                <a href="javascript:history.back()" style="color:white; font-size:1.5rem; text-decoration:none;">✕</a>
+            </div>
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
@@ -871,9 +1081,13 @@
 
             <!-- Filters & Search Toolbar -->
             <div class="pr-filters-section" id="filtersSection">
-                <div class="pr-search-box">
-                    <span class="pr-search-icon">🔍</span>
-                    <input type="text" class="pr-search-input" id="searchInput" placeholder="Cerca esercizio...">
+                <div class="search-container">
+                    <input type="text" class="input" id="searchInput" placeholder="Cerca esercizio...">
+                    <svg viewBox="0 0 24 24" class="search__icon">
+                        <path
+                            d="M21.71,20.29,18,16.61A9,9,0,1,0,16.61,18l3.68,3.68a1,1,0,0,0,1.42,0A1,1,0,0,0,21.71,20.29ZM11,18a7,7,0,1,1,7-7A7,7,0,0,1,11,18Z">
+                        </path>
+                    </svg>
                 </div>
 
                 <!-- Horizontal Scrollable Chips -->
@@ -902,7 +1116,12 @@
 
             <!-- Results Count & Context -->
             <div class="pr-results-info" id="resultsInfo">
-                <span id="resultsCount">Caricamento record...</span>
+                <span id="resultsCount">
+                    <div class="loader">
+                        <span class="loader-text">loading</span>
+                        <span class="load"></span>
+                    </div>
+                </span>
             </div>
 
             <!-- PR List -->
