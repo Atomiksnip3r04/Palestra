@@ -527,7 +527,7 @@
             color: var(--neon-cyan);
         }
 
-        /* --- Filter Chips (IOS Style) --- */
+        /* --- SENIOR DESIGN: Filter Chips System --- */
         .pr-chip-scroller {
             scrollbar-width: none;
             -ms-overflow-style: none;
@@ -537,52 +537,86 @@
             display: none;
         }
 
+        /* Base Chip - Dark, high contrast */
         .pr-filter-chip {
-            padding: 0.6rem 1.2rem;
-            border-radius: 100px;
-            background: var(--surface-glass);
-            border: 1px solid var(--border-glass);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            font-weight: 600;
+            position: relative;
+            padding: 0.75rem 1.25rem;
+            border-radius: 50px;
+            background: #1a1a2e;
+            border: 2px solid #2d2d44;
+            color: #8b8b9e;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
             white-space: nowrap;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             user-select: none;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Specificity Fix for Active State */
+        /* Hover State - Glow hint */
+        .pr-filter-chip:hover {
+            border-color: #00f3ff40;
+            color: #c0c0d0;
+            background: #1e1e35;
+            transform: translateY(-1px);
+        }
+
+        /* Press/Tap Animation */
+        .pr-filter-chip:active {
+            transform: scale(0.95) translateY(0);
+            transition: transform 0.1s ease;
+        }
+
+        /* ACTIVE STATE - Cyan Neon */
         button.pr-filter-chip.active,
         .pr-filter-chip.active {
-            background: var(--neon-cyan) !important;
+            background: linear-gradient(135deg, #00f3ff 0%, #00d4e8 100%) !important;
+            border-color: #00f3ff !important;
             color: #000 !important;
-            border-color: var(--neon-cyan) !important;
-            box-shadow: 0 4px 15px var(--neon-cyan-dim) !important;
-            opacity: 1 !important;
+            font-weight: 800 !important;
+            box-shadow:
+                0 4px 20px rgba(0, 243, 255, 0.4),
+                0 0 40px rgba(0, 243, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+            transform: translateY(-2px);
         }
 
-        .pr-filter-chip:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            background: var(--surface-glass-hover);
+        /* Active chip inner glow animation */
+        .pr-filter-chip.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: chipShine 2s ease-in-out infinite;
         }
 
-        .pr-filter-chip:active {
-            transform: scale(0.92);
+        @keyframes chipShine {
+            0% {
+                left: -100%;
+            }
+
+            50%,
+            100% {
+                left: 100%;
+            }
         }
 
-        .pr-filter-chip.active {
-            background: var(--neon-cyan);
-            color: #000;
-            border-color: var(--neon-cyan);
-            box-shadow: 0 4px 15px var(--neon-cyan-dim);
-        }
-
+        /* DATE CHIP ACTIVE - White/Gold variant */
         .pr-date-chip.active {
-            background: #fff;
-            color: #000;
-            border-color: #fff;
-            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+            background: linear-gradient(135deg, #ffd700 0%, #ffb800 100%) !important;
+            border-color: #ffd700 !important;
+            color: #1a1a1a !important;
+            box-shadow:
+                0 4px 20px rgba(255, 215, 0, 0.35),
+                0 0 30px rgba(255, 215, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
         }
+
 
         /* --- MAIN CARD ENGINE --- */
         .pr-date-group {
@@ -1031,36 +1065,25 @@
                 <p class="pr-page-subtitle">TRACCIA OGNI TUA VITTORIA</p>
             </div>
 
-            <!-- Stats Summary - Soft Gradient Style -->
+            <!-- SENIOR DESIGN: Stats Cards -->
             <div class="grid grid-cols-3 gap-3 mb-8">
                 <!-- Total Records -->
-                <div class="relative rounded-[20px] p-[6px]"
-                    style="background: linear-gradient(135deg, rgb(179, 208, 253) 0%, rgb(164, 202, 248) 100%);">
-                    <div class="rounded-[16px] p-4 text-center"
-                        style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); box-shadow: rgba(79, 156, 232, 0.5) 2px 2px 8px 0px;">
-                        <div id="totalPRsCount" class="text-2xl font-black" style="color: #3d5a80;">0</div>
-                        <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #6b8cae;">Record Totali
-                        </div>
-                    </div>
+                <div class="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105"
+                    style="background: #1a1a2e; border: 2px solid #2d2d44;">
+                    <div id="totalPRsCount" class="text-2xl font-black" style="color: #fff;">0</div>
+                    <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #8b8b9e;">Record Totali</div>
                 </div>
                 <!-- Recent PRs -->
-                <div class="relative rounded-[20px] p-[6px]"
-                    style="background: linear-gradient(135deg, rgb(167, 243, 208) 0%, rgb(134, 239, 172) 100%);">
-                    <div class="rounded-[16px] p-4 text-center"
-                        style="background: linear-gradient(135deg, rgb(220, 252, 231) 0%, rgb(209, 250, 229) 100%); box-shadow: rgba(34, 197, 94, 0.4) 2px 2px 8px 0px;">
-                        <div id="recentPRsCount" class="text-2xl font-black" style="color: #166534;">0</div>
-                        <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #4ade80;">Ultimi 30gg
-                        </div>
-                    </div>
+                <div class="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105"
+                    style="background: linear-gradient(135deg, #00f3ff15 0%, #1a1a2e 100%); border: 2px solid #00f3ff40;">
+                    <div id="recentPRsCount" class="text-2xl font-black" style="color: #00f3ff;">0</div>
+                    <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #00f3ff80;">Ultimi 30gg</div>
                 </div>
                 <!-- Exercises -->
-                <div class="relative rounded-[20px] p-[6px]"
-                    style="background: linear-gradient(135deg, rgb(221, 214, 254) 0%, rgb(196, 181, 253) 100%);">
-                    <div class="rounded-[16px] p-4 text-center"
-                        style="background: linear-gradient(135deg, rgb(237, 233, 254) 0%, rgb(233, 213, 255) 100%); box-shadow: rgba(139, 92, 246, 0.4) 2px 2px 8px 0px;">
-                        <div id="exercisesWithPRs" class="text-2xl font-black" style="color: #5b21b6;">0</div>
-                        <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #a78bfa;">Esercizi</div>
-                    </div>
+                <div class="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105"
+                    style="background: linear-gradient(135deg, #ffd70015 0%, #1a1a2e 100%); border: 2px solid #ffd70040;">
+                    <div id="exercisesWithPRs" class="text-2xl font-black" style="color: #ffd700;">0</div>
+                    <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #ffd70080;">Esercizi</div>
                 </div>
             </div>
 
@@ -1080,22 +1103,18 @@
             </div>
             <div id="sessionPRList"></div>
 
-            <!-- Navigation Tabs - Soft Gradient Style -->
-            <div class="relative rounded-[20px] p-[6px] mb-6"
-                style="background: linear-gradient(135deg, rgb(179, 208, 253) 0%, rgb(164, 202, 248) 100%);">
-                <div class="flex gap-2 rounded-[16px] p-1"
-                    style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%);">
-                    <button
-                        class="pr-tab-btn active flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200"
-                        data-tab="history" style="color: #3d5a80;">
-                        Cronologia
-                    </button>
-                    <button
-                        class="pr-tab-btn flex-1 py-3 px-4 rounded-xl text-sm font-bold uppercase tracking-wider transition-all duration-200"
-                        data-tab="all" style="color: #9EBCD9;">
-                        Tutti i PR
-                    </button>
-                </div>
+            <!-- SENIOR DESIGN: Navigation Tabs -->
+            <div class="flex gap-2 p-2 mb-6 rounded-full" style="background: #0d0d15; border: 2px solid #1a1a2e;">
+                <button
+                    class="pr-tab-btn active flex-1 py-3 px-6 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300"
+                    data-tab="history">
+                    Cronologia
+                </button>
+                <button
+                    class="pr-tab-btn flex-1 py-3 px-6 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300"
+                    data-tab="all">
+                    Tutti i PR
+                </button>
             </div>
 
             <!-- Filters & Search Toolbar -->
@@ -1111,58 +1130,24 @@
                     </div>
                 </div>
 
-                <!-- Horizontal Scrollable Chips - Soft Gradient Style -->
-                <div class="flex flex-col gap-4">
+                <!-- SENIOR DESIGN: Filter Chips -->
+                <div class="flex flex-col gap-5">
 
-                    <!-- Type Filters -->
-                    <div id="categoryFilters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                        <button
-                            class="pr-filter-chip active px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-filter="all"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #5a7a99; box-shadow: rgba(79, 156, 232, 0.4) 2px 2px 6px 0px;">✨
-                            Tutti</button>
-                        <button
-                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-filter="weight"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">🏋️
-                            Peso Max</button>
-                        <button
-                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-filter="1rm"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">💪
-                            1RM</button>
-                        <button
-                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-filter="reps"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">🔁
-                            Reps</button>
-                        <button
-                            class="pr-filter-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-filter="volume"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">📊
-                            Volume</button>
+                    <!-- Category Filters -->
+                    <div id="categoryFilters" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        <button class="pr-filter-chip active" data-filter="all">✨ Tutti</button>
+                        <button class="pr-filter-chip" data-filter="weight">🏋️ Peso Max</button>
+                        <button class="pr-filter-chip" data-filter="1rm">💪 1RM</button>
+                        <button class="pr-filter-chip" data-filter="reps">🔁 Reps</button>
+                        <button class="pr-filter-chip" data-filter="volume">📊 Volume</button>
                     </div>
 
                     <!-- Time Filters -->
-                    <div id="dateFilters" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                        <button
-                            class="pr-filter-chip pr-date-chip active px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-date="all"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #5a7a99; box-shadow: rgba(79, 156, 232, 0.4) 2px 2px 6px 0px;">Sempre</button>
-                        <button
-                            class="pr-filter-chip pr-date-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-date="30"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">30gg</button>
-                        <button
-                            class="pr-filter-chip pr-date-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-date="90"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">3
-                            Mesi</button>
-                        <button
-                            class="pr-filter-chip pr-date-chip px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                            data-date="365"
-                            style="background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%); color: #9EBCD9;">1
-                            Anno</button>
+                    <div id="dateFilters" class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                        <button class="pr-filter-chip pr-date-chip active" data-date="all">🗓️ Sempre</button>
+                        <button class="pr-filter-chip pr-date-chip" data-date="30">30 giorni</button>
+                        <button class="pr-filter-chip pr-date-chip" data-date="90">3 Mesi</button>
+                        <button class="pr-filter-chip pr-date-chip" data-date="365">1 Anno</button>
                     </div>
                 </div>
             </div>
