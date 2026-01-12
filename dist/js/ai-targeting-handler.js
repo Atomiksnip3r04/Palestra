@@ -22,7 +22,7 @@ export class AITargetingHandler {
         this.chips = document.querySelectorAll(chipSelector);
 
         if (this.chips.length === 0) {
-            console.warn('No AI target chips found');
+            // Suppress warning on pages without workout generation UI
             return;
         }
 

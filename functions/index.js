@@ -1113,8 +1113,17 @@ exports.generateContentWithGemini = functions
 
       if (data.contents && Array.isArray(data.contents) && data.contents.length > 0) {
         // Chat mode (multi-turn)
-        // Compatibility check: systemInstruction can be string or object
-        const systemInst = typeof data.systemInstruction === 'object' ? data.systemInstruction : (data.systemInstruction ? { parts: [{ text: data.systemInstruction }] } : undefined);
+        // Compatibility check: systemInstruction can be string or object { parts: [...] } or { role: 'system', parts: [...] }
+        let systemInst = undefined;
+        if (data.systemInstruction) {
+          if (typeof data.systemInstruction === 'string') {
+            systemInst = { parts: [{ text: data.systemInstruction }] };
+          } else if (data.systemInstruction.parts) {
+            systemInst = { parts: data.systemInstruction.parts };
+          } else {
+            systemInst = data.systemInstruction;
+          }
+        }
 
         const model = genAI.getGenerativeModel({
           model: modelName || "gemini-3-flash-preview",
@@ -1131,7 +1140,16 @@ exports.generateContentWithGemini = functions
         text = response.text();
       } else {
         // Standard generation (single-turn)
-        const systemInst = typeof data.systemInstruction === 'object' ? data.systemInstruction : (data.systemInstruction ? { parts: [{ text: data.systemInstruction }] } : undefined);
+        let systemInst = undefined;
+        if (data.systemInstruction) {
+          if (typeof data.systemInstruction === 'string') {
+            systemInst = { parts: [{ text: data.systemInstruction }] };
+          } else if (data.systemInstruction.parts) {
+            systemInst = { parts: data.systemInstruction.parts };
+          } else {
+            systemInst = data.systemInstruction;
+          }
+        }
 
         const model = genAI.getGenerativeModel({
           model: modelName || "gemini-3-flash-preview",
@@ -1147,8 +1165,8 @@ exports.generateContentWithGemini = functions
       return { success: true, text: text };
 
     } catch (error) {
-      console.error('Gemini Backend Error:', error);
-      // Return a generic error to client to avoid leaking internal details, strictly log the real error
-      throw new functions.https.HttpsError('internal', 'AI generation failed. Please try again later.');
+      console.error("Gemini Generation Error:", error);
+      // Temporarily return real error for debugging
+      throw new functions.https.HttpsError('internal', `AI Error: ${error.message || 'Unknown'}`);
     }
   });

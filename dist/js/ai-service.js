@@ -946,19 +946,25 @@ ${metricsContext}
 Rispondi all'utente in modo naturale, mantenendo la cronologia della conversazione se pertinente.
             `;
 
-            // Clean history to just roles and content for the backend
-            const chatHistory = history.map(m => ({
-                role: m.role === 'gymbro' ? 'model' : 'user',
-                parts: [{ text: m.text }]
+            // Only send PREVIOUS messages in the history.
+            // The current message will be sent separately as the 'prompt'.
+            const historyToInclude = history.slice(0, -1);
+
+            const chatHistory = historyToInclude.map(msg => ({
+                role: msg.role === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
             }));
 
             // Sanitize user message
             const sanitizedInput = sanitizeUserInput(userMessage, 500);
 
             // Call Gemini
+            // Wrap system instruction in correct format for better compatibility
+            const systemInstructionObj = { role: 'system', parts: [{ text: systemPrompt }] };
+
             const result = await this.callGeminiBackend(sanitizedInput, {
                 temperature: 0.8
-            }, 'gemini-3-flash-preview', 30000, systemPrompt, chatHistory);
+            }, 'gemini-3-flash-preview', 30000, systemInstructionObj, chatHistory);
 
             return { success: true, text: result.text };
         } catch (error) {
