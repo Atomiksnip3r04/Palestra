@@ -124,7 +124,7 @@ export class FirestoreService {
             console.warn('[FirestoreService] Sync already in progress, skipping duplicate call');
             return { success: false, message: 'Sync already in progress' };
         }
-        
+
         this._syncInProgress = true;
         try {
             const uid = this.getUid();
@@ -164,7 +164,7 @@ export class FirestoreService {
             console.warn('[FirestoreService] Load already in progress, skipping duplicate call');
             return { success: false, message: 'Load already in progress' };
         }
-        
+
         this._loadInProgress = true;
         try {
             const uid = this.getUid();
@@ -360,6 +360,11 @@ export class FirestoreService {
 
             const recentLogs = localLogs.filter(log => new Date(log.date) >= thirtyDaysAgo);
 
+            // Filter last 180 days for a more comprehensive PR history
+            const sixMonthsAgo = new Date();
+            sixMonthsAgo.setMonth(now.getMonth() - 6);
+            const longTermLogs = localLogs.filter(log => new Date(log.date) >= sixMonthsAgo);
+
             // Also get 60-90 days ago for progression/regression tracking
             const ninetyDaysAgo = new Date();
             ninetyDaysAgo.setDate(now.getDate() - 90);
@@ -373,7 +378,7 @@ export class FirestoreService {
 
             // Calculate PRs locally - USA PESI REALI (non stime)
             const prs = {};
-            localLogs.forEach(log => {
+            longTermLogs.forEach(log => {
                 if (!log.exercises) return;
                 log.exercises.forEach(ex => {
                     const name = ex.name.toLowerCase();
@@ -411,10 +416,10 @@ export class FirestoreService {
                 delete prs[name].weightSum;
             });
 
-            // Sort PRs by max weight (PESO REALE) and keep top 10
+            // Sort PRs by max weight (PESO REALE) and keep top 20 for more context
             const topPrs = Object.entries(prs)
                 .sort(([, a], [, b]) => b.maxWeight - a.maxWeight)
-                .slice(0, 10)
+                .slice(0, 20)
                 .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
 
             // Simplify Logs for Token Efficiency (Date + Volume + All Exercises for Style Analysis + RPE + Set Types)
@@ -641,10 +646,10 @@ export class FirestoreService {
                 });
             });
 
-            // Get health data from Google Fit or Terra/Apple Health (last 7 days)
+            // Get health data from Google Fit or Terra/Apple Health (last 14 days for better trends)
             let healthData = null;
             try {
-                const healthRecords = await this.getHealthData(7);
+                const healthRecords = await this.getHealthData(14);
                 if (healthRecords && healthRecords.length > 0) {
                     // Get the most recent record
                     const latestHealth = healthRecords[0];
@@ -695,7 +700,7 @@ export class FirestoreService {
 
             return {
                 profile: localProfile,
-                bodyStats: localBodyStats.slice(0, 5), // Last 5 weigh-ins for trend
+                bodyStats: localBodyStats.slice(0, 10), // Last 10 weigh-ins for better trend
                 recentLogs: simplifiedLogs,
                 recentWorkoutCount: recentLogs.length,
                 historicalWorkoutCount: historicalLogs.length,
