@@ -552,6 +552,137 @@ export class FriendshipService {
 
         }, 'checkFriendshipStatus');
     }
+
+    /**
+     * Find a user by their email address
+     * 
+     * @param {string} email - Email address to search for
+     * @returns {Promise<ServiceResult>}
+     */
+    async findUserByEmail(email) {
+        return this._withRetry(async () => {
+            const uid = this._getUid();
+
+            if (!email || typeof email !== 'string') {
+                return { success: false, error: 'Email non valida', code: 'invalid-argument' };
+            }
+
+            // Normalize email
+            const normalizedEmail = email.toLowerCase().trim();
+
+            // Query users collection for matching email
+            const usersRef = collection(db, 'users');
+            const q = query(
+                usersRef,
+                where('profile.email', '==', normalizedEmail)
+            );
+
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                return { success: false, error: 'Nessun utente trovato con questa email', code: 'not-found' };
+            }
+
+            // Get the first (and should be only) match
+            const userDoc = querySnapshot.docs[0];
+            const userData = userDoc.data();
+
+            // Don't return self
+            if (userDoc.id === uid) {
+                return { success: false, error: 'Non puoi cercare te stesso', code: 'invalid-argument' };
+            }
+
+            // Check friendship status
+            const statusResult = await this.checkFriendshipStatus(userDoc.id);
+
+            return {
+                success: true,
+                data: {
+                    uid: userDoc.id,
+                    displayName: userData.profile?.name || 'Utente',
+                    photoURL: userData.profile?.photoUrl || '',
+                    email: normalizedEmail,
+                    friendshipStatus: statusResult.success ? statusResult.data.status : 'none'
+                }
+            };
+
+        }, 'findUserByEmail');
+    }
+
+    /**
+     * Create instant friendship via QR code scan (bypasses approval)
+     * Both users must have scanned each other's QR OR one scans the other's
+     * For simplicity: scanning creates immediate friendship
+     * 
+     * @param {string} scannedUid - UID from scanned QR code
+     * @returns {Promise<ServiceResult>}
+     */
+    async createInstantFriendship(scannedUid) {
+        return this._withRetry(async () => {
+            const scannerUid = this._getUid();
+
+            if (!scannedUid || typeof scannedUid !== 'string') {
+                return { success: false, error: 'QR Code non valido', code: 'invalid-argument' };
+            }
+
+            if (scannerUid === scannedUid) {
+                return { success: false, error: 'Non puoi scansionare il tuo QR code', code: 'invalid-argument' };
+            }
+
+            const friendshipId = this._getFriendshipId(scannerUid, scannedUid);
+            const sortedParticipants = [scannerUid, scannedUid].sort();
+            const friendshipRef = doc(db, this.collectionName, friendshipId);
+
+            // Use transaction for atomicity
+            const result = await runTransaction(db, async (transaction) => {
+                const docSnap = await transaction.get(friendshipRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+
+                    if (data.status === 'accepted') {
+                        return { alreadyFriends: true };
+                    }
+
+                    if (data.status === 'blocked') {
+                        throw new Error('Non è possibile aggiungere questo utente');
+                    }
+
+                    // If pending, upgrade to accepted (QR scan = instant accept)
+                    if (data.status.startsWith('pending_')) {
+                        transaction.update(friendshipRef, {
+                            status: 'accepted',
+                            respondedAt: serverTimestamp(),
+                            acceptedVia: 'qr_scan'
+                        });
+                        return { upgraded: true };
+                    }
+                }
+
+                // Create new instant friendship
+                transaction.set(friendshipRef, {
+                    participants: sortedParticipants,
+                    status: 'accepted',
+                    createdBy: scannerUid,
+                    createdAt: serverTimestamp(),
+                    respondedAt: serverTimestamp(),
+                    acceptedVia: 'qr_scan',
+                    metadata: {}
+                });
+
+                return { created: true };
+            });
+
+            if (result.alreadyFriends) {
+                console.log(`[FriendshipService] Already friends: ${scannerUid} <-> ${scannedUid}`);
+                return { success: true, data: { status: 'already_friends' } };
+            }
+
+            console.log(`[FriendshipService] Instant friendship created via QR: ${scannerUid} <-> ${scannedUid}`);
+            return { success: true, data: { friendshipId, status: 'accepted', instant: true } };
+
+        }, 'createInstantFriendship');
+    }
 }
 
 // Export singleton instance

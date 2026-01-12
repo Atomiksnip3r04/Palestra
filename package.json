@@ -21,6 +21,7 @@
   "homepage": "https://github.com/Atomiksnip3r04/Palestra#readme",
   "dependencies": {
     "@capacitor/android": "^7.4.4",
+    "@capacitor/barcode-scanner": "^2.2.4",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
     "@capacitor/filesystem": "^7.1.6",
