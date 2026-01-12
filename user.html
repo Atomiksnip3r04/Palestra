@@ -1679,11 +1679,15 @@
         });
     </script>
 
+    <!-- Sync Manager - Sincronizzazione centralizzata -->
+    <script type="module" src="./js/sync-manager.js"></script>
+
     <!-- Module Script for Firebase Logic -->
     <script type="module">
         import { authService } from './js/auth-service.js';
         import { firestoreService } from './js/firestore-service.js';
         import { aiService } from './js/ai-service.js';
+        import { syncManager } from './js/sync-manager.js';
         import { EXERCISE_DB, MUSCLE_GROUPS, isBilateralDumbbell, calculateTotalWeight } from './js/exercise-db.js';
         import { notificationManager } from './js/notification-manager.js';
         import { mediaSessionManager } from './js/media-session-manager.js';

@@ -1345,8 +1345,12 @@
 
         <script src="js/api.js"></script>
         <script src="js/main.js"></script>
+        <!-- Sync Manager - Sincronizzazione centralizzata -->
+        <script type="module" src="./js/sync-manager.js"></script>
         <script type="module">
             import { firestoreService } from "./js/firestore-service.js";
+            import { authService } from "./js/auth-service.js";
+            import { syncManager } from "./js/sync-manager.js";
             import { MUSCLE_GROUPS } from "./js/exercise-db.js";
             import { prTracker } from "./js/pr-tracker.js";
 
@@ -2376,14 +2380,8 @@
 
                 // 5. Save Workout Log
                 const syncLogsToCloud = async () => {
-                    try {
-                        await firestoreService.syncToCloud();
-                    } catch (error) {
-                        console.warn(
-                            "Sync diario fallita:",
-                            error.message || error,
-                        );
-                    }
+                    // Usa il syncManager centralizzato
+                    await syncManager.syncToCloud(true); // force=true per sync immediata
                 };
 
                 finishWorkoutBtn.addEventListener("click", async () => {
@@ -3247,63 +3245,19 @@
                 // Initial Render (immediate with local data)
                 renderLogs();
 
-                // --- LOAD FROM CLOUD ON STARTUP ---
-                // Carica e merge i dati dal cloud per assicurarsi di avere tutti i log
-                // Questo previene la perdita di allenamenti salvati su altri dispositivi
-                // o che non erano ancora stati sincronizzati
-                const loadAndMergeFromCloud = async () => {
-                    try {
-                        console.log("☁️ [Diary] Caricamento dati dal cloud...");
-                        const result = await firestoreService.loadFromCloud();
-                        if (result.success) {
-                            console.log(
-                                "✅ [Diary] Dati cloud caricati e merged",
-                            );
-                            // Re-render dopo il merge per mostrare eventuali log mancanti
-                            renderLogs();
-                        }
-                    } catch (error) {
-                        console.warn(
-                            "⚠️ [Diary] Caricamento cloud fallito:",
-                            error.message,
-                        );
+                // Il SyncManager gestisce automaticamente:
+                // - Caricamento dal cloud quando l'utente è autenticato
+                // - Auto-sync ogni 5 minuti
+                // - Sync quando la pagina torna in focus
+                
+                // Listener per aggiornare la UI quando il sync completa
+                syncManager.onSync((eventType, data) => {
+                    if (eventType === 'load' || eventType === 'focus') {
+                        console.log('🔄 [Diary] Aggiornamento UI dopo sync');
+                        renderLogs();
+                        populateWorkoutSelect();
                     }
-                };
-
-                // Carica dal cloud subito dopo il render iniziale
-                loadAndMergeFromCloud();
-
-                // --- AUTO-SYNC MANAGER ---
-                // Sincronizza automaticamente all'avvio e ogni 5 minuti
-                const AUTO_SYNC_INTERVAL = 5 * 60 * 1000; // 5 minuti
-
-                const performAutoSync = async () => {
-                    try {
-                        console.log("🔄 [Diary] Auto-sync in corso...");
-                        await firestoreService.syncToCloud();
-                        console.log(
-                            "✅ [Diary] Auto-sync completato:",
-                            new Date().toLocaleTimeString(),
-                        );
-                    } catch (error) {
-                        console.warn(
-                            "⚠️ [Diary] Auto-sync fallito:",
-                            error.message,
-                        );
-                    }
-                };
-
-                // Primo sync verso cloud dopo 3 secondi (dopo il load dal cloud)
-                setTimeout(performAutoSync, 3000);
-
-                // Sync ogni 5 minuti
-                if (!window.autoSyncInterval) {
-                    window.autoSyncInterval = setInterval(
-                        performAutoSync,
-                        AUTO_SYNC_INTERVAL,
-                    );
-                    console.log("🔄 [Diary] Auto-sync attivato: ogni 5 minuti");
-                }
+                });
             });
         </script>
 

@@ -724,12 +724,15 @@
 
     <script src="js/api.js"></script>
     <script src="js/main.js"></script>
+    <!-- Sync Manager - Sincronizzazione centralizzata -->
+    <script type="module" src="./js/sync-manager.js"></script>
     <script type="module">
         import { firestoreService } from './js/firestore-service.js';
         import { authService } from './js/auth-service.js';
         import { healthConnectService } from './js/health-connect-service.js';
         import { healthTOONEncoder } from './js/health-toon-encoder.js';
         import { bfAIService } from './js/bf-ai-service.js';
+        import { syncManager } from './js/sync-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- Elements ---

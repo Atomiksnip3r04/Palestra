@@ -1,7 +1,30 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithCredential } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, serverTimestamp, collection, query, where, orderBy, limit, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    arrayUnion,
+    arrayRemove,
+    serverTimestamp,
+    collection,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDocs,
+    deleteDoc,
+    onSnapshot,
+    writeBatch,
+    runTransaction,
+    increment,
+    addDoc,
+    Timestamp,
+    enableIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -18,4 +41,48 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-export { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, signInWithCredential, doc, setDoc, getDoc, updateDoc, arrayUnion, serverTimestamp, collection, query, where, orderBy, limit, getDocs, deleteDoc };
+// Enable offline persistence for resilience
+try {
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code === 'failed-precondition') {
+            console.warn('Persistence failed: Multiple tabs open');
+        } else if (err.code === 'unimplemented') {
+            console.warn('Persistence not available in this browser');
+        }
+    });
+} catch (e) {
+    console.warn('Persistence setup error:', e);
+}
+
+export {
+    auth,
+    db,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    updateProfile,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithCredential,
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    arrayUnion,
+    arrayRemove,
+    serverTimestamp,
+    collection,
+    query,
+    where,
+    orderBy,
+    limit,
+    getDocs,
+    deleteDoc,
+    onSnapshot,
+    writeBatch,
+    runTransaction,
+    increment,
+    addDoc,
+    Timestamp
+};

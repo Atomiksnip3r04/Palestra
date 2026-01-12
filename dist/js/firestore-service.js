@@ -153,6 +153,8 @@ export class FirestoreService {
     this._syncInProgress = true;
     try {
       const uid = this.getUid();
+      console.log("📤 [FirestoreService] Sync to cloud per UID:", uid);
+      
       const localWorkouts = JSON.parse(
         localStorage.getItem("ironflow_workouts") || "[]",
       );
@@ -174,6 +176,14 @@ export class FirestoreService {
         localStorage.getItem("ironflow_ai_plan_history") || "[]",
       );
 
+      console.log("📤 [FirestoreService] Dati da sincronizzare:", {
+        workouts: localWorkouts.length,
+        logs: localLogs.length,
+        bodyStats: localBodyStats.length,
+        photos: localPhotos.length,
+        aiPlanHistory: localAiPlanHistory.length
+      });
+
       const data = {
         workouts: localWorkouts,
         logs: localLogs,
@@ -185,10 +195,10 @@ export class FirestoreService {
       };
 
       await setDoc(doc(db, this.collectionName, uid), data, { merge: true });
-      console.log("Data synced to Firestore successfully");
+      console.log("✅ [FirestoreService] Data synced to Firestore successfully - logs:", localLogs.length);
       return { success: true };
     } catch (error) {
-      console.error("Error syncing to Firestore:", error);
+      console.error("❌ [FirestoreService] Error syncing to Firestore:", error);
       return { success: false, message: error.message };
     } finally {
       this._syncInProgress = false; // Always release mutex

@@ -1562,9 +1562,13 @@
             });
         </script>
 
+        <!-- Sync Manager - Sincronizzazione centralizzata -->
+        <script type="module" src="./js/sync-manager.js"></script>
+
         <script type="module">
             import { firestoreService } from './js/firestore-service.js';
             import { aiService } from './js/ai-service.js';
+            import { syncManager } from './js/sync-manager.js';
 
             // ============================================
             // AI WORKOUT GENERATOR LOGIC

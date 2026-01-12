@@ -1170,3 +1170,295 @@ exports.generateContentWithGemini = functions
       throw new functions.https.HttpsError('internal', `AI Error: ${error.message || 'Unknown'}`);
     }
   });
+
+// ============================================
+// GYMBRO PROXIMITY DETECTION (Social Layer)
+// ============================================
+
+/**
+ * Rate limits for proximity functions
+ */
+RATE_LIMITS.proximityDiscovery = { maxCalls: 30, windowMs: 60000 }; // 30/min (device scans)
+RATE_LIMITS.findNearbyUsers = { maxCalls: 10, windowMs: 60000 };   // 10/min (web geohash)
+
+/**
+ * Helper: Get adjacent geohash cells for edge coverage
+ */
+function getAdjacentGeohashes(geohash) {
+  const GEOHASH_BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
+
+  // Decode geohash to bounding box
+  const decode = (hash) => {
+    let latMin = -90, latMax = 90;
+    let lngMin = -180, lngMax = 180;
+    let isLon = true;
+
+    for (const c of hash.toLowerCase()) {
+      const idx = GEOHASH_BASE32.indexOf(c);
+      if (idx === -1) continue;
+
+      for (let bit = 4; bit >= 0; bit--) {
+        const mask = 1 << bit;
+
+        if (isLon) {
+          const mid = (lngMin + lngMax) / 2;
+          if (idx & mask) lngMin = mid;
+          else lngMax = mid;
+        } else {
+          const mid = (latMin + latMax) / 2;
+          if (idx & mask) latMin = mid;
+          else latMax = mid;
+        }
+        isLon = !isLon;
+      }
+    }
+    return { minLat: latMin, maxLat: latMax, minLng: lngMin, maxLng: lngMax };
+  };
+
+  // Encode lat/lng to geohash
+  const encode = (lat, lng, precision) => {
+    let latMin = -90, latMax = 90;
+    let lngMin = -180, lngMax = 180;
+    let hash = '', isLon = true, bit = 0, ch = 0;
+
+    while (hash.length < precision) {
+      if (isLon) {
+        const mid = (lngMin + lngMax) / 2;
+        if (lng >= mid) { ch |= (1 << (4 - bit)); lngMin = mid; }
+        else lngMax = mid;
+      } else {
+        const mid = (latMin + latMax) / 2;
+        if (lat >= mid) { ch |= (1 << (4 - bit)); latMin = mid; }
+        else latMax = mid;
+      }
+      isLon = !isLon;
+      bit++;
+      if (bit === 5) { hash += GEOHASH_BASE32[ch]; bit = 0; ch = 0; }
+    }
+    return hash;
+  };
+
+  const bounds = decode(geohash);
+  const lat = (bounds.minLat + bounds.maxLat) / 2;
+  const lng = (bounds.minLng + bounds.maxLng) / 2;
+  const latDelta = bounds.maxLat - bounds.minLat;
+  const lngDelta = bounds.maxLng - bounds.minLng;
+
+  const neighbors = [];
+  const directions = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+
+  for (const [dLat, dLng] of directions) {
+    let newLat = Math.max(-89.9, Math.min(89.9, lat + dLat * latDelta));
+    let newLng = lng + dLng * lngDelta;
+    if (newLng > 180) newLng -= 360;
+    if (newLng < -180) newLng += 360;
+    neighbors.push(encode(newLat, newLng, geohash.length));
+  }
+
+  return neighbors;
+}
+
+/**
+ * Helper: Check debounce and send notification
+ */
+async function checkAndNotifyProximity(myUid, otherUid) {
+  // Generate deterministic pair hash
+  const pairHash = crypto.createHash('sha256')
+    .update([myUid, otherUid].sort().join('_'))
+    .digest('hex');
+
+  const logRef = admin.firestore().collection('proximity_logs').doc(pairHash);
+  const logDoc = await logRef.get();
+
+  const DEBOUNCE_MS = 3600000; // 1 hour
+
+  if (logDoc.exists) {
+    const lastNotified = logDoc.data().last_notified?.toDate?.() || logDoc.data().last_notified;
+    if (lastNotified && (Date.now() - new Date(lastNotified).getTime()) < DEBOUNCE_MS) {
+      return { notified: false, reason: 'debounced' };
+    }
+  }
+
+  // Get both users' display names for notifications
+  const [myUserDoc, otherUserDoc] = await Promise.all([
+    admin.firestore().collection('users').doc(myUid).get(),
+    admin.firestore().collection('users').doc(otherUid).get()
+  ]);
+
+  const myName = myUserDoc.data()?.displayName || 'Un utente';
+  const otherName = otherUserDoc.data()?.displayName || 'Un utente';
+
+  // Get FCM tokens (if available)
+  const myToken = myUserDoc.data()?.fcmToken;
+  const otherToken = otherUserDoc.data()?.fcmToken;
+
+  const notifications = [];
+
+  // Notify first user
+  if (otherToken) {
+    notifications.push(
+      admin.messaging().send({
+        token: otherToken,
+        notification: {
+          title: '🏋️ GymBro Nearby!',
+          body: `${myName} sta allenandosi vicino a te!`
+        },
+        data: {
+          type: 'proximity',
+          senderUid: myUid,
+          senderName: myName
+        }
+      }).catch(e => console.warn('FCM send error:', e.message))
+    );
+  }
+
+  // Notify second user
+  if (myToken) {
+    notifications.push(
+      admin.messaging().send({
+        token: myToken,
+        notification: {
+          title: '🏋️ GymBro Nearby!',
+          body: `${otherName} sta allenandosi vicino a te!`
+        },
+        data: {
+          type: 'proximity',
+          senderUid: otherUid,
+          senderName: otherName
+        }
+      }).catch(e => console.warn('FCM send error:', e.message))
+    );
+  }
+
+  await Promise.all(notifications);
+
+  // Update debounce log
+  await logRef.set({
+    user_a: [myUid, otherUid].sort()[0],
+    user_b: [myUid, otherUid].sort()[1],
+    last_notified: admin.firestore.FieldValue.serverTimestamp(),
+    notification_count: admin.firestore.FieldValue.increment(1)
+  }, { merge: true });
+
+  console.log(`Proximity notification sent: ${myUid} <-> ${otherUid}`);
+  return { notified: true };
+}
+
+/**
+ * Called by native app when Bluetooth discovers a proximity_id
+ * Reports the discovery to match users and send notifications
+ */
+exports.reportProximityDiscovery = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  // Rate limiting
+  if (!checkRateLimit(context.auth.uid, 'proximityDiscovery')) {
+    throw new functions.https.HttpsError('resource-exhausted', 'Too many requests');
+  }
+
+  try {
+    const { discoveredProximityId } = data;
+    const myUid = context.auth.uid;
+
+    // Validate input
+    if (!discoveredProximityId || typeof discoveredProximityId !== 'string') {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid proximity ID');
+    }
+
+    // UUID format validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(discoveredProximityId)) {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid proximity ID format');
+    }
+
+    // Find user by proximity_id
+    const usersSnap = await admin.firestore()
+      .collection('users')
+      .where('proximity_id', '==', discoveredProximityId)
+      .where('proximity_status', '==', 'training')
+      .limit(1)
+      .get();
+
+    if (usersSnap.empty) {
+      return { found: false };
+    }
+
+    const otherUid = usersSnap.docs[0].id;
+
+    // Don't match with self
+    if (otherUid === myUid) {
+      return { found: false };
+    }
+
+    // Check debounce and notify
+    const result = await checkAndNotifyProximity(myUid, otherUid);
+
+    return { found: true, ...result };
+
+  } catch (error) {
+    console.error('reportProximityDiscovery error:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+/**
+ * Called by web app with geohash for geofencing-based discovery
+ * Queries users in the same or adjacent geohash cells
+ */
+exports.findNearbyUsers = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  // Rate limiting
+  if (!checkRateLimit(context.auth.uid, 'findNearbyUsers')) {
+    throw new functions.https.HttpsError('resource-exhausted', 'Too many requests');
+  }
+
+  try {
+    const { geohash } = data;
+    const myUid = context.auth.uid;
+
+    // Validate geohash
+    if (!geohash || typeof geohash !== 'string' || geohash.length < 4 || geohash.length > 12) {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid geohash');
+    }
+
+    // Geohash character validation
+    const geohashRegex = /^[0-9bcdefghjkmnpqrstuvwxyz]+$/i;
+    if (!geohashRegex.test(geohash)) {
+      throw new functions.https.HttpsError('invalid-argument', 'Invalid geohash characters');
+    }
+
+    // Get adjacent cells for edge coverage
+    const searchHashes = [geohash, ...getAdjacentGeohashes(geohash)];
+
+    // Query users in same area (Firestore 'in' supports up to 10 values)
+    const usersSnap = await admin.firestore()
+      .collection('users')
+      .where('last_geohash', 'in', searchHashes.slice(0, 10))
+      .where('proximity_status', '==', 'training')
+      .get();
+
+    let checkedCount = 0;
+    let notifiedCount = 0;
+
+    for (const userDoc of usersSnap.docs) {
+      if (userDoc.id === myUid) continue;
+
+      checkedCount++;
+      const result = await checkAndNotifyProximity(myUid, userDoc.id);
+      if (result.notified) notifiedCount++;
+    }
+
+    console.log(`findNearbyUsers: checked ${checkedCount}, notified ${notifiedCount}`);
+    return { checked: checkedCount, notified: notifiedCount };
+
+  } catch (error) {
+    console.error('findNearbyUsers error:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+

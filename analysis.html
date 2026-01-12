@@ -1566,6 +1566,9 @@
         </div>
     </div>
 
+    <!-- Sync Manager - Sincronizzazione centralizzata -->
+    <script type="module" src="./js/sync-manager.js"></script>
+
     <!-- AI Logic -->
     <script type="module">
         import { firestoreService } from "./js/firestore-service.js";
@@ -1575,6 +1578,7 @@
         import ChartRenderer from "./js/chart-renderer.js";
         import { trendEngine } from "./js/trend-engine.js";
         import { exportService } from "./js/export-service.js";
+        import { syncManager } from "./js/sync-manager.js";
 
         // Mark services as available globally for mixed context if needed, though module scope is safer
 

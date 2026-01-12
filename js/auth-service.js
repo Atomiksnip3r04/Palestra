@@ -64,7 +64,32 @@ export class AuthService {
     }
 
     getCurrentUser() {
-        return auth.currentUser;
+        // Usa this.user che viene aggiornato da onAuthStateChanged
+        // invece di auth.currentUser che potrebbe non essere ancora pronto
+        return this.user || auth.currentUser;
+    }
+
+    /**
+     * Attende che l'autenticazione sia pronta
+     * @returns {Promise<User|null>}
+     */
+    waitForAuth() {
+        return new Promise((resolve) => {
+            // Se l'utente è già definito (anche se null), risolvi subito
+            if (this.user !== undefined) {
+                resolve(this.user);
+                return;
+            }
+            // Altrimenti aspetta il primo callback
+            const unsubscribe = this.subscribe((user) => {
+                // Rimuovi questo callback dopo la prima chiamata
+                const index = this.onUserChangeCallbacks.indexOf(unsubscribe);
+                if (index > -1) {
+                    this.onUserChangeCallbacks.splice(index, 1);
+                }
+                resolve(user);
+            });
+        });
     }
 }
 

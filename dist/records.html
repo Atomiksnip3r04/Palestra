@@ -1173,8 +1173,11 @@
     </section>
 
     <script src="js/main.js"></script>
+    <!-- Sync Manager - Sincronizzazione centralizzata -->
+    <script type="module" src="./js/sync-manager.js"></script>
     <script type="module">
         import { prTracker } from './js/pr-tracker.js';
+        import { syncManager } from './js/sync-manager.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             // State
