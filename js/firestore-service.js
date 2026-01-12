@@ -32,6 +32,44 @@ export class FirestoreService {
     return user.uid;
   }
 
+  /**
+   * Clear local data when a different user logs in
+   * This prevents data leakage between accounts on the same device
+   */
+  _clearLocalDataForNewUser() {
+    console.log("🧹 [FirestoreService] Clearing local data for new user...");
+    
+    const keysToRemove = [
+      'ironflow_workouts',
+      'ironflow_logs',
+      'ironflow_profile',
+      'ironflow_body_stats',
+      'ironflow_photos',
+      'ironflow_ai_plan_history',
+      'ironflow_last_sync',
+      'ironflow_pending_changes',
+      'ironflow_cached_exercises',
+      'ironflow_pr_records',
+      'ironflow_doms_data',
+      'ironflow_health_data',
+      'ironflow_terra_connection',
+      'ironflow_google_fit_token'
+    ];
+    
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+    });
+    
+    // Also clear any other ironflow_ keys
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('ironflow_') && key !== 'ironflow_current_uid') {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    console.log("✅ [FirestoreService] Local data cleared for new user");
+  }
+
   // --- GLOBAL CONFIG MANAGEMENT ---
 
   async getGlobalConfig() {
@@ -84,6 +122,8 @@ export class FirestoreService {
       if (!defaultKey) defaultKey = "";
 
       const initialData = {
+        // Root-level email for efficient querying (friend search)
+        email: user.email ? user.email.toLowerCase() : "",
         profile: {
           name: user.displayName || "",
           email: user.email || "",
@@ -184,7 +224,11 @@ export class FirestoreService {
         aiPlanHistory: localAiPlanHistory.length
       });
 
+      // Get current user email for root-level field (for friend search)
+      const currentUserEmail = auth.currentUser?.email?.toLowerCase() || "";
+
       const data = {
+        email: currentUserEmail, // Root-level email for efficient querying
         workouts: localWorkouts,
         logs: localLogs,
         profile: localProfile,
@@ -219,6 +263,15 @@ export class FirestoreService {
       const uid = this.getUid();
       console.log("📥 [FirestoreService] Caricamento da cloud per UID:", uid);
       
+      // Check if localStorage belongs to a different user
+      const storedUid = localStorage.getItem("ironflow_current_uid");
+      if (storedUid && storedUid !== uid) {
+        console.log("🔄 [FirestoreService] Different user detected, clearing old local data");
+        this._clearLocalDataForNewUser();
+      }
+      // Save current user's UID
+      localStorage.setItem("ironflow_current_uid", uid);
+      
       const docRef = doc(db, this.collectionName, uid);
       const docSnap = await getDoc(docRef);
 
@@ -239,6 +292,7 @@ export class FirestoreService {
 
         // MERGE LOGS: combine local and cloud, remove duplicates based on ID, sort by date (newest first)
         // This prevents losing locally saved workouts that haven't synced yet
+        // NOTE: Only merge if localStorage belongs to the same user (checked above)
         const cloudLogs = data.logs || [];
         const localLogs = JSON.parse(
           localStorage.getItem("ironflow_logs") || "[]",

@@ -51,11 +51,59 @@ export class AuthService {
 
     async logout() {
         try {
+            // Clear all local user data before signing out
+            this._clearLocalUserData();
+            
             await signOut(auth);
             return { success: true };
         } catch (error) {
             return { success: false, message: error.message };
         }
+    }
+
+    /**
+     * Clear all local user data from localStorage
+     * Called on logout to prevent data leakage between accounts
+     */
+    _clearLocalUserData() {
+        console.log('🧹 [AuthService] Clearing local user data...');
+        
+        // List of all ironflow_ prefixed keys used by the app
+        const keysToRemove = [
+            'ironflow_workouts',
+            'ironflow_logs',
+            'ironflow_profile',
+            'ironflow_body_stats',
+            'ironflow_photos',
+            'ironflow_ai_plan_history',
+            'ironflow_last_sync',
+            'ironflow_pending_changes',
+            'ironflow_cached_exercises',
+            'ironflow_pr_records',
+            'ironflow_doms_data',
+            'ironflow_health_data',
+            'ironflow_terra_connection',
+            'ironflow_google_fit_token',
+            'ironflow_current_uid'  // Also clear the current user ID
+        ];
+        
+        keysToRemove.forEach(key => {
+            if (localStorage.getItem(key) !== null) {
+                localStorage.removeItem(key);
+                console.log(`🧹 [AuthService] Removed: ${key}`);
+            }
+        });
+        
+        // Also clear any keys that start with ironflow_ (catch-all)
+        const allKeys = Object.keys(localStorage);
+        allKeys.forEach(key => {
+            if (key.startsWith('ironflow_') && !keysToRemove.includes(key)) {
+                localStorage.removeItem(key);
+                console.log(`🧹 [AuthService] Removed (catch-all): ${key}`);
+            }
+        });
+        
+        console.log('✅ [AuthService] Local user data cleared');
     }
 
     subscribe(callback) {

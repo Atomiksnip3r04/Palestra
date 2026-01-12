@@ -571,13 +571,24 @@ export class FriendshipService {
             const normalizedEmail = email.toLowerCase().trim();
 
             // Query users collection for matching email
+            // Try root-level 'email' field first (new format)
             const usersRef = collection(db, 'users');
-            const q = query(
+            let q = query(
                 usersRef,
-                where('profile.email', '==', normalizedEmail)
+                where('email', '==', normalizedEmail)
             );
 
-            const querySnapshot = await getDocs(q);
+            let querySnapshot = await getDocs(q);
+
+            // Fallback: try profile.email for legacy users
+            if (querySnapshot.empty) {
+                console.log('[FriendshipService] Root email not found, trying profile.email fallback');
+                q = query(
+                    usersRef,
+                    where('profile.email', '==', normalizedEmail)
+                );
+                querySnapshot = await getDocs(q);
+            }
 
             if (querySnapshot.empty) {
                 return { success: false, error: 'Nessun utente trovato con questa email', code: 'not-found' };
