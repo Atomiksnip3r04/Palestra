@@ -22,6 +22,11 @@
             --pr-gold-soft: rgba(255, 215, 0, 0.15);
             --pr-green: #00ff88;
             --pr-red: rgba(255, 107, 107, 0.8);
+            --pr-cyan: #00f3ff;
+            --pr-black: #000000;
+            --pr-card-bg: #FFFFFF;
+            --pr-text-dark: #121212;
+            --pr-text-muted: #666666;
         }
 
         /* Page Header */
@@ -47,8 +52,15 @@
         }
 
         @keyframes trophyFloat {
-            0%, 100% { transform: translateY(0) rotate(-5deg); }
-            50% { transform: translateY(-5px) rotate(5deg); }
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-5deg);
+            }
+
+            50% {
+                transform: translateY(-5px) rotate(5deg);
+            }
         }
 
         .pr-page-subtitle {
@@ -113,8 +125,15 @@
         }
 
         @keyframes celebratePulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
-            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+            }
         }
 
         .pr-session-header {
@@ -130,8 +149,13 @@
         }
 
         @keyframes bounce {
-            from { transform: scale(1); }
-            to { transform: scale(1.1); }
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.1);
+            }
         }
 
         .pr-session-title {
@@ -348,34 +372,28 @@
             white-space: nowrap;
         }
 
-        /* Modern PR Card */
+        /* Modern PR Card - Analytical Premium */
         .pr-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
+            background: var(--pr-card-bg);
             border-radius: 20px;
             overflow: hidden;
             transition: all 0.3s ease;
-        }
-
-        .pr-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255, 215, 0, 0.3);
-            box-shadow: var(--glass-shadow);
+            margin-bottom: 1.5rem;
+            /* Increased margin for airiness */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
 
         .pr-card.session-highlight {
-            border-color: rgba(255, 215, 0, 0.5);
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), var(--glass-bg));
+            border: 2px solid var(--pr-gold);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
         }
 
         .pr-card-header {
-            padding: 1rem 1rem 0.75rem;
+            padding: 1.25rem 1.25rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 0.5rem;
+            gap: 1rem;
         }
 
         .pr-exercise-info {
@@ -384,33 +402,18 @@
         }
 
         .pr-exercise-name {
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--color-text);
-            margin-bottom: 0.25rem;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--pr-text-dark);
+            margin-bottom: 0.5rem;
             word-break: break-word;
+            line-height: 1.2;
         }
 
         .pr-type-badge {
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
-            padding: 0.25rem 0.6rem;
-            border-radius: 8px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .pr-type-badge.weight {
-            background: rgba(147, 112, 219, 0.2);
-            color: #b794f6;
-        }
-
-        .pr-type-badge.rm,
-        .pr-type-badge.1rm {
-            background: rgba(0, 243, 255, 0.15);
             color: var(--color-primary);
         }
 
@@ -430,155 +433,151 @@
             white-space: nowrap;
         }
 
-        /* Comparison Section - Modern */
+        /* Comparison Section - Binary Split */
         .pr-comparison {
             display: flex;
             align-items: stretch;
-            padding: 0 0.75rem 0.75rem;
-            gap: 0.5rem;
+            margin: 0 1.25rem 1.25rem;
+            position: relative;
+            height: 120px;
+            border-radius: 16px;
+            overflow: visible;
         }
 
         .pr-value-box {
             flex: 1;
-            padding: 0.75rem;
-            border-radius: 14px;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 1.25rem;
+            text-align: left;
         }
 
         .pr-value-box.old {
-            background: rgba(255, 107, 107, 0.08);
-            border: 1px solid rgba(255, 107, 107, 0.15);
+            background: var(--pr-black);
+            color: #fff;
+            border-radius: 12px 0 0 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .pr-value-box.new {
-            background: rgba(0, 255, 136, 0.08);
-            border: 1px solid rgba(0, 255, 136, 0.2);
+            background: var(--pr-cyan);
+            color: var(--pr-black);
+            border-radius: 0 12px 12px 0;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
 
         .pr-value-label {
             font-size: 0.6rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.35rem;
-            opacity: 0.7;
-        }
-
-        .pr-value-box.old .pr-value-label {
-            color: var(--pr-red);
-        }
-
-        .pr-value-box.new .pr-value-label {
-            color: var(--pr-green);
+            letter-spacing: 0.8px;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            opacity: 0.8;
         }
 
         .pr-value-number {
             font-family: var(--font-display);
-            font-size: 1.4rem;
-            font-weight: 800;
+            font-size: 2rem;
+            font-weight: 900;
             line-height: 1;
         }
 
-        .pr-value-box.old .pr-value-number {
-            color: rgba(255, 255, 255, 0.35);
-            text-decoration: line-through;
-            text-decoration-color: rgba(255, 107, 107, 0.5);
-        }
-
-        .pr-value-box.new .pr-value-number {
-            color: var(--pr-green);
-        }
-
         .pr-value-unit {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
-            margin-top: 0.2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.2rem;
         }
 
         .pr-value-context {
             font-size: 0.65rem;
-            color: var(--color-text-muted);
-            margin-top: 0.25rem;
-            opacity: 0.8;
+            margin-top: 0.35rem;
+            opacity: 0.7;
         }
 
-        /* Delta Arrow */
-        .pr-delta-arrow {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0 0.5rem;
-            min-width: 60px;
-        }
-
-        .pr-delta-icon {
-            font-size: 1.25rem;
+        /* Delta Floating Badge */
+        .pr-delta-badge {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
             color: var(--pr-green);
-            animation: arrowPulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes arrowPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
+            padding: 0.5rem 0.75rem;
+            border-radius: 10px;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+            text-align: center;
+            min-width: 60px;
         }
 
         .pr-delta-value {
             font-family: var(--font-display);
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--pr-green);
-            margin-top: 0.15rem;
+            font-size: 0.8rem;
+            font-weight: 800;
+            line-height: 1;
+            display: block;
         }
 
         .pr-delta-percent {
             font-size: 0.6rem;
-            color: rgba(0, 255, 136, 0.7);
+            font-weight: 700;
+            opacity: 0.9;
         }
 
         .pr-delta-new-badge {
-            background: linear-gradient(135deg, var(--pr-gold), #FFA500);
+            background: var(--pr-gold);
             color: #000;
-            font-size: 0.55rem;
-            font-weight: 700;
-            padding: 0.2rem 0.4rem;
-            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 0.4rem 0.6rem;
+            border-radius: 8px;
             text-transform: uppercase;
         }
 
-        /* Card Footer - Timestamps */
+        /* Card Footer - Simplified */
         .pr-card-footer {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.6rem 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid var(--glass-border);
-            font-size: 0.65rem;
-            color: var(--color-text-muted);
+            display: none;
+            /* Removed as requested for "cleaner" look, or keeping it very minimal */
         }
 
-        .pr-timestamp {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
+        .pr-page-header {
+            padding: 3rem 0;
+            /* More air */
         }
 
-        .pr-timestamp.highlight {
-            color: var(--pr-green);
+        .pr-tabs-wrapper {
+            margin-bottom: 2rem;
+            border-radius: 14px;
         }
 
-        /* Current PR Card (All PRs Tab) */
-        .pr-current-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: all 0.3s ease;
+        .pr-filters-section {
+            margin-bottom: 2rem;
+            padding: 1rem 0;
         }
 
-        .pr-current-card:hover {
-            border-color: rgba(0, 243, 255, 0.3);
-            box-shadow: var(--glass-shadow);
+        .pr-floating-mascott {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 100;
+            filter: drop-shadow(0 4px 15px rgba(0, 243, 255, 0.3));
+            animation: mascottFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes mascottFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
         }
 
         .pr-current-header {
@@ -679,7 +678,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Info Tooltip */
@@ -845,77 +846,79 @@
                 <div class="pr-session-header">
                     <span class="pr-session-icon">🎉</span>
                     <div>
-                        <div</div> class="pr-session-title">Progressi Straordinari!</div>
-                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record in questa sessione</div>
+                        <div< /div> class="pr-session-title">Progressi Straordinari!
+                    </div>
+                    <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record in questa sessione
                     </div>
                 </div>
-                <div id="sessionPRList"></div>
+            </div>
+            <div id="sessionPRList"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="pr-tabs-wrapper">
+            <div class="pr-tabs">
+                <button class="pr-tab active" data-tab="history">
+                    <span>📜</span> Cronologia
+                </button>
+                <button class="pr-tab" data-tab="all">
+                    <span>🏅</span> Tutti i PR
+                </button>
+            </div>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="pr-filters-section" id="filtersSection">
+            <!-- Search -->
+            <div class="pr-search-box">
+                <span class="pr-search-icon">🔍</span>
+                <input type="text" class="pr-search-input" id="prSearchInput" placeholder="Cerca esercizio...">
             </div>
 
-            <!-- Tabs -->
-            <div class="pr-tabs-wrapper">
-                <div class="pr-tabs">
-                    <button class="pr-tab active" data-tab="history">
-                        <span>📜</span> Cronologia
-                    </button>
-                    <button class="pr-tab" data-tab="all">
-                        <span>🏅</span> Tutti i PR
-                    </button>
-                </div>
+            <!-- Category Filters -->
+            <span class="pr-filter-label">Tipo di Record</span>
+            <div class="pr-filters-row" id="categoryFilters">
+                <button class="pr-filter-chip active" data-filter="all">
+                    <span class="chip-icon">✨</span> Tutti
+                </button>
+                <button class="pr-filter-chip" data-filter="weight">
+                    <span class="chip-icon">💪</span> Peso Max
+                </button>
+                <button class="pr-filter-chip" data-filter="1rm">
+                    <span class="chip-icon">🎯</span> 1RM Stimato
+                </button>
+                <button class="pr-filter-chip" data-filter="reps">
+                    <span class="chip-icon">🔥</span> Ripetizioni
+                </button>
+                <button class="pr-filter-chip" data-filter="volume">
+                    <span class="chip-icon">📊</span> Volume
+                    <span class="pr-info-tip" title="Volume totale sollevato per esercizio in un allenamento">?</span>
+                </button>
             </div>
 
-            <!-- Filters Section -->
-            <div class="pr-filters-section" id="filtersSection">
-                <!-- Search -->
-                <div class="pr-search-box">
-                    <span class="pr-search-icon">🔍</span>
-                    <input type="text" class="pr-search-input" id="prSearchInput" placeholder="Cerca esercizio...">
-                </div>
-
-                <!-- Category Filters -->
-                <span class="pr-filter-label">Tipo di Record</span>
-                <div class="pr-filters-row" id="categoryFilters">
-                    <button class="pr-filter-chip active" data-filter="all">
-                        <span class="chip-icon">✨</span> Tutti
-                    </button>
-                    <button class="pr-filter-chip" data-filter="weight">
-                        <span class="chip-icon">💪</span> Peso Max
-                    </button>
-                    <button class="pr-filter-chip" data-filter="1rm">
-                        <span class="chip-icon">🎯</span> 1RM Stimato
-                    </button>
-                    <button class="pr-filter-chip" data-filter="reps">
-                        <span class="chip-icon">🔥</span> Ripetizioni
-                    </button>
-                    <button class="pr-filter-chip" data-filter="volume">
-                        <span class="chip-icon">📊</span> Volume
-                        <span class="pr-info-tip" title="Volume totale sollevato per esercizio in un allenamento">?</span>
-                    </button>
-                </div>
-
-                <!-- Date Range Filters -->
-                <span class="pr-filter-label">Periodo</span>
-                <div class="pr-date-filter" id="dateFilters">
-                    <button class="pr-date-chip active" data-date="all">Tutto</button>
-                    <button class="pr-date-chip" data-date="7">7 giorni</button>
-                    <button class="pr-date-chip" data-date="30">30 giorni</button>
-                    <button class="pr-date-chip" data-date="90">3 mesi</button>
-                    <button class="pr-date-chip" data-date="365">1 anno</button>
-                </div>
+            <!-- Date Range Filters -->
+            <span class="pr-filter-label">Periodo</span>
+            <div class="pr-date-filter" id="dateFilters">
+                <button class="pr-date-chip active" data-date="all">Tutto</button>
+                <button class="pr-date-chip" data-date="7">7 giorni</button>
+                <button class="pr-date-chip" data-date="30">30 giorni</button>
+                <button class="pr-date-chip" data-date="90">3 mesi</button>
+                <button class="pr-date-chip" data-date="365">1 anno</button>
             </div>
+        </div>
 
-            <!-- Results Info -->
-            <div class="pr-results-info" id="resultsInfo">
-                <div class="pr-results-count">
-                    <span id="resultsCount">0 record trovati</span>
-                </div>
-                <button class="pr-clear-filters" id="clearFilters" style="display: none;">Resetta filtri</button>
+        <!-- Results Info -->
+        <div class="pr-results-info" id="resultsInfo">
+            <div class="pr-results-count">
+                <span id="resultsCount">0 record trovati</span>
             </div>
+            <button class="pr-clear-filters" id="clearFilters" style="display: none;">Resetta filtri</button>
+        </div>
 
-            <!-- PR List -->
-            <div class="pr-list-container" id="prListContainer">
-                <!-- Populated by JS -->
-            </div>
+        <!-- PR List -->
+        <div class="pr-list-container" id="prListContainer">
+            <!-- Populated by JS -->
+        </div>
 
         </div>
     </section>
@@ -1050,19 +1053,19 @@
                                 <div class="pr-date-group-line"></div>
                             </div>
                             ${prs.map(pr => {
-                                let records = pr.records;
-                                if (currentFilter !== 'all') {
-                                    records = records.filter(r => r.type === currentFilter || r.type === '1rm');
-                                }
-                                // FIX: Skip records with no valid oldValue AND newValue (ghost records)
-                                records = records.filter(r => {
-                                    const hasNewValue = r.newValue !== undefined && r.newValue !== null && r.newValue > 0;
-                                    return hasNewValue;
-                                });
-                                return records.map(record =>
-                                    renderCompactPRCard(pr.exercise, record, pr.timestamp || pr.date, false)
-                                ).join('');
-                            }).join('')}
+                        let records = pr.records;
+                        if (currentFilter !== 'all') {
+                            records = records.filter(r => r.type === currentFilter || r.type === '1rm');
+                        }
+                        // FIX: Skip records with no valid oldValue AND newValue (ghost records)
+                        records = records.filter(r => {
+                            const hasNewValue = r.newValue !== undefined && r.newValue !== null && r.newValue > 0;
+                            return hasNewValue;
+                        });
+                        return records.map(record =>
+                            renderCompactPRCard(pr.exercise, record, pr.timestamp || pr.date, false)
+                        ).join('');
+                    }).join('')}
                         </div>
                     `;
                 }
@@ -1144,54 +1147,43 @@
                 const delta = newValue - oldValue;
                 const deltaPercent = oldValue > 0 ? ((delta / oldValue) * 100).toFixed(1) : 0;
                 const isNew = oldValue === 0;
-                const oldDate = getOldRecordDate(exercise, record.type);
 
                 return `
                     <div class="pr-card ${isSession ? 'session-highlight' : ''}">
                         <div class="pr-card-header">
                             <div class="pr-exercise-info">
                                 <div class="pr-exercise-name">${exercise}</div>
-                                <span class="pr-type-badge ${record.type}">${record.label}</span>
+                                <span class="pr-type-badge">${record.label}</span>
                             </div>
                             <span class="pr-card-date">${formattedDate}</span>
                         </div>
 
                         <div class="pr-comparison">
                             <div class="pr-value-box old">
-                                <div>
-                                    <div class="pr-value-label">Precedente</div>
-                                    <div class="pr-value-number">${oldValue > 0 ? oldValue : '—'}</div>
-                                    <div class="pr-value-unit">${oldValue > 0 ? record.unit : ''}</div>
+                                <div class="pr-value-label">Precedente</div>
+                                <div class="pr-value-row">
+                                    <span class="pr-value-number">${oldValue > 0 ? oldValue : '—'}</span>
+                                    <span class="pr-value-unit">${oldValue > 0 ? record.unit : ''}</span>
                                 </div>
                                 ${record.context && oldValue > 0 ? `<div class="pr-value-context">${record.context}</div>` : ''}
                             </div>
 
-                            <div class="pr-delta-arrow">
-                                <span class="pr-delta-icon">→</span>
+                            <div class="pr-delta-badge">
                                 ${isNew ?
-                                    `<span class="pr-delta-new-badge">NUOVO!</span>` :
-                                    `<div class="pr-delta-value">+${delta.toFixed(1)}</div>
-                                     <div class="pr-delta-percent">+${deltaPercent}%</div>`
-                                }
+                        `<span class="pr-delta-new-badge">NUOVO!</span>` :
+                        `<span class="pr-delta-value">+${delta.toFixed(1)}</span>
+                                     <span class="pr-delta-percent">+${deltaPercent}%</span>`
+                    }
                             </div>
 
                             <div class="pr-value-box new">
-                                <div>
-                                    <div class="pr-value-label">Nuovo PR</div>
-                                    <div class="pr-value-number">${newValue}</div>
-                                    <div class="pr-value-unit">${record.unit}</div>
+                                <div class="pr-value-label">Nuovo PR</div>
+                                <div class="pr-value-row">
+                                    <span class="pr-value-number">${newValue}</span>
+                                    <span class="pr-value-unit">${record.unit}</span>
                                 </div>
                                 ${record.context ? `<div class="pr-value-context">${record.context}</div>` : ''}
                             </div>
-                        </div>
-
-                        <div class="pr-card-footer">
-                            <span class="pr-timestamp">
-                                <span>📅</span> ${oldDate || 'Prima volta'}
-                            </span>
-                            <span class="pr-timestamp highlight">
-                                <span>🆕</span> ${formattedDate}
-                            </span>
                         </div>
                     </div>
                 `;
@@ -1349,6 +1341,7 @@
             });
         });
     </script>
+    <img src="mascott-gymbro.png" class="pr-floating-mascott" alt="GymBro Mascott">
     <script type="module" src="./js/gymbro-chat.js"></script>
 </body>
 
