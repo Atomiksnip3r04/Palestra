@@ -14,80 +14,179 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <style>
-        /* PR Hub Specific Styles */
-        .pr-hub-header {
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --pr-gold: #FFD700;
+            --pr-gold-soft: rgba(255, 215, 0, 0.15);
+            --pr-green: #00ff88;
+            --pr-red: rgba(255, 107, 107, 0.8);
+        }
+
+        /* Page Header */
+        .pr-page-header {
             text-align: center;
-            margin-bottom: 2rem;
+            padding: 2rem 0;
+            margin-bottom: 1.5rem;
         }
 
-        .pr-hub-header h1 {
-            font-size: 1.8rem;
+        .pr-page-title {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: 800;
             margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .pr-hub-subtitle {
+        .pr-page-title .trophy-icon {
+            font-size: 1.2em;
+            animation: trophyFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes trophyFloat {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-5px) rotate(5deg); }
+        }
+
+        .pr-page-subtitle {
             color: var(--color-text-muted);
             font-size: 0.9rem;
         }
 
-        /* Stats Summary */
-        .pr-stats-grid {
+        /* Stats Cards - Glass Design */
+        .pr-stats-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 2rem;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
         }
 
         .pr-stat-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             padding: 1rem;
             text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .pr-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--pr-gold);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.1);
         }
 
         .pr-stat-value {
             font-family: var(--font-display);
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--color-primary);
-            line-height: 1;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--pr-gold), #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.2;
         }
 
         .pr-stat-label {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--color-text-muted);
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-top: 0.5rem;
+            margin-top: 0.25rem;
         }
 
-        /* Tabs */
+        /* Session Highlight - Modern Glass */
+        .pr-session-banner {
+            display: none;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.1));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 20px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+            animation: celebratePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes celebratePulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
+        }
+
+        .pr-session-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .pr-session-icon {
+            font-size: 2.5rem;
+            animation: bounce 0.6s ease infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        .pr-session-title {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--pr-gold);
+        }
+
+        .pr-session-subtitle {
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+        }
+
+        #sessionPRList {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Tabs - Pill Style */
+        .pr-tabs-wrapper {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 0.35rem;
+            margin-bottom: 1rem;
+        }
+
         .pr-tabs {
             display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 0.25rem;
-            border-radius: var(--radius-md);
+            gap: 0.25rem;
         }
 
         .pr-tab {
             flex: 1;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 0.5rem;
             background: transparent;
             border: none;
             color: var(--color-text-muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            border-radius: var(--radius-sm);
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
         }
 
         .pr-tab.active {
-            background: var(--color-primary);
+            background: linear-gradient(135deg, var(--pr-gold), #FFA500);
             color: #000;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
         }
 
         .pr-tab:not(.active):hover {
@@ -95,187 +194,209 @@
             color: var(--color-text);
         }
 
-        /* PR Record Card - Binary Comparison Design */
-        .pr-record-card {
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-lg);
-            margin-bottom: 1rem;
-            overflow: hidden;
+        /* Filter Section - Modern Chips */
+        .pr-filters-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .pr-filters-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .pr-filter-label {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .pr-filter-chip {
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            color: var(--color-text-muted);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .pr-filter-chip:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--color-text);
+        }
+
+        .pr-filter-chip.active {
+            background: linear-gradient(135deg, var(--color-primary), #0099cc);
+            border-color: var(--color-primary);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .pr-filter-chip .chip-icon {
+            margin-right: 0.25rem;
+        }
+
+        /* Date Range Filter */
+        .pr-date-filter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .pr-date-chip {
+            padding: 0.4rem 0.75rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            color: var(--color-text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .pr-record-card:hover {
-            border-color: rgba(0, 243, 255, 0.3);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        .pr-date-chip:hover {
+            border-color: var(--color-primary);
+            color: var(--color-text);
         }
 
-        .pr-record-header {
-            padding: 1rem;
-            border-bottom: 1px solid var(--color-border);
+        .pr-date-chip.active {
+            background: rgba(0, 243, 255, 0.15);
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        /* Search Box */
+        .pr-search-box {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .pr-search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            color: var(--color-text);
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        .pr-search-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.1);
+        }
+
+        .pr-search-input::placeholder {
+            color: var(--color-text-muted);
+        }
+
+        .pr-search-icon {
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            opacity: 0.5;
+        }
+
+        /* PR Record Cards - Glass Morphism */
+        .pr-list-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        /* Date Group Headers */
+        .pr-date-group {
+            margin-top: 1rem;
+        }
+
+        .pr-date-group:first-child {
+            margin-top: 0;
+        }
+
+        .pr-date-group-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding: 0.5rem 0;
+        }
+
+        .pr-date-group-line {
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--glass-border), transparent);
+        }
+
+        .pr-date-group-label {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        /* Modern PR Card */
+        .pr-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .pr-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 215, 0, 0.3);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .pr-card.session-highlight {
+            border-color: rgba(255, 215, 0, 0.5);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), var(--glass-bg));
+        }
+
+        .pr-card-header {
+            padding: 1rem 1rem 0.75rem;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .pr-exercise-info {
+            flex: 1;
+            min-width: 0;
         }
 
         .pr-exercise-name {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.95rem;
             color: var(--color-text);
+            margin-bottom: 0.25rem;
+            word-break: break-word;
         }
 
-        .pr-record-date {
-            font-size: 0.75rem;
-            color: var(--color-text-muted);
-            display: flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        /* Binary Comparison Layout */
-        .pr-comparison {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 0;
-        }
-
-        .pr-old-record,
-        .pr-new-record {
-            padding: 1rem;
-            text-align: center;
-        }
-
-        .pr-old-record {
-            background: rgba(255, 107, 107, 0.05);
-            border-right: 1px solid var(--color-border);
-        }
-
-        .pr-new-record {
-            background: rgba(0, 243, 255, 0.05);
-            border-left: 1px solid var(--color-border);
-        }
-
-        .pr-record-label {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.25rem;
-        }
-
-        .pr-old-record .pr-record-label {
-            color: rgba(255, 107, 107, 0.8);
-        }
-
-        .pr-new-record .pr-record-label {
-            color: var(--color-primary);
-        }
-
-        .pr-record-value {
-            font-family: var(--font-display);
-            font-size: 1.75rem;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .pr-old-record .pr-record-value {
-            color: rgba(255, 255, 255, 0.4);
-            text-decoration: line-through;
-            text-decoration-color: rgba(255, 107, 107, 0.5);
-        }
-
-        .pr-new-record .pr-record-value {
-            color: var(--color-primary);
-        }
-
-        .pr-record-unit {
-            font-size: 0.8rem;
-            color: var(--color-text-muted);
-            margin-top: 0.25rem;
-        }
-
-        .pr-record-context {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
-            margin-top: 0.25rem;
-        }
-
-        /* Delta Arrow Section */
-        .pr-delta {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem;
-            background: rgba(0, 255, 136, 0.1);
-            min-width: 70px;
-        }
-
-        .pr-delta-arrow {
-            font-size: 1.5rem;
-            color: #00ff88;
-            animation: pulseArrow 1.5s ease-in-out infinite;
-        }
-
-        @keyframes pulseArrow {
-
-            0%,
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-
-            50% {
-                transform: scale(1.1);
-                opacity: 0.8;
-            }
-        }
-
-        .pr-delta-value {
-            font-family: var(--font-display);
-            font-size: 1rem;
-            font-weight: 700;
-            color: #00ff88;
-            margin-top: 0.25rem;
-        }
-
-        .pr-delta-percent {
-            font-size: 0.7rem;
-            color: rgba(0, 255, 136, 0.7);
-        }
-
-        /* Timestamps */
-        .pr-timestamps {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            font-size: 0.7rem;
-        }
-
-        .pr-timestamp {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: var(--color-text-muted);
-        }
-
-        .pr-timestamp.new {
-            justify-content: flex-end;
-            color: var(--color-primary);
-        }
-
-        /* Record Type Badge */
         .pr-type-badge {
             display: inline-flex;
             align-items: center;
             gap: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
+            padding: 0.25rem 0.6rem;
+            border-radius: 8px;
             font-size: 0.65rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -283,109 +404,393 @@
         }
 
         .pr-type-badge.weight {
-            background: rgba(255, 215, 0, 0.15);
-            color: #ffd700;
+            background: rgba(147, 112, 219, 0.2);
+            color: #b794f6;
         }
 
-        .pr-type-badge.rm {
-            background: rgba(255, 107, 107, 0.15);
-            color: #ff6b6b;
-        }
-
-        .pr-type-badge.reps {
+        .pr-type-badge.rm,
+        .pr-type-badge.1rm {
             background: rgba(0, 243, 255, 0.15);
             color: var(--color-primary);
         }
 
+        .pr-type-badge.reps {
+            background: rgba(255, 165, 0, 0.2);
+            color: #FFB347;
+        }
+
         .pr-type-badge.volume {
-            background: rgba(156, 39, 176, 0.15);
-            color: #ce93d8;
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--pr-green);
+        }
+
+        .pr-card-date {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            white-space: nowrap;
+        }
+
+        /* Comparison Section - Modern */
+        .pr-comparison {
+            display: flex;
+            align-items: stretch;
+            padding: 0 0.75rem 0.75rem;
+            gap: 0.5rem;
+        }
+
+        .pr-value-box {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .pr-value-box.old {
+            background: rgba(255, 107, 107, 0.08);
+            border: 1px solid rgba(255, 107, 107, 0.15);
+        }
+
+        .pr-value-box.new {
+            background: rgba(0, 255, 136, 0.08);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .pr-value-label {
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+            opacity: 0.7;
+        }
+
+        .pr-value-box.old .pr-value-label {
+            color: var(--pr-red);
+        }
+
+        .pr-value-box.new .pr-value-label {
+            color: var(--pr-green);
+        }
+
+        .pr-value-number {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .pr-value-box.old .pr-value-number {
+            color: rgba(255, 255, 255, 0.35);
+            text-decoration: line-through;
+            text-decoration-color: rgba(255, 107, 107, 0.5);
+        }
+
+        .pr-value-box.new .pr-value-number {
+            color: var(--pr-green);
+        }
+
+        .pr-value-unit {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            margin-top: 0.2rem;
+        }
+
+        .pr-value-context {
+            font-size: 0.65rem;
+            color: var(--color-text-muted);
+            margin-top: 0.25rem;
+            opacity: 0.8;
+        }
+
+        /* Delta Arrow */
+        .pr-delta-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 0.5rem;
+            min-width: 60px;
+        }
+
+        .pr-delta-icon {
+            font-size: 1.25rem;
+            color: var(--pr-green);
+            animation: arrowPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes arrowPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .pr-delta-value {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--pr-green);
+            margin-top: 0.15rem;
+        }
+
+        .pr-delta-percent {
+            font-size: 0.6rem;
+            color: rgba(0, 255, 136, 0.7);
+        }
+
+        .pr-delta-new-badge {
+            background: linear-gradient(135deg, var(--pr-gold), #FFA500);
+            color: #000;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 0.2rem 0.4rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        /* Card Footer - Timestamps */
+        .pr-card-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.6rem 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--glass-border);
+            font-size: 0.65rem;
+            color: var(--color-text-muted);
+        }
+
+        .pr-timestamp {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .pr-timestamp.highlight {
+            color: var(--pr-green);
+        }
+
+        /* Current PR Card (All PRs Tab) */
+        .pr-current-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .pr-current-card:hover {
+            border-color: rgba(0, 243, 255, 0.3);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .pr-current-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .pr-current-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .pr-current-date {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+        }
+
+        .pr-current-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+            padding: 0.75rem;
+        }
+
+        .pr-current-stat {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .pr-current-stat-label {
+            font-size: 0.6rem;
+            color: var(--color-text-muted);
+            margin-bottom: 0.3rem;
+        }
+
+        .pr-current-stat-value {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--color-primary);
+        }
+
+        .pr-current-stat-unit {
+            font-size: 0.65rem;
+            color: var(--color-text-muted);
         }
 
         /* Empty State */
         .pr-empty-state {
             text-align: center;
-            padding: 3rem 1rem;
-            color: var(--color-text-muted);
+            padding: 3rem 1.5rem;
+            background: var(--glass-bg);
+            border: 1px dashed var(--glass-border);
+            border-radius: 20px;
         }
 
         .pr-empty-icon {
-            font-size: 4rem;
+            font-size: 3rem;
             margin-bottom: 1rem;
-            opacity: 0.3;
+            opacity: 0.5;
         }
 
         .pr-empty-title {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--color-text);
+            font-size: 1.1rem;
+            font-weight: 700;
             margin-bottom: 0.5rem;
+            color: var(--color-text);
         }
 
         .pr-empty-text {
-            font-size: 0.9rem;
-            max-width: 300px;
+            font-size: 0.85rem;
+            color: var(--color-text-muted);
+            max-width: 280px;
             margin: 0 auto;
+            line-height: 1.5;
         }
 
-        /* Session PR Highlight */
-        .pr-session-highlight {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 165, 0, 0.05));
-            border: 1px solid rgba(255, 215, 0, 0.3);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .pr-session-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-
-        .pr-session-icon {
-            font-size: 2rem;
-        }
-
-        .pr-session-title {
-            font-weight: 700;
-            color: #ffd700;
-        }
-
-        .pr-session-subtitle {
-            font-size: 0.8rem;
+        /* Loading State */
+        .pr-loading {
+            text-align: center;
+            padding: 2rem;
             color: var(--color-text-muted);
         }
 
-        /* Filter Pills */
-        .pr-filter-pills {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
+        .pr-loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--glass-border);
+            border-top-color: var(--color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
 
-        .pr-filter-pill {
-            padding: 0.4rem 0.75rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid transparent;
-            border-radius: 20px;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Info Tooltip */
+        .pr-info-tip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            font-size: 0.6rem;
+            color: var(--color-text-muted);
+            cursor: help;
+            margin-left: 0.25rem;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 480px) {
+            .pr-stats-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.5rem;
+            }
+
+            .pr-stat-card {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .pr-stat-value {
+                font-size: 1.3rem;
+            }
+
+            .pr-comparison {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .pr-delta-arrow {
+                flex-direction: row;
+                gap: 0.5rem;
+                padding: 0.5rem;
+                background: rgba(0, 255, 136, 0.05);
+                border-radius: 10px;
+            }
+
+            .pr-value-box {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                text-align: left;
+                padding: 0.6rem 0.75rem;
+            }
+
+            .pr-value-number {
+                font-size: 1.2rem;
+            }
+
+            .pr-filter-chip {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Results Count */
+        .pr-results-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
             font-size: 0.75rem;
             color: var(--color-text-muted);
-            cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        .pr-filter-pill:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--color-text);
+        .pr-results-count {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .pr-filter-pill.active {
-            background: rgba(0, 243, 255, 0.15);
-            border-color: rgba(0, 243, 255, 0.3);
+        .pr-clear-filters {
+            background: none;
+            border: none;
             color: var(--color-primary);
+            cursor: pointer;
+            font-size: 0.75rem;
+            text-decoration: underline;
+        }
+
+        /* Scrollable Container for Long Lists */
+        .pr-scroll-container {
+            max-height: calc(100vh - 400px);
+            overflow-y: auto;
+            padding-right: 0.25rem;
+        }
+
+        .pr-scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .pr-scroll-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .pr-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 4px;
+        }
+
+        .pr-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: var(--color-primary);
         }
     </style>
 </head>
@@ -407,17 +812,20 @@
         </div>
     </header>
 
-    <section class="section" style="padding-top: 100px;">
+    <section class="section" style="padding-top: 100px; padding-bottom: 120px;">
         <div class="container">
 
-            <!-- Header -->
-            <div class="pr-hub-header">
-                <h1>🏆 Record <span class="text-primary">Storici</span></h1>
-                <p class="pr-hub-subtitle">I tuoi Personal Record con analisi comparativa</p>
+            <!-- Page Header -->
+            <div class="pr-page-header">
+                <h1 class="pr-page-title">
+                    <span class="trophy-icon">🏆</span>
+                    I Tuoi <span class="text-primary">Record</span>
+                </h1>
+                <p class="pr-page-subtitle">Traccia i tuoi progressi e celebra ogni conquista</p>
             </div>
 
             <!-- Stats Summary -->
-            <div class="pr-stats-grid">
+            <div class="pr-stats-container">
                 <div class="pr-stat-card">
                     <div class="pr-stat-value" id="totalPRsCount">0</div>
                     <div class="pr-stat-label">Record Totali</div>
@@ -432,36 +840,80 @@
                 </div>
             </div>
 
-            <!-- Session PR Highlight (shown only when coming from workout) -->
-            <div class="pr-session-highlight" id="sessionPRHighlight" style="display: none;">
+            <!-- Session Banner (shown after workout) -->
+            <div class="pr-session-banner" id="sessionPRHighlight">
                 <div class="pr-session-header">
                     <span class="pr-session-icon">🎉</span>
                     <div>
-                        <div class="pr-session-title">Progressi Straordinari!</div>
-                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record nella sessione
-                        </div>
+                        <div</div> class="pr-session-title">Progressi Straordinari!</div>
+                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record in questa sessione</div>
                     </div>
                 </div>
                 <div id="sessionPRList"></div>
             </div>
 
             <!-- Tabs -->
-            <div class="pr-tabs">
-                <button class="pr-tab active" data-tab="history">📜 Cronologia</button>
-                <button class="pr-tab" data-tab="all">🏅 Tutti i PR</button>
+            <div class="pr-tabs-wrapper">
+                <div class="pr-tabs">
+                    <button class="pr-tab active" data-tab="history">
+                        <span>📜</span> Cronologia
+                    </button>
+                    <button class="pr-tab" data-tab="all">
+                        <span>🏅</span> Tutti i PR
+                    </button>
+                </div>
             </div>
 
-            <!-- Filter Pills -->
-            <div class="pr-filter-pills" id="filterPills">
-                <button class="pr-filter-pill active" data-filter="all">Tutti</button>
-                <button class="pr-filter-pill" data-filter="weight">💪 Peso Max</button>
-                <button class="pr-filter-pill" data-filter="1rm">🎯 1RM</button>
-                <button class="pr-filter-pill" data-filter="reps">🔥 Reps</button>
-                <button class="pr-filter-pill" data-filter="volume">📊 Volume</button>
+            <!-- Filters Section -->
+            <div class="pr-filters-section" id="filtersSection">
+                <!-- Search -->
+                <div class="pr-search-box">
+                    <span class="pr-search-icon">🔍</span>
+                    <input type="text" class="pr-search-input" id="prSearchInput" placeholder="Cerca esercizio...">
+                </div>
+
+                <!-- Category Filters -->
+                <span class="pr-filter-label">Tipo di Record</span>
+                <div class="pr-filters-row" id="categoryFilters">
+                    <button class="pr-filter-chip active" data-filter="all">
+                        <span class="chip-icon">✨</span> Tutti
+                    </button>
+                    <button class="pr-filter-chip" data-filter="weight">
+                        <span class="chip-icon">💪</span> Peso Max
+                    </button>
+                    <button class="pr-filter-chip" data-filter="1rm">
+                        <span class="chip-icon">🎯</span> 1RM Stimato
+                    </button>
+                    <button class="pr-filter-chip" data-filter="reps">
+                        <span class="chip-icon">🔥</span> Ripetizioni
+                    </button>
+                    <button class="pr-filter-chip" data-filter="volume">
+                        <span class="chip-icon">📊</span> Volume
+                        <span class="pr-info-tip" title="Volume totale sollevato per esercizio in un allenamento">?</span>
+                    </button>
+                </div>
+
+                <!-- Date Range Filters -->
+                <span class="pr-filter-label">Periodo</span>
+                <div class="pr-date-filter" id="dateFilters">
+                    <button class="pr-date-chip active" data-date="all">Tutto</button>
+                    <button class="pr-date-chip" data-date="7">7 giorni</button>
+                    <button class="pr-date-chip" data-date="30">30 giorni</button>
+                    <button class="pr-date-chip" data-date="90">3 mesi</button>
+                    <button class="pr-date-chip" data-date="365">1 anno</button>
+                </div>
+            </div>
+
+            <!-- Results Info -->
+            <div class="pr-results-info" id="resultsInfo">
+                <div class="pr-results-count">
+                    <span id="resultsCount">0 record trovati</span>
+                </div>
+                <button class="pr-clear-filters" id="clearFilters" style="display: none;">Resetta filtri</button>
             </div>
 
             <!-- PR List -->
-            <div id="prListContainer">
+            <div class="pr-list-container" id="prListContainer">
                 <!-- Populated by JS -->
             </div>
 
@@ -473,20 +925,31 @@
         import { prTracker } from './js/pr-tracker.js';
 
         document.addEventListener('DOMContentLoaded', () => {
+            // State
             let currentTab = 'history';
             let currentFilter = 'all';
+            let currentDateFilter = 'all';
+            let searchQuery = '';
+
+            // DOM Elements
+            const container = document.getElementById('prListContainer');
+            const searchInput = document.getElementById('prSearchInput');
+            const resultsCount = document.getElementById('resultsCount');
+            const clearFiltersBtn = document.getElementById('clearFilters');
+            const sessionHighlight = document.getElementById('sessionPRHighlight');
+            const sessionList = document.getElementById('sessionPRList');
+            const sessionSubtitle = document.getElementById('sessionPRSubtitle');
 
             // Check if coming from workout with new PRs
             const urlParams = new URLSearchParams(window.location.search);
-            const sessionPRs = urlParams.get('session_prs');
+            const sessionPRsParam = urlParams.get('session_prs');
 
-            if (sessionPRs) {
+            if (sessionPRsParam) {
                 try {
-                    const prs = JSON.parse(decodeURIComponent(sessionPRs));
+                    const prs = JSON.parse(decodeURIComponent(sessionPRsParam));
                     if (prs.length > 0) {
                         showSessionPRs(prs);
                     }
-                    // Clean URL
                     window.history.replaceState({}, '', window.location.pathname);
                 } catch (e) {
                     console.warn('Failed to parse session PRs:', e);
@@ -502,7 +965,6 @@
                 const allPRs = prTracker.getAllPRs();
                 const history = prTracker.getPRHistory(100);
 
-                // Total unique PRs (count of record types across all exercises)
                 let totalRecords = 0;
                 allPRs.forEach(pr => {
                     if (pr.maxWeight > 0) totalRecords++;
@@ -514,7 +976,6 @@
                 document.getElementById('totalPRsCount').textContent = totalRecords;
                 document.getElementById('exercisesWithPRs').textContent = allPRs.length;
 
-                // Recent PRs (last 30 days)
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                 const recentCount = history.filter(pr => new Date(pr.timestamp) > thirtyDaysAgo).length;
@@ -522,135 +983,251 @@
             }
 
             function showSessionPRs(prs) {
-                const container = document.getElementById('sessionPRHighlight');
-                const list = document.getElementById('sessionPRList');
-                const subtitle = document.getElementById('sessionPRSubtitle');
+                sessionHighlight.style.display = 'block';
+                const totalRecords = prs.reduce((sum, p) => sum + p.records.length, 0);
+                sessionSubtitle.textContent = `Hai battuto ${totalRecords} record in ${prs.length} esercizi!`;
 
-                container.style.display = 'block';
-                subtitle.textContent = `Hai battuto ${prs.reduce((sum, p) => sum + p.records.length, 0)} record in ${prs.length} esercizi!`;
-
-                list.innerHTML = prs.map(pr => renderPRCard(pr, true)).join('');
+                sessionList.innerHTML = prs.map(pr => {
+                    return pr.records.map(record => renderCompactPRCard(pr.exercise, record, pr.timestamp || pr.date, true)).join('');
+                }).join('');
             }
 
             function renderPRs() {
-                const container = document.getElementById('prListContainer');
-
                 if (currentTab === 'history') {
-                    const history = prTracker.getPRHistory(50);
-                    const filtered = currentFilter === 'all'
-                        ? history
-                        : history.filter(pr => pr.records.some(r => r.type === currentFilter));
-
-                    if (filtered.length === 0) {
-                        container.innerHTML = renderEmptyState();
-                        return;
-                    }
-
-                    container.innerHTML = filtered.map(pr => renderPRCard(pr)).join('');
+                    renderHistoryView();
                 } else {
-                    // All current PRs grouped by exercise
-                    const allPRs = prTracker.getAllPRs();
-
-                    if (allPRs.length === 0) {
-                        container.innerHTML = renderEmptyState();
-                        return;
-                    }
-
-                    container.innerHTML = allPRs.map(pr => renderCurrentPRCard(pr)).join('');
+                    renderAllPRsView();
                 }
+                updateClearFiltersVisibility();
             }
 
-            function renderPRCard(prData, isSession = false) {
-                const { exercise, date, records, timestamp } = prData;
-                const recordDate = new Date(timestamp || date);
-                const formattedDate = recordDate.toLocaleDateString('it-IT', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                });
+            function renderHistoryView() {
+                let history = prTracker.getPRHistory(200);
 
-                return records.map(record => {
-                    const delta = record.newValue - record.oldValue;
-                    const deltaPercent = record.oldValue > 0
-                        ? ((delta / record.oldValue) * 100).toFixed(1)
-                        : 100;
+                // Apply category filter
+                if (currentFilter !== 'all') {
+                    history = history.filter(pr => pr.records.some(r => r.type === currentFilter || r.type === '1rm'));
+                }
 
-                    const oldDate = getOldRecordDate(exercise, record.type);
+                // Apply date filter
+                if (currentDateFilter !== 'all') {
+                    const days = parseInt(currentDateFilter);
+                    const cutoffDate = new Date();
+                    cutoffDate.setDate(cutoffDate.getDate() - days);
+                    history = history.filter(pr => new Date(pr.timestamp || pr.date) >= cutoffDate);
+                }
 
-                    return `
-                        <div class="pr-record-card ${isSession ? 'session-card' : ''}">
-                            <div class="pr-record-header">
-                                <div>
-                                    <span class="pr-exercise-name">${exercise}</span>
-                                    <span class="pr-type-badge ${record.type}">${record.label}</span>
-                                </div>
+                // Apply search filter
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    history = history.filter(pr => pr.exercise.toLowerCase().includes(query));
+                }
+
+                // Update results count
+                const recordCount = history.reduce((sum, pr) => {
+                    let validRecords = pr.records;
+                    if (currentFilter !== 'all') {
+                        validRecords = validRecords.filter(r => r.type === currentFilter || r.type === '1rm');
+                    }
+                    return sum + validRecords.length;
+                }, 0);
+                resultsCount.textContent = `${recordCount} record trovati`;
+
+                if (history.length === 0) {
+                    container.innerHTML = renderEmptyState();
+                    return;
+                }
+
+                // Group by date
+                const grouped = groupByDate(history);
+                let html = '';
+
+                for (const [dateLabel, prs] of Object.entries(grouped)) {
+                    html += `
+                        <div class="pr-date-group">
+                            <div class="pr-date-group-header">
+                                <span class="pr-date-group-label">${dateLabel}</span>
+                                <div class="pr-date-group-line"></div>
                             </div>
-                            
-                            <div class="pr-comparison">
-                                <div class="pr-old-record">
-                                    <div class="pr-record-label">❌ Vecchio Record</div>
-                                    <div class="pr-record-value">${record.oldValue > 0 ? record.oldValue : '—'}</div>
-                                    <div class="pr-record-unit">${record.unit}</div>
-                                    ${record.context ? `<div class="pr-record-context">${record.context}</div>` : ''}
-                                </div>
-                                
-                                <div class="pr-delta">
-                                    <div class="pr-delta-arrow">→</div>
-                                    <div class="pr-delta-value">+${delta.toFixed(1)}</div>
-                                    <div class="pr-delta-percent">${record.oldValue > 0 ? `+${deltaPercent}%` : 'NUOVO!'}</div>
-                                </div>
-                                
-                                <div class="pr-new-record">
-                                    <div class="pr-record-label">✅ Nuovo PR</div>
-                                    <div class="pr-record-value">${record.newValue}</div>
-                                    <div class="pr-record-unit">${record.unit}</div>
-                                    ${record.context ? `<div class="pr-record-context">${record.context}</div>` : ''}
-                                </div>
-                            </div>
-                            
-                            <div class="pr-timestamps">
-                                <div class="pr-timestamp">
-                                    <span>📅</span>
-                                    <span>${oldDate || 'Prima volta'}</span>
-                                </div>
-                                <div class="pr-timestamp new">
-                                    <span>🆕</span>
-                                    <span>${formattedDate}</span>
-                                </div>
-                            </div>
+                            ${prs.map(pr => {
+                                let records = pr.records;
+                                if (currentFilter !== 'all') {
+                                    records = records.filter(r => r.type === currentFilter || r.type === '1rm');
+                                }
+                                // FIX: Skip records with no valid oldValue AND newValue (ghost records)
+                                records = records.filter(r => {
+                                    const hasNewValue = r.newValue !== undefined && r.newValue !== null && r.newValue > 0;
+                                    return hasNewValue;
+                                });
+                                return records.map(record =>
+                                    renderCompactPRCard(pr.exercise, record, pr.timestamp || pr.date, false)
+                                ).join('');
+                            }).join('')}
                         </div>
                     `;
-                }).join('');
+                }
+
+                container.innerHTML = html;
+            }
+
+            function renderAllPRsView() {
+                let allPRs = prTracker.getAllPRs();
+
+                // Apply search filter
+                if (searchQuery) {
+                    const query = searchQuery.toLowerCase();
+                    allPRs = allPRs.filter(pr => pr.displayName.toLowerCase().includes(query));
+                }
+
+                // Update results count
+                resultsCount.textContent = `${allPRs.length} esercizi`;
+
+                if (allPRs.length === 0) {
+                    container.innerHTML = renderEmptyState();
+                    return;
+                }
+
+                container.innerHTML = allPRs.map(pr => renderCurrentPRCard(pr)).join('');
+            }
+
+            function groupByDate(history) {
+                const groups = {};
+                const now = new Date();
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const thisWeekStart = new Date(today);
+                thisWeekStart.setDate(thisWeekStart.getDate() - thisWeekStart.getDay());
+                const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+                history.forEach(pr => {
+                    const prDate = new Date(pr.timestamp || pr.date);
+                    const prDateOnly = new Date(prDate.getFullYear(), prDate.getMonth(), prDate.getDate());
+
+                    let label;
+                    if (prDateOnly.getTime() === today.getTime()) {
+                        label = '📅 Oggi';
+                    } else if (prDateOnly.getTime() === yesterday.getTime()) {
+                        label = '📅 Ieri';
+                    } else if (prDateOnly >= thisWeekStart) {
+                        label = '📅 Questa settimana';
+                    } else if (prDateOnly >= thisMonthStart) {
+                        label = '📅 Questo mese';
+                    } else {
+                        label = `📅 ${prDate.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}`;
+                    }
+
+                    if (!groups[label]) groups[label] = [];
+                    groups[label].push(pr);
+                });
+
+                return groups;
+            }
+
+            function renderCompactPRCard(exercise, record, timestamp, isSession = false) {
+                const recordDate = new Date(timestamp);
+                const formattedDate = recordDate.toLocaleDateString('it-IT', {
+                    day: 'numeric',
+                    month: 'short'
+                });
+
+                // FIX: Validate record values - skip ghost records
+                const oldValue = record.oldValue !== undefined && record.oldValue !== null ? record.oldValue : 0;
+                const newValue = record.newValue !== undefined && record.newValue !== null ? record.newValue : 0;
+
+                // Skip if newValue is 0 or missing (invalid record)
+                if (newValue <= 0) {
+                    console.warn(`Ghost record detected for ${exercise}:`, record);
+                    return '';
+                }
+
+                const delta = newValue - oldValue;
+                const deltaPercent = oldValue > 0 ? ((delta / oldValue) * 100).toFixed(1) : 0;
+                const isNew = oldValue === 0;
+                const oldDate = getOldRecordDate(exercise, record.type);
+
+                return `
+                    <div class="pr-card ${isSession ? 'session-highlight' : ''}">
+                        <div class="pr-card-header">
+                            <div class="pr-exercise-info">
+                                <div class="pr-exercise-name">${exercise}</div>
+                                <span class="pr-type-badge ${record.type}">${record.label}</span>
+                            </div>
+                            <span class="pr-card-date">${formattedDate}</span>
+                        </div>
+
+                        <div class="pr-comparison">
+                            <div class="pr-value-box old">
+                                <div>
+                                    <div class="pr-value-label">Precedente</div>
+                                    <div class="pr-value-number">${oldValue > 0 ? oldValue : '—'}</div>
+                                    <div class="pr-value-unit">${oldValue > 0 ? record.unit : ''}</div>
+                                </div>
+                                ${record.context && oldValue > 0 ? `<div class="pr-value-context">${record.context}</div>` : ''}
+                            </div>
+
+                            <div class="pr-delta-arrow">
+                                <span class="pr-delta-icon">→</span>
+                                ${isNew ?
+                                    `<span class="pr-delta-new-badge">NUOVO!</span>` :
+                                    `<div class="pr-delta-value">+${delta.toFixed(1)}</div>
+                                     <div class="pr-delta-percent">+${deltaPercent}%</div>`
+                                }
+                            </div>
+
+                            <div class="pr-value-box new">
+                                <div>
+                                    <div class="pr-value-label">Nuovo PR</div>
+                                    <div class="pr-value-number">${newValue}</div>
+                                    <div class="pr-value-unit">${record.unit}</div>
+                                </div>
+                                ${record.context ? `<div class="pr-value-context">${record.context}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="pr-card-footer">
+                            <span class="pr-timestamp">
+                                <span>📅</span> ${oldDate || 'Prima volta'}
+                            </span>
+                            <span class="pr-timestamp highlight">
+                                <span>🆕</span> ${formattedDate}
+                            </span>
+                        </div>
+                    </div>
+                `;
             }
 
             function renderCurrentPRCard(pr) {
                 const lastUpdated = pr.lastUpdated
                     ? new Date(pr.lastUpdated).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : 'N/A';
+                    : 'N/D';
 
                 const records = [];
+                // FIX: Only add records with valid values > 0
                 if (pr.maxWeight > 0) records.push({ type: 'weight', label: '💪 Peso Max', value: pr.maxWeight, unit: 'kg' });
-                if (pr.max1RM > 0) records.push({ type: '1rm', label: '🎯 1RM Stimato', value: pr.max1RM, unit: 'kg' });
-                if (pr.maxReps > 0) records.push({ type: 'reps', label: '🔥 Max Reps', value: pr.maxReps, unit: 'reps' });
-                if (pr.maxVolume > 0) records.push({ type: 'volume', label: '📊 Volume Max', value: pr.maxVolume, unit: 'kg' });
+                if (pr.max1RM > 0) records.push({ type: '1rm', label: '🎯 1RM', value: pr.max1RM, unit: 'kg' });
+                if (pr.maxReps > 0) records.push({ type: 'reps', label: '🔥 Reps', value: pr.maxReps, unit: 'reps' });
+                if (pr.maxVolume > 0) records.push({ type: 'volume', label: '📊 Volume', value: pr.maxVolume, unit: 'kg' });
 
+                // Apply filter
+                let displayRecords = records;
                 if (currentFilter !== 'all') {
-                    const filtered = records.filter(r => r.type === currentFilter);
-                    if (filtered.length === 0) return '';
+                    displayRecords = records.filter(r => r.type === currentFilter);
+                    if (displayRecords.length === 0) return '';
                 }
 
                 return `
-                    <div class="pr-record-card">
-                        <div class="pr-record-header">
-                            <span class="pr-exercise-name">${pr.displayName}</span>
-                            <span class="pr-record-date">📅 ${lastUpdated}</span>
+                    <div class="pr-current-card">
+                        <div class="pr-current-header">
+                            <span class="pr-current-name">${pr.displayName}</span>
+                            <span class="pr-current-date">📅 ${lastUpdated}</span>
                         </div>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; padding: 1rem;">
-                            ${records.map(r => `
-                                <div style="text-align: center; padding: 0.75rem; background: rgba(255,255,255,0.02); border-radius: var(--radius-sm);">
-                                    <div style="font-size: 0.7rem; color: var(--color-text-muted); margin-bottom: 0.25rem;">${r.label}</div>
-                                    <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; color: var(--color-primary);">${r.value}</div>
-                                    <div style="font-size: 0.7rem; color: var(--color-text-muted);">${r.unit}</div>
+                        <div class="pr-current-grid">
+                            ${displayRecords.map(r => `
+                                <div class="pr-current-stat">
+                                    <div class="pr-current-stat-label">${r.label}</div>
+                                    <div class="pr-current-stat-value">${r.value}</div>
+                                    <div class="pr-current-stat-unit">${r.unit}</div>
                                 </div>
                             `).join('')}
                         </div>
@@ -659,19 +1236,32 @@
             }
 
             function renderEmptyState() {
+                const hasFilters = currentFilter !== 'all' || currentDateFilter !== 'all' || searchQuery;
+
+                if (hasFilters) {
+                    return `
+                        <div class="pr-empty-state">
+                            <div class="pr-empty-icon">🔍</div>
+                            <div class="pr-empty-title">Nessun risultato</div>
+                            <div class="pr-empty-text">
+                                Prova a modificare i filtri o la ricerca per trovare i tuoi record.
+                            </div>
+                        </div>
+                    `;
+                }
+
                 return `
                     <div class="pr-empty-state">
                         <div class="pr-empty-icon">🏋️</div>
                         <div class="pr-empty-title">Nessun Record Ancora</div>
                         <div class="pr-empty-text">
-                            Completa i tuoi allenamenti e i tuoi Personal Record appariranno qui con analisi dettagliate.
+                            Completa i tuoi allenamenti e i tuoi Personal Record appariranno qui automaticamente.
                         </div>
                     </div>
                 `;
             }
 
             function getOldRecordDate(exerciseName, recordType) {
-                // Search through history to find the previous record date
                 const history = prTracker.getPRHistory(100);
                 const normalizedName = exerciseName.toLowerCase().trim();
 
@@ -682,13 +1272,17 @@
                         if (hasMatchingRecord) {
                             return new Date(pr.timestamp || pr.date).toLocaleDateString('it-IT', {
                                 day: 'numeric',
-                                month: 'short',
-                                year: 'numeric'
+                                month: 'short'
                             });
                         }
                     }
                 }
                 return null;
+            }
+
+            function updateClearFiltersVisibility() {
+                const hasFilters = currentFilter !== 'all' || currentDateFilter !== 'all' || searchQuery;
+                clearFiltersBtn.style.display = hasFilters ? 'inline' : 'none';
             }
 
             function setupEventListeners() {
@@ -702,14 +1296,50 @@
                     });
                 });
 
-                // Filter pills
-                document.querySelectorAll('.pr-filter-pill').forEach(pill => {
-                    pill.addEventListener('click', () => {
-                        document.querySelectorAll('.pr-filter-pill').forEach(p => p.classList.remove('active'));
-                        pill.classList.add('active');
-                        currentFilter = pill.dataset.filter;
+                // Category filters
+                document.querySelectorAll('#categoryFilters .pr-filter-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        document.querySelectorAll('#categoryFilters .pr-filter-chip').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        currentFilter = chip.dataset.filter;
                         renderPRs();
                     });
+                });
+
+                // Date filters
+                document.querySelectorAll('#dateFilters .pr-date-chip').forEach(chip => {
+                    chip.addEventListener('click', () => {
+                        document.querySelectorAll('#dateFilters .pr-date-chip').forEach(c => c.classList.remove('active'));
+                        chip.classList.add('active');
+                        currentDateFilter = chip.dataset.date;
+                        renderPRs();
+                    });
+                });
+
+                // Search
+                let searchTimeout;
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        searchQuery = e.target.value.trim();
+                        renderPRs();
+                    }, 300);
+                });
+
+                // Clear filters
+                clearFiltersBtn.addEventListener('click', () => {
+                    currentFilter = 'all';
+                    currentDateFilter = 'all';
+                    searchQuery = '';
+                    searchInput.value = '';
+
+                    document.querySelectorAll('.pr-filter-chip').forEach(c => c.classList.remove('active'));
+                    document.querySelector('.pr-filter-chip[data-filter="all"]').classList.add('active');
+
+                    document.querySelectorAll('.pr-date-chip').forEach(c => c.classList.remove('active'));
+                    document.querySelector('.pr-date-chip[data-date="all"]').classList.add('active');
+
+                    renderPRs();
                 });
             }
 
