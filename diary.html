@@ -1027,28 +1027,163 @@
             </div>
         </header>
 
+        <!-- Cloud Sync Loader Styles -->
+        <style>
+            /* From Uiverse.io by andrew-manzyk */
+            .loader {
+                --cloud-color: #4387f4;
+                --arrows-color: #80b1ff;
+                --time-animation: 1s;
+                transform: scale(0.4);
+            }
+            .loader #cloud {
+                width: 100px;
+                height: 100px;
+            }
+            .loader #cloud rect {
+                fill: var(--cloud-color);
+            }
+            .loader #cloud g:nth-child(3) {
+                transform-origin: 50% 72.8938%;
+                fill: var(--arrows-color);
+                filter: drop-shadow(0 0 8px black);
+            }
+            .loader.syncing #cloud g:nth-child(3) {
+                animation: rotation var(--time-animation) linear infinite;
+            }
+            .loader #shapes g g circle {
+                opacity: 0;
+            }
+            .loader.syncing #shapes g g circle {
+                opacity: 1;
+                animation: cloud calc(var(--time-animation) * 2) linear infinite;
+            }
+            .loader.syncing #shapes g g circle:nth-child(2) {
+                animation-delay: calc((var(--time-animation) * 2) / -3);
+            }
+            .loader.syncing #shapes g g circle:nth-child(3) {
+                animation-delay: calc((var(--time-animation) * 2) / -1.5);
+            }
+            .loader svg #lines g line {
+                stroke-width: 5;
+                transform-origin: 50% 50%;
+                rotate: -65deg;
+                opacity: 0;
+            }
+            .loader.syncing svg #lines g line {
+                opacity: 1;
+                animation: lines calc(var(--time-animation) / 1.33) linear infinite;
+            }
+            @keyframes rotation {
+                0% { transform: rotate(0deg); }
+                50% { transform: rotate(180deg); }
+                100% { transform: rotate(360deg); }
+            }
+            @keyframes lines {
+                0% { transform: translateY(-10px); }
+                100% { transform: translateY(8px); }
+            }
+            @keyframes cloud {
+                0% { cx: 20; cy: 60; r: 15; }
+                50% { cx: 50; cy: 45; r: 20; }
+                100% { cx: 80; cy: 60; r: 15; }
+            }
+            
+            /* Sync Button Container */
+            .sync-btn-container {
+                position: relative;
+                cursor: pointer;
+                width: 50px;
+                height: 50px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                background: rgba(67, 135, 244, 0.1);
+                border: 2px solid rgba(67, 135, 244, 0.3);
+                transition: all 0.3s ease;
+            }
+            .sync-btn-container:hover {
+                background: rgba(67, 135, 244, 0.2);
+                border-color: rgba(67, 135, 244, 0.5);
+                transform: scale(1.05);
+            }
+            .sync-btn-container:active {
+                transform: scale(0.95);
+            }
+            .sync-btn-container.syncing {
+                border-color: #4387f4;
+                box-shadow: 0 0 15px rgba(67, 135, 244, 0.4);
+            }
+            .sync-btn-container.success {
+                background: rgba(76, 175, 80, 0.2);
+                border-color: #4CAF50;
+            }
+            .sync-btn-container.error {
+                background: rgba(244, 67, 54, 0.2);
+                border-color: #f44336;
+            }
+            
+            /* Status indicator */
+            .sync-status-dot {
+                position: absolute;
+                bottom: 2px;
+                right: 2px;
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: #4CAF50;
+                border: 2px solid var(--bg-dark, #1a1a2e);
+            }
+            .sync-status-dot.offline {
+                background: #ff9800;
+            }
+            .sync-status-dot.error {
+                background: #f44336;
+            }
+        </style>
+
         <section class="section" style="padding-top: 160px">
             <div class="container">
                 <div class="diary-page-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h1>
                         Diario <span class="text-primary">Allenamento</span>
                     </h1>
-                    <button id="manualSyncBtn" class="sync-btn" title="Sincronizza con cloud" style="
-                        background: transparent;
-                        border: 1px solid var(--primary);
-                        color: var(--primary);
-                        padding: 8px 12px;
-                        border-radius: 20px;
-                        font-size: 14px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                        gap: 6px;
-                        transition: all 0.2s;
-                    ">
-                        <span class="sync-icon">☁️</span>
-                        <span class="sync-text">Sync</span>
-                    </button>
+                    <div id="manualSyncBtn" class="sync-btn-container" title="Sincronizza con cloud">
+                        <div class="loader">
+                            <svg id="cloud" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <defs>
+                                    <clipPath id="cloud-clip">
+                                        <path d="M 82.5 50 A 17.5 17.5 0 0 1 65 67.5 L 35 67.5 A 17.5 17.5 0 1 1 35 32.5 A 25 25 0 1 1 82.5 50" />
+                                    </clipPath>
+                                </defs>
+                                <g clip-path="url(#cloud-clip)">
+                                    <rect x="0" y="0" width="100" height="100" />
+                                    <g id="shapes">
+                                        <g>
+                                            <g>
+                                                <circle cx="20" cy="60" r="15" fill="#80b1ff" />
+                                                <circle cx="50" cy="45" r="20" fill="#80b1ff" />
+                                                <circle cx="80" cy="60" r="15" fill="#80b1ff" />
+                                            </g>
+                                        </g>
+                                    </g>
+                                    <g id="lines">
+                                        <g>
+                                            <line x1="30" y1="45" x2="30" y2="65" stroke="#80b1ff" />
+                                            <line x1="50" y1="40" x2="50" y2="70" stroke="#80b1ff" />
+                                            <line x1="70" y1="45" x2="70" y2="65" stroke="#80b1ff" />
+                                        </g>
+                                    </g>
+                                </g>
+                                <g>
+                                    <path d="M 50 58 L 42 68 L 46 68 L 46 78 L 54 78 L 54 68 L 58 68 Z" />
+                                    <path d="M 50 88 L 58 78 L 54 78 L 54 68 L 46 68 L 46 78 L 42 78 Z" />
+                                </g>
+                            </svg>
+                        </div>
+                        <span class="sync-status-dot"></span>
+                    </div>
                 </div>
 
                 <!-- FAB - Floating Action Button -->
@@ -1395,16 +1530,18 @@
 
                 // Manual Sync Button Handler
                 const manualSyncBtn = document.getElementById("manualSyncBtn");
+                const syncStatusDot = manualSyncBtn?.querySelector(".sync-status-dot");
+                const loader = manualSyncBtn?.querySelector(".loader");
+                
                 if (manualSyncBtn) {
                     manualSyncBtn.addEventListener("click", async () => {
-                        const syncIcon = manualSyncBtn.querySelector(".sync-icon");
-                        const syncText = manualSyncBtn.querySelector(".sync-text");
+                        // Prevent double-click
+                        if (manualSyncBtn.classList.contains("syncing")) return;
                         
-                        // Disable button and show loading
-                        manualSyncBtn.disabled = true;
-                        syncIcon.textContent = "🔄";
-                        syncText.textContent = "...";
-                        manualSyncBtn.style.animation = "spin 1s linear infinite";
+                        // Start syncing animation
+                        manualSyncBtn.classList.remove("success", "error");
+                        manualSyncBtn.classList.add("syncing");
+                        loader?.classList.add("syncing");
                         
                         try {
                             // First load from cloud to get latest data
@@ -1415,37 +1552,45 @@
                             console.log("🔄 Manual sync: syncing to cloud...");
                             const result = await syncManager.syncToCloud(true);
                             
+                            // Stop animation
+                            manualSyncBtn.classList.remove("syncing");
+                            loader?.classList.remove("syncing");
+                            
                             if (result.success) {
-                                syncIcon.textContent = "✅";
-                                syncText.textContent = "OK!";
+                                manualSyncBtn.classList.add("success");
+                                syncStatusDot?.classList.remove("offline", "error");
                                 // Refresh the logs display
                                 renderLogs();
                             } else {
-                                syncIcon.textContent = "❌";
-                                syncText.textContent = result.reason === 'not_authenticated' ? "Login!" : "Errore";
+                                manualSyncBtn.classList.add("error");
+                                syncStatusDot?.classList.add("error");
+                                syncStatusDot?.classList.remove("offline");
                             }
                         } catch (error) {
                             console.error("Manual sync error:", error);
-                            syncIcon.textContent = "❌";
-                            syncText.textContent = "Errore";
+                            manualSyncBtn.classList.remove("syncing");
+                            loader?.classList.remove("syncing");
+                            manualSyncBtn.classList.add("error");
+                            syncStatusDot?.classList.add("error");
                         }
                         
-                        // Reset button after 2 seconds
+                        // Reset button after 3 seconds
                         setTimeout(() => {
-                            manualSyncBtn.disabled = false;
-                            manualSyncBtn.style.animation = "";
-                            syncIcon.textContent = "☁️";
-                            syncText.textContent = "Sync";
-                        }, 2000);
+                            manualSyncBtn.classList.remove("success", "error");
+                        }, 3000);
                     });
-                }
-                
-                // Add spin animation style
-                if (!document.getElementById("sync-spin-style")) {
-                    const style = document.createElement("style");
-                    style.id = "sync-spin-style";
-                    style.textContent = "@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }";
-                    document.head.appendChild(style);
+                    
+                    // Update status dot based on auth state
+                    syncManager.onSync((eventType, data) => {
+                        if (eventType === 'sync' && data.success) {
+                            syncStatusDot?.classList.remove("offline", "error");
+                        }
+                    });
+                    
+                    // Check initial auth state
+                    if (!syncManager.isAuthenticated()) {
+                        syncStatusDot?.classList.add("offline");
+                    }
                 }
 
                 // DOMS Muscle Picker Setup
