@@ -98,14 +98,20 @@ class GymBroChat {
     }
 
     loadWelcomeMessage() {
-        const welcome = "Ehilà campione! Sono GymBro, il tuo coach virtuale. Come posso aiutarti oggi? Posso analizzare i tuoi allenamenti, darti una mano con la dieta o spiegarti perché quel muscolo ti fa ancora male! 🔥";
+        const welcome = "Ehilà <b class=\"highlight\">campione</b>! Sono <b class=\"highlight\">GymBro</b>, il tuo coach virtuale. Come posso aiutarti oggi? Posso analizzare i tuoi allenamenti, darti una mano con la dieta o spiegarti perché quel muscolo ti fa ancora male! 🔥";
         this.addMessage('gymbro', welcome);
     }
 
     addMessage(role, text) {
         const msg = document.createElement('div');
         msg.className = `chat-msg ${role}`;
-        msg.textContent = text;
+
+        if (role === 'user') {
+            msg.textContent = text; // Secure for user input
+        } else {
+            msg.innerHTML = text; // Allow HTML for GymBro rich formatting
+        }
+
         this.elements.messagesContainer.appendChild(msg);
         this.scrollToBottom();
 

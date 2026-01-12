@@ -168,9 +168,56 @@
 .chat-msg.gymbro {
     align-self: flex-start;
     background: rgba(255, 255, 255, 0.05);
-    color: #e0e0e0;
+    color: #f0f0f0;
     border-bottom-left-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Rich Text Formatting Styles */
+.chat-msg.gymbro .highlight {
+    color: var(--chat-primary);
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.3);
+}
+
+.chat-msg.gymbro .advice-card {
+    background: rgba(0, 243, 255, 0.05);
+    border: 1px solid rgba(0, 243, 255, 0.2);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+}
+
+.chat-msg.gymbro .gym-list {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+    list-style-type: none;
+}
+
+.chat-msg.gymbro .gym-list li {
+    position: relative;
+    margin-bottom: 0.4rem;
+}
+
+.chat-msg.gymbro .gym-list li::before {
+    content: '→';
+    position: absolute;
+    left: -1.25rem;
+    color: var(--chat-primary);
+    font-weight: bold;
+}
+
+.chat-msg.gymbro .stat-badge {
+    background: rgba(0, 243, 255, 0.15);
+    color: var(--chat-primary);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 0.8rem;
+    border: 1px solid rgba(0, 243, 255, 0.3);
 }
 
 .chat-msg.user {
