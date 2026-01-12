@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Amici | GYMBRO</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00f3ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GymBro">
+    <link rel="apple-touch-icon" href="assets/icon.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Friends Page Styles */
+        .friends-container { padding-top: 100px; padding-bottom: 2rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .page-header h1 { margin: 0; font-size: clamp(1.5rem, 5vw, 2rem); }
+        
+        /* Search Bar */
+        .search-container { margin-bottom: 1rem; }
+        .search-input-wrapper {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 0.6rem 1rem; transition: border-color 0.2s;
+        }
+        .search-input-wrapper:focus-within { border-color: var(--color-primary); }
+        .search-input-wrapper input {
+            flex: 1; background: transparent; border: none; color: white;
+            font-size: 0.95rem; outline: none;
+        }
+        .search-input-wrapper input::placeholder { color: rgba(255,255,255,0.4); }
+        .search-icon { color: var(--color-text-muted); font-size: 1rem; }
+        .search-clear { background: none; border: none; color: var(--color-text-muted);
+            cursor: pointer; padding: 0.25rem; display: none; }
+        .search-clear.visible { display: block; }
+</style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
+            <nav>
+                <div class="mobile-toggle" id="mobileToggle">☰</div>
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="creator.html">📝 Crea Schede</a></li>
+                    <li><a href="diary.html">📓 Diario</a></li>
+                    <li><a href="analysis.html">📈 Analisi</a></li>
+                    <li><a href="friends.html" class="text-primary">👥 Amici</a></li>
+                    <li><a href="user.html">👤 Profilo</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <section class="section friends-container">
+        <div class="container">
+            <!-- Auth Required Message -->
+            <div id="authRequired" class="card" style="text-align: center; display: none;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+                <h3>Accedi per vedere i tuoi amici</h3>
+                <p style="color: var(--color-text-muted); margin-bottom: 1rem;">
+                    Effettua il login per gestire le tue connessioni social.
+                </p>
+                <a href="user.html" class="btn btn-primary">Accedi</a>
+            </div>
+
+            <!-- Main Content (visible when authenticated) -->
+            <div id="friendsContent" style="display: none;">
+                <div class="page-header">
+                    <h1>👥 Amici</h1>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="Cerca utenti per nome...">
+                        <button class="search-clear" id="searchClear">✕</button>
+                    </div>
+                </div>
+
+                <!-- Search Results (hidden by default) -->
+                <div id="searchResults" class="card" style="display: none; margin-bottom: 1rem;">
+                    <h4 style="margin-bottom: 0.75rem; font-size: 0.9rem; color: var(--color-text-muted);">
+                        Risultati ricerca
+                    </h4>
+                    <div id="searchResultsList"></div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs-container" style="margin-bottom: 1rem;">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="friends">
+                            Amici <span id="friendsCount" class="tab-badge">0</span>
+                        </button>
+                        <button class="tab" data-tab="requests">
+                            Richieste <span id="requestsCount" class="tab-badge">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Friends Tab Content -->
+                <div id="friendsTab" class="tab-content active">
+                    <div id="friendsList"></div>
+                    <div id="friendsEmpty" class="empty-state" style="display: none;">
+                        <div class="empty-icon">🤝</div>
+                        <p>Nessun amico ancora</p>
+                        <p style="font-size: 0.85rem; color: var(--color-text-muted);">
+                            Cerca utenti per iniziare a connetterti!
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Requests Tab Content -->
+                <div id="requestsTab" class="tab-content" style="display: none;">
+                    <!-- Received Requests -->
+                    <div id="receivedSection" style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">
+                            📥 Richieste ricevute
+                        </h4>
+                        <div id="receivedList"></div>
+                        <div id="receivedEmpty" class="empty-mini" style="display: none;">
+                            Nessuna richiesta in arrivo
+                        </div>
+                    </div>
+                    
+                    <!-- Sent Requests -->
+                    <div id="sentSection">
+                        <h4 style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">
+                            📤 Richieste inviate
+                        </h4>
+                        <div id="sentList"></div>
+                        <div id="sentEmpty" class="empty-mini" style="display: none;">
+                            Nessuna richiesta in sospeso
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Action Modal -->
+    <div id="actionModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <div id="modalUserInfo" style="text-align: center; margin-bottom: 1rem;"></div>
+            <div id="modalActions"></div>
+            <button class="btn btn-outline" onclick="closeModal()" style="width: 100%; margin-top: 0.75rem;">
+                Chiudi
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <style>
+        /* Tabs */
+        .tabs { display: flex; gap: 0.5rem; background: rgba(0,0,0,0.2); padding: 0.25rem; border-radius: 12px; }
+        .tab {
+            flex: 1; padding: 0.6rem 1rem; background: transparent; border: none;
+            color: var(--color-text-muted); font-size: 0.9rem; font-weight: 500;
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+        .tab.active { background: var(--color-primary); color: black; }
+        .tab-badge {
+            background: rgba(255,255,255,0.2); padding: 0.1rem 0.4rem;
+            border-radius: 10px; font-size: 0.75rem;
+        }
+        .tab.active .tab-badge { background: rgba(0,0,0,0.2); }
+        
+        /* Friend Card */
+        .friend-card {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0,0,0,0.15) 100%);
+            padding: 0.85rem 1rem; border-radius: 12px; margin-bottom: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+        .friend-card:hover { border-color: rgba(0,243,255,0.2); }
+        .friend-card:active { transform: scale(0.98); }
+        
+        .friend-avatar {
+            width: 48px; height: 48px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-primary), #00c8d4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; color: black; font-weight: 600; flex-shrink: 0;
+            overflow: hidden;
+        }
+        .friend-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .friend-info { flex: 1; min-width: 0; }
+        .friend-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.15rem;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .friend-meta { font-size: 0.8rem; color: var(--color-text-muted); }
+        
+        .friend-action { padding: 0.5rem; color: var(--color-text-muted); font-size: 1.1rem; }
+
+        /* Request Card */
+        .request-card {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0,0,0,0.15) 100%);
+            padding: 0.85rem 1rem; border-radius: 12px; margin-bottom: 0.6rem;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .request-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+        .btn-accept {
+            background: var(--color-primary); color: black; border: none;
+            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: transform 0.15s;
+        }
+        .btn-accept:active { transform: scale(0.95); }
+        .btn-reject {
+            background: rgba(255,68,68,0.15); color: #ff4444; border: 1px solid rgba(255,68,68,0.3);
+            padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem;
+            font-weight: 500; cursor: pointer; transition: transform 0.15s;
+        }
+        .btn-reject:active { transform: scale(0.95); }
+        
+        /* Search Result */
+        .search-result {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .search-result:last-child { border-bottom: none; }
+        .btn-add {
+            background: transparent; border: 1px solid var(--color-primary);
+            color: var(--color-primary); padding: 0.35rem 0.7rem; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 500; cursor: pointer; white-space: nowrap;
+        }
+        .btn-add:hover { background: rgba(0,243,255,0.1); }
+        .btn-add.sent { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2);
+            color: var(--color-text-muted); cursor: default; }
+        .btn-add.friend { background: rgba(0,243,255,0.1); border-color: var(--color-primary);
+            color: var(--color-primary); cursor: default; }
+        
+        /* Empty States */
+        .empty-state { text-align: center; padding: 3rem 1rem; color: var(--color-text-muted); }
+        .empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+        .empty-mini { text-align: center; padding: 1rem; color: var(--color-text-muted);
+            font-size: 0.85rem; background: rgba(0,0,0,0.1); border-radius: 8px; }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px); z-index: 1000;
+            display: flex; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .modal-card {
+            background: var(--color-surface); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 1.25rem; width: 100%; max-width: 320px;
+        }
+        .modal-btn {
+            width: 100%; padding: 0.75rem; border-radius: 10px; font-size: 0.9rem;
+            font-weight: 500; cursor: pointer; margin-bottom: 0.5rem;
+            transition: transform 0.15s, background 0.15s;
+        }
+        .modal-btn:active { transform: scale(0.98); }
+        .modal-btn.danger { background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3);
+            color: #ff4444; }
+        .modal-btn.danger:hover { background: rgba(255,68,68,0.25); }
+        .modal-btn.primary { background: var(--color-primary); border: none; color: black; }
+        
+        /* Toast */
+        .toast-container { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast {
+            background: var(--color-surface); border: 1px solid rgba(255,255,255,0.15);
+            padding: 0.75rem 1.25rem; border-radius: 12px; font-size: 0.9rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4); animation: toastIn 0.3s ease;
+            white-space: nowrap;
+        }
+        .toast.success { border-color: rgba(0,243,255,0.4); }
+        .toast.error { border-color: rgba(255,68,68,0.4); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Loading */
+        .loading-spinner {
+            display: flex; justify-content: center; padding: 2rem;
+        }
+        .spinner {
+            width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--color-primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <script type="module">
+        import { auth, db, collection, query, where, getDocs, limit, orderBy } from './js/firebase-config.js';
+        import { friendshipService } from './js/services/friendship-service.js';
+        
+        // State
+        let currentUser = null;
+        let friendsCache = [];
+        let pendingCache = { received: [], sent: [] };
+        let searchTimeout = null;
+        
+        // DOM Elements
+        const authRequired = document.getElementById('authRequired');
+        const friendsContent = document.getElementById('friendsContent');
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        const searchResults = document.getElementById('searchResults');
+        const searchResultsList = document.getElementById('searchResultsList');
+        const friendsList = document.getElementById('friendsList');
+        const friendsEmpty = document.getElementById('friendsEmpty');
+        const receivedList = document.getElementById('receivedList');
+        const receivedEmpty = document.getElementById('receivedEmpty');
+        const sentList = document.getElementById('sentList');
+        const sentEmpty = document.getElementById('sentEmpty');
+        const friendsCount = document.getElementById('friendsCount');
+        const requestsCount = document.getElementById('requestsCount');
+        
+        // Initialize
+        auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
+            if (user) {
+                authRequired.style.display = 'none';
+                friendsContent.style.display = 'block';
+                await loadData();
+            } else {
+                authRequired.style.display = 'block';
+                friendsContent.style.display = 'none';
+            }
+        });
+        
+        // Load all data
+        async function loadData() {
+            showLoading(friendsList);
+            showLoading(receivedList);
+            showLoading(sentList);
+            
+            try {
+                const [friendsResult, pendingResult] = await Promise.all([
+                    friendshipService.getFriends(),
+                    friendshipService.getPendingRequests()
+                ]);
+                
+                if (friendsResult.success) {
+                    friendsCache = friendsResult.data;
+                    await renderFriends();
+                }
+                
+                if (pendingResult.success) {
+                    pendingCache.received = pendingResult.data.filter(r => r.isInbound);
+                    pendingCache.sent = pendingResult.data.filter(r => !r.isInbound);
+                    await renderRequests();
+                }
+                
+                updateCounts();
+            } catch (err) {
+                console.error('❌ Error loading friends data:', err);
+                showToast('Errore nel caricamento', 'error');
+            }
+        }
+
+        // Render friends list
+        async function renderFriends() {
+            if (friendsCache.length === 0) {
+                friendsList.innerHTML = '';
+                friendsEmpty.style.display = 'block';
+                return;
+            }
+            
+            friendsEmpty.style.display = 'none';
+            const usersData = await fetchUsersData(friendsCache.map(f => f.friendUid));
+            
+            friendsList.innerHTML = friendsCache.map(friend => {
+                const userData = usersData[friend.friendUid] || {};
+                const name = userData.displayName || 'Utente';
+                const initial = name.charAt(0).toUpperCase();
+                const since = friend.since ? formatDate(friend.since) : '';
+                const photoURL = userData.photoURL || '';
+                
+                return `
+                    <div class="friend-card" onclick="openFriendModal('${friend.friendUid}', '${escapeHtml(name)}')">
+                        <div class="friend-avatar">
+                            ${photoURL ? `<img src="${photoURL}" alt="">` : initial}
+                        </div>
+                        <div class="friend-info">
+                            <div class="friend-name">${escapeHtml(name)}</div>
+                            <div class="friend-meta">Amici da ${since}</div>
+                        </div>
+                        <div class="friend-action">⋮</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Render requests
+        async function renderRequests() {
+            // Received
+            if (pendingCache.received.length === 0) {
+                receivedList.innerHTML = '';
+                receivedEmpty.style.display = 'block';
+            } else {
+                receivedEmpty.style.display = 'none';
+                const usersData = await fetchUsersData(pendingCache.received.map(r => r.otherUid));
+                
+                receivedList.innerHTML = pendingCache.received.map(req => {
+                    const userData = usersData[req.otherUid] || {};
+                    const name = userData.displayName || 'Utente';
+                    const initial = name.charAt(0).toUpperCase();
+                    const photoURL = userData.photoURL || '';
+                    
+                    return `
+                        <div class="request-card">
+                            <div class="friend-avatar">
+                                ${photoURL ? `<img src="${photoURL}" alt="">` : initial}
+                            </div>
+                            <div class="friend-info">
+                                <div class="friend-name">${escapeHtml(name)}</div>
+                                <div class="friend-meta">Vuole essere tuo amico</div>
+                            </div>
+                            <div class="request-actions">
+                                <button class="btn-accept" onclick="acceptRequest('${req.otherUid}')">✓</button>
+                                <button class="btn-reject" onclick="rejectRequest('${req.otherUid}')">✕</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            // Sent
+            if (pendingCache.sent.length === 0) {
+                sentList.innerHTML = '';
+                sentEmpty.style.display = 'block';
+            } else {
+                sentEmpty.style.display = 'none';
+                const usersData = await fetchUsersData(pendingCache.sent.map(r => r.otherUid));
+                
+                sentList.innerHTML = pendingCache.sent.map(req => {
+                    const userData = usersData[req.otherUid] || {};
+                    const name = userData.displayName || 'Utente';
+                    const initial = name.charAt(0).toUpperCase();
+                    
+                    return `
+                        <div class="request-card">
+                            <div class="friend-avatar">${initial}</div>
+                            <div class="friend-info">
+                                <div class="friend-name">${escapeHtml(name)}</div>
+                                <div class="friend-meta">In attesa di risposta...</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Search users
+        async function searchUsers(term) {
+            if (!term || term.length < 2) {
+                searchResults.style.display = 'none';
+                return;
+            }
+            
+            searchResultsList.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+            searchResults.style.display = 'block';
+            
+            try {
+                const usersRef = collection(db, 'users');
+                const q = query(
+                    usersRef,
+                    where('displayName', '>=', term),
+                    where('displayName', '<=', term + '\uf8ff'),
+                    limit(10)
+                );
+                
+                const snapshot = await getDocs(q);
+                const results = [];
+                
+                for (const doc of snapshot.docs) {
+                    if (doc.id === currentUser.uid) continue; // Skip self
+                    
+                    const userData = doc.data();
+                    const statusResult = await friendshipService.checkFriendshipStatus(doc.id);
+                    
+                    results.push({
+                        uid: doc.id,
+                        displayName: userData.displayName || 'Utente',
+                        photoURL: userData.photoURL || '',
+                        status: statusResult.success ? statusResult.data.status : 'none'
+                    });
+                }
+                
+                if (results.length === 0) {
+                    searchResultsList.innerHTML = '<div class="empty-mini">Nessun utente trovato</div>';
+                    return;
+                }
+                
+                searchResultsList.innerHTML = results.map(user => {
+                    const initial = user.displayName.charAt(0).toUpperCase();
+                    let actionBtn = '';
+                    
+                    switch (user.status) {
+                        case 'accepted':
+                            actionBtn = '<span class="btn-add friend">✓ Amico</span>';
+                            break;
+                        case 'pending_sent':
+                            actionBtn = '<span class="btn-add sent">Inviata</span>';
+                            break;
+                        case 'pending_received':
+                            actionBtn = `<button class="btn-accept" onclick="acceptRequest('${user.uid}')">Accetta</button>`;
+                            break;
+                        default:
+                            actionBtn = `<button class="btn-add" onclick="sendRequest('${user.uid}')">+ Aggiungi</button>`;
+                    }
+                    
+                    return `
+                        <div class="search-result">
+                            <div class="friend-avatar" style="width:40px;height:40px;font-size:1rem;">
+                                ${user.photoURL ? `<img src="${user.photoURL}" alt="">` : initial}
+                            </div>
+                            <div class="friend-info">
+                                <div class="friend-name">${escapeHtml(user.displayName)}</div>
+                            </div>
+                            ${actionBtn}
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (err) {
+                console.error('❌ Search error:', err);
+                searchResultsList.innerHTML = '<div class="empty-mini">Errore nella ricerca</div>';
+            }
+        }
+        
+        // Search input handler
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim();
+            searchClear.classList.toggle('visible', term.length > 0);
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchUsers(term), 300);
+        });
+        
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.classList.remove('visible');
+            searchResults.style.display = 'none';
+        });
+
+        // Actions
+        window.sendRequest = async function(uid) {
+            try {
+                const result = await friendshipService.sendFriendRequest(uid);
+                if (result.success) {
+                    if (result.data?.autoAccepted) {
+                        showToast('Siete ora amici! 🎉', 'success');
+                    } else {
+                        showToast('Richiesta inviata ✓', 'success');
+                    }
+                    await loadData();
+                    searchInput.value = '';
+                    searchResults.style.display = 'none';
+                } else {
+                    showToast(result.error || 'Errore', 'error');
+                }
+            } catch (err) {
+                showToast(err.message || 'Errore', 'error');
+            }
+        };
+        
+        window.acceptRequest = async function(uid) {
+            try {
+                const result = await friendshipService.acceptFriendRequest(uid);
+                if (result.success) {
+                    showToast('Richiesta accettata! 🤝', 'success');
+                    await loadData();
+                } else {
+                    showToast(result.error || 'Errore', 'error');
+                }
+            } catch (err) {
+                showToast(err.message || 'Errore', 'error');
+            }
+        };
+        
+        window.rejectRequest = async function(uid) {
+            try {
+                const result = await friendshipService.rejectFriendRequest(uid);
+                if (result.success) {
+                    showToast('Richiesta rifiutata', 'success');
+                    await loadData();
+                } else {
+                    showToast(result.error || 'Errore', 'error');
+                }
+            } catch (err) {
+                showToast(err.message || 'Errore', 'error');
+            }
+        };
+        
+        window.removeFriend = async function(uid) {
+            if (!confirm('Vuoi rimuovere questo amico?')) return;
+            
+            try {
+                const result = await friendshipService.removeFriend(uid);
+                if (result.success) {
+                    showToast('Amico rimosso', 'success');
+                    closeModal();
+                    await loadData();
+                } else {
+                    showToast(result.error || 'Errore', 'error');
+                }
+            } catch (err) {
+                showToast(err.message || 'Errore', 'error');
+            }
+        };
+        
+        window.blockUser = async function(uid) {
+            if (!confirm('Vuoi bloccare questo utente?')) return;
+            
+            try {
+                const result = await friendshipService.blockUser(uid);
+                if (result.success) {
+                    showToast('Utente bloccato', 'success');
+                    closeModal();
+                    await loadData();
+                } else {
+                    showToast(result.error || 'Errore', 'error');
+                }
+            } catch (err) {
+                showToast(err.message || 'Errore', 'error');
+            }
+        };
+
+        // Modal
+        window.openFriendModal = function(uid, name) {
+            const modal = document.getElementById('actionModal');
+            const userInfo = document.getElementById('modalUserInfo');
+            const actions = document.getElementById('modalActions');
+            
+            userInfo.innerHTML = `
+                <div class="friend-avatar" style="width:64px;height:64px;font-size:1.5rem;margin:0 auto 0.75rem;">
+                    ${name.charAt(0).toUpperCase()}
+                </div>
+                <div style="font-weight:600;font-size:1.1rem;">${escapeHtml(name)}</div>
+            `;
+            
+            actions.innerHTML = `
+                <button class="modal-btn danger" onclick="removeFriend('${uid}')">
+                    🗑️ Rimuovi amico
+                </button>
+                <button class="modal-btn danger" onclick="blockUser('${uid}')">
+                    🚫 Blocca utente
+                </button>
+            `;
+            
+            modal.style.display = 'flex';
+        };
+        
+        window.closeModal = function() {
+            document.getElementById('actionModal').style.display = 'none';
+        };
+        
+        // Close modal on backdrop click
+        document.getElementById('actionModal').addEventListener('click', (e) => {
+            if (e.target.id === 'actionModal') closeModal();
+        });
+        
+        // Tabs
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                const tabName = tab.dataset.tab;
+                document.getElementById('friendsTab').style.display = tabName === 'friends' ? 'block' : 'none';
+                document.getElementById('requestsTab').style.display = tabName === 'requests' ? 'block' : 'none';
+            });
+        });
+        
+        // Helpers
+        async function fetchUsersData(uids) {
+            if (!uids.length) return {};
+            
+            const usersData = {};
+            const usersRef = collection(db, 'users');
+            
+            // Fetch in batches of 10 (Firestore limit)
+            for (let i = 0; i < uids.length; i += 10) {
+                const batch = uids.slice(i, i + 10);
+                const q = query(usersRef, where('__name__', 'in', batch));
+                const snapshot = await getDocs(q);
+                snapshot.forEach(doc => {
+                    usersData[doc.id] = doc.data();
+                });
+            }
+            
+            return usersData;
+        }
+        
+        function updateCounts() {
+            friendsCount.textContent = friendsCache.length;
+            requestsCount.textContent = pendingCache.received.length;
+            
+            // Update badge style if there are pending requests
+            if (pendingCache.received.length > 0) {
+                requestsCount.style.background = 'var(--color-primary)';
+                requestsCount.style.color = 'black';
+            }
+        }
+        
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days < 1) return 'oggi';
+            if (days === 1) return 'ieri';
+            if (days < 7) return `${days} giorni`;
+            if (days < 30) return `${Math.floor(days / 7)} settimane`;
+            if (days < 365) return `${Math.floor(days / 30)} mesi`;
+            return `${Math.floor(days / 365)} anni`;
+        }
+        
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
+        function showLoading(container) {
+            container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // Mobile nav toggle
+        document.getElementById('mobileToggle').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
