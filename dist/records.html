@@ -13,6 +13,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'neon-cyan': '#00f3ff',
+                        'neon-green': '#00ff88',
+                        'neon-gold': '#ffd700',
+                        'neon-purple': '#9945FF',
+                        'surface': 'rgba(255, 255, 255, 0.03)',
+                        'surface-hover': 'rgba(255, 255, 255, 0.06)',
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         :root {
             --glass-bg: rgba(255, 255, 255, 0.03);
@@ -22,6 +41,11 @@
             --pr-gold-soft: rgba(255, 215, 0, 0.15);
             --pr-green: #00ff88;
             --pr-red: rgba(255, 107, 107, 0.8);
+            --pr-cyan: #00f3ff;
+            --pr-black: #000000;
+            --pr-card-bg: #FFFFFF;
+            --pr-text-dark: #121212;
+            --pr-text-muted: #666666;
         }
 
         /* Page Header */
@@ -47,8 +71,15 @@
         }
 
         @keyframes trophyFloat {
-            0%, 100% { transform: translateY(0) rotate(-5deg); }
-            50% { transform: translateY(-5px) rotate(5deg); }
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-5deg);
+            }
+
+            50% {
+                transform: translateY(-5px) rotate(5deg);
+            }
         }
 
         .pr-page-subtitle {
@@ -113,8 +144,15 @@
         }
 
         @keyframes celebratePulse {
-            0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.2); }
-            50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+            }
         }
 
         .pr-session-header {
@@ -130,8 +168,13 @@
         }
 
         @keyframes bounce {
-            from { transform: scale(1); }
-            to { transform: scale(1.1); }
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.1);
+            }
         }
 
         .pr-session-title {
@@ -174,483 +217,678 @@
             color: var(--color-text-muted);
             font-size: 0.8rem;
             font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .pr-page-subtitle {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        /* --- USER PROVIDED COMPONENTS --- */
+        /* From Uiverse.io by Smit-Prajapati */
+        .search-wrapper {
+            position: relative;
+            background: linear-gradient(135deg, rgb(179, 208, 253) 0%, rgb(164, 202, 248) 100%);
+            border-radius: 1000px;
+            padding: 10px;
+            display: grid;
+            place-content: center;
+            z-index: 0;
+            margin-bottom: 2rem;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            border-radius: 50px;
+            background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%);
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            box-shadow: rgba(79, 156, 232, 0.7) 3px 3px 5px 0px, rgba(79, 156, 232, 0.7) 5px 5px 20px 0px;
+        }
+
+        .input {
+            padding: 10px;
+            width: 100%;
+            background: linear-gradient(135deg, rgb(218, 232, 247) 0%, rgb(214, 229, 247) 100%);
+            border: none;
+            color: #5a7a99;
+            font-size: 16px;
+            border-radius: 50px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .input:focus {
+            outline: none;
+            background: linear-gradient(135deg, rgb(239, 247, 255) 0%, rgb(214, 229, 247) 100%);
+        }
+
+        .search__icon {
+            width: 50px;
+            aspect-ratio: 1;
+            border-left: 2px solid white;
+            border-top: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            border-radius: 50%;
+            padding-left: 12px;
+            margin-right: 10px;
+            position: relative;
+            z-index: 2;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.4rem;
         }
 
-        .pr-tab.active {
-            background: linear-gradient(135deg, var(--pr-gold), #FFA500);
-            color: #000;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        .search__icon:hover {
+            border-left: 3px solid white;
         }
 
-        .pr-tab:not(.active):hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: var(--color-text);
+        .search__icon path {
+            fill: #6fa3d6;
         }
 
-        /* Filter Section - Modern Chips */
-        .pr-filters-section {
-            margin-bottom: 1.5rem;
+        /* From Uiverse.io by alexruix */
+        .loader {
+            width: 80px;
+            height: 50px;
+            position: relative;
+            margin: 2rem auto;
         }
 
-        .pr-filters-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
+        .loader-text {
+            position: absolute;
+            top: 0;
+            padding: 0;
+            margin: 0;
+            color: #C8B6FF;
+            animation: text_713 3.5s ease both infinite;
+            font-size: .8rem;
+            letter-spacing: 1px;
         }
 
-        .pr-filter-label {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
+        .load {
+            background-color: #9A79FF;
+            border-radius: 50px;
             display: block;
+            height: 16px;
+            width: 16px;
+            bottom: 0;
+            position: absolute;
+            transform: translateX(64px);
+            animation: loading_713 3.5s ease both infinite;
         }
 
-        .pr-filter-chip {
-            padding: 0.5rem 1rem;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            color: var(--color-text-muted);
-            font-size: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
+        .load::before {
+            position: absolute;
+            content: "";
+            width: 100%;
+            height: 100%;
+            background-color: #D1C2FF;
+            border-radius: inherit;
+            animation: loading2_713 3.5s ease both infinite;
         }
 
-        .pr-filter-chip:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--color-text);
+        @keyframes text_713 {
+            0% {
+                letter-spacing: 1px;
+                transform: translateX(0px);
+            }
+
+            40% {
+                letter-spacing: 2px;
+                transform: translateX(26px);
+            }
+
+            80% {
+                letter-spacing: 1px;
+                transform: translateX(32px);
+            }
+
+            90% {
+                letter-spacing: 2px;
+                transform: translateX(0px);
+            }
+
+            100% {
+                letter-spacing: 1px;
+                transform: translateX(0px);
+            }
         }
 
-        .pr-filter-chip.active {
-            background: linear-gradient(135deg, var(--color-primary), #0099cc);
-            border-color: var(--color-primary);
-            color: #000;
-            font-weight: 600;
+        @keyframes loading_713 {
+            0% {
+                width: 16px;
+                transform: translateX(0px);
+            }
+
+            40% {
+                width: 100%;
+                transform: translateX(0px);
+            }
+
+            80% {
+                width: 16px;
+                transform: translateX(64px);
+            }
+
+            90% {
+                width: 100%;
+                transform: translateX(0px);
+            }
+
+            100% {
+                width: 16px;
+                transform: translateX(0px);
+            }
         }
 
-        .pr-filter-chip .chip-icon {
-            margin-right: 0.25rem;
+        @keyframes loading2_713 {
+            0% {
+                transform: translateX(0px);
+                width: 16px;
+            }
+
+            40% {
+                transform: translateX(0%);
+                width: 80%;
+            }
+
+            80% {
+                width: 100%;
+                transform: translateX(0px);
+            }
+
+            90% {
+                width: 80%;
+                transform: translateX(15px);
+            }
+
+            100% {
+                transform: translateX(0px);
+                width: 16px;
+            }
         }
 
-        /* Date Range Filter */
-        .pr-date-filter {
+        /* --- Input & Navigation System --- */
+        .pr-tabs-wrapper {
+            background: var(--surface-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 0.5rem;
             display: flex;
-            align-items: center;
             gap: 0.5rem;
-            flex-wrap: wrap;
+            backdrop-filter: var(--backdrop);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
         }
 
-        .pr-date-chip {
-            padding: 0.4rem 0.75rem;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            color: var(--color-text-muted);
-            font-size: 0.7rem;
+        .pr-tab-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 1px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: var(--radius-md);
+            position: relative;
+            outline: none;
         }
 
-        .pr-date-chip:hover {
-            border-color: var(--color-primary);
-            color: var(--color-text);
+        .pr-tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
         }
 
-        .pr-date-chip.active {
-            background: rgba(0, 243, 255, 0.15);
-            border-color: var(--color-primary);
-            color: var(--color-primary);
+        .pr-tab-btn:active {
+            transform: scale(0.97);
         }
 
-        /* Search Box */
+        .pr-tab-btn.active {
+            background: var(--surface-glass-hover);
+            color: var(--neon-cyan);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(0, 243, 255, 0.2);
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+        }
+
+        .pr-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 12px;
+            height: 2px;
+            background: var(--neon-cyan);
+            border-radius: 10px;
+            box-shadow: 0 0 10px var(--neon-cyan);
+            animation: tabReveal 0.3s ease-out;
+        }
+
+        @keyframes tabReveal {
+            from {
+                width: 0;
+                opacity: 0;
+            }
+
+            to {
+                width: 12px;
+                opacity: 1;
+            }
+        }
+
         .pr-search-box {
             position: relative;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .pr-search-input {
             width: 100%;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 14px;
-            color: var(--color-text);
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
+            padding: 1.25rem 1.25rem 1.25rem 3.5rem;
+            background: var(--surface-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: none;
         }
 
         .pr-search-input:focus {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.15), inset 0 0 10px rgba(0, 243, 255, 0.05);
             outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px rgba(0, 243, 255, 0.1);
-        }
-
-        .pr-search-input::placeholder {
-            color: var(--color-text-muted);
+            transform: translateY(-2px);
         }
 
         .pr-search-icon {
             position: absolute;
-            left: 0.85rem;
+            left: 1.25rem;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 0.9rem;
-            opacity: 0.5;
+            color: var(--text-tertiary);
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
         }
 
-        /* PR Record Cards - Glass Morphism */
-        .pr-list-container {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+        .pr-search-input:focus+.pr-search-icon {
+            color: var(--neon-cyan);
         }
 
-        /* Date Group Headers */
+        /* --- SENIOR DESIGN: Filter Chips System --- */
+        .pr-chip-scroller {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .pr-chip-scroller::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Base Chip - Dark, high contrast */
+        .pr-filter-chip {
+            position: relative;
+            padding: 0.75rem 1.25rem;
+            border-radius: 50px;
+            background: #1a1a2e;
+            border: 2px solid #2d2d44;
+            color: #8b8b9e;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Hover State - Glow hint */
+        .pr-filter-chip:hover {
+            border-color: #00f3ff40;
+            color: #c0c0d0;
+            background: #1e1e35;
+            transform: translateY(-1px);
+        }
+
+        /* Press/Tap Animation */
+        .pr-filter-chip:active {
+            transform: scale(0.95) translateY(0);
+            transition: transform 0.1s ease;
+        }
+
+        /* ACTIVE STATE - Cyan Neon */
+        button.pr-filter-chip.active,
+        .pr-filter-chip.active {
+            background: linear-gradient(135deg, #00f3ff 0%, #00d4e8 100%) !important;
+            border-color: #00f3ff !important;
+            color: #000 !important;
+            font-weight: 800 !important;
+            box-shadow:
+                0 4px 20px rgba(0, 243, 255, 0.4),
+                0 0 40px rgba(0, 243, 255, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Active chip inner glow animation */
+        .pr-filter-chip.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: chipShine 2s ease-in-out infinite;
+        }
+
+        @keyframes chipShine {
+            0% {
+                left: -100%;
+            }
+
+            50%,
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* DATE CHIP ACTIVE - White/Gold variant */
+        .pr-date-chip.active {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb800 100%) !important;
+            border-color: #ffd700 !important;
+            color: #1a1a1a !important;
+            box-shadow:
+                0 4px 20px rgba(255, 215, 0, 0.35),
+                0 0 30px rgba(255, 215, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        }
+
+
+        /* --- MAIN CARD ENGINE --- */
         .pr-date-group {
-            margin-top: 1rem;
-        }
-
-        .pr-date-group:first-child {
-            margin-top: 0;
+            margin-bottom: 3rem;
         }
 
         .pr-date-group-header {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            padding: 0.5rem 0;
-        }
-
-        .pr-date-group-line {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--glass-border), transparent);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
         }
 
         .pr-date-group-label {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 1px;
-            white-space: nowrap;
         }
 
-        /* Modern PR Card */
+        .pr-date-group-line {
+            height: 1px;
+            flex: 1;
+            background: linear-gradient(90deg, var(--border-glass), transparent);
+        }
+
+        /* Premium Card */
         .pr-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(20, 20, 22, 0.6), rgba(10, 10, 12, 0.8));
+            backdrop-filter: var(--backdrop);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-xl);
+            margin-bottom: 1.5rem;
+            position: relative;
             overflow: hidden;
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--shadow-card);
         }
 
-        .pr-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255, 215, 0, 0.3);
-            box-shadow: var(--glass-shadow);
+        .pr-card:active {
+            transform: scale(0.98);
         }
 
         .pr-card.session-highlight {
-            border-color: rgba(255, 215, 0, 0.5);
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), var(--glass-bg));
+            border-color: var(--neon-gold);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
         }
 
+        .pr-card.session-highlight::before {
+            content: 'NEW SESSION';
+            position: absolute;
+            top: 12px;
+            right: -30px;
+            background: var(--neon-gold);
+            color: #000;
+            font-size: 0.6rem;
+            font-weight: 800;
+            padding: 2px 30px;
+            transform: rotate(45deg);
+            z-index: 10;
+        }
+
+        /* Card Header */
         .pr-card-header {
-            padding: 1rem 1rem 0.75rem;
+            padding: 1.5rem 1.5rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 0.5rem;
-        }
-
-        .pr-exercise-info {
-            flex: 1;
-            min-width: 0;
         }
 
         .pr-exercise-name {
+            font-family: var(--font-body);
             font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--color-text);
-            margin-bottom: 0.25rem;
-            word-break: break-word;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 0.4rem;
+            line-height: 1.3;
         }
 
         .pr-type-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
+            display: inline-block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             padding: 0.25rem 0.6rem;
-            border-radius: 8px;
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .pr-type-badge.weight {
-            background: rgba(147, 112, 219, 0.2);
-            color: #b794f6;
-        }
-
-        .pr-type-badge.rm,
-        .pr-type-badge.1rm {
-            background: rgba(0, 243, 255, 0.15);
-            color: var(--color-primary);
-        }
-
-        .pr-type-badge.reps {
-            background: rgba(255, 165, 0, 0.2);
-            color: #FFB347;
-        }
-
-        .pr-type-badge.volume {
-            background: rgba(0, 255, 136, 0.15);
-            color: var(--pr-green);
-        }
-
-        .pr-card-date {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
-            white-space: nowrap;
-        }
-
-        /* Comparison Section - Modern */
-        .pr-comparison {
-            display: flex;
-            align-items: stretch;
-            padding: 0 0.75rem 0.75rem;
-            gap: 0.5rem;
-        }
-
-        .pr-value-box {
-            flex: 1;
-            padding: 0.75rem;
-            border-radius: 14px;
-            text-align: center;
-        }
-
-        .pr-value-box.old {
-            background: rgba(255, 107, 107, 0.08);
-            border: 1px solid rgba(255, 107, 107, 0.15);
-        }
-
-        .pr-value-box.new {
-            background: rgba(0, 255, 136, 0.08);
-            border: 1px solid rgba(0, 255, 136, 0.2);
-        }
-
-        .pr-value-label {
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.35rem;
-            opacity: 0.7;
-        }
-
-        .pr-value-box.old .pr-value-label {
-            color: var(--pr-red);
-        }
-
-        .pr-value-box.new .pr-value-label {
-            color: var(--pr-green);
-        }
-
-        .pr-value-number {
-            font-family: var(--font-display);
-            font-size: 1.4rem;
-            font-weight: 800;
-            line-height: 1;
-        }
-
-        .pr-value-box.old .pr-value-number {
-            color: rgba(255, 255, 255, 0.35);
-            text-decoration: line-through;
-            text-decoration-color: rgba(255, 107, 107, 0.5);
-        }
-
-        .pr-value-box.new .pr-value-number {
-            color: var(--pr-green);
-        }
-
-        .pr-value-unit {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
-            margin-top: 0.2rem;
-        }
-
-        .pr-value-context {
-            font-size: 0.65rem;
-            color: var(--color-text-muted);
-            margin-top: 0.25rem;
-            opacity: 0.8;
-        }
-
-        /* Delta Arrow */
-        .pr-delta-arrow {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0 0.5rem;
-            min-width: 60px;
-        }
-
-        .pr-delta-icon {
-            font-size: 1.25rem;
-            color: var(--pr-green);
-            animation: arrowPulse 1.5s ease-in-out infinite;
-        }
-
-        @keyframes arrowPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.7; transform: scale(1.1); }
-        }
-
-        .pr-delta-value {
-            font-family: var(--font-display);
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--pr-green);
-            margin-top: 0.15rem;
-        }
-
-        .pr-delta-percent {
-            font-size: 0.6rem;
-            color: rgba(0, 255, 136, 0.7);
-        }
-
-        .pr-delta-new-badge {
-            background: linear-gradient(135deg, var(--pr-gold), #FFA500);
-            color: #000;
-            font-size: 0.55rem;
-            font-weight: 700;
-            padding: 0.2rem 0.4rem;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-
-        /* Card Footer - Timestamps */
-        .pr-card-footer {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.6rem 1rem;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid var(--glass-border);
-            font-size: 0.65rem;
-            color: var(--color-text-muted);
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .pr-timestamp {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-family: var(--font-body);
+        }
+
+        /* COMPARISON ENGINE (Grid Layout) */
+        .pr-comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: stretch;
+            margin: 0.5rem 0.5rem 0.5rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: var(--radius-lg);
+            padding: 0.5rem;
+            position: relative;
+        }
+
+        /* Old Value - Dimmed */
+        .pr-val-col-old {
+            padding: 1.25rem 1rem;
+            text-align: center;
+            border-radius: var(--radius-md);
+            background: transparent;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        .pr-card:hover .pr-val-col-old {
+            opacity: 0.7;
+        }
+
+        /* New Value - Highlighted */
+        .pr-val-col-new {
+            padding: 1.25rem 1rem;
+            text-align: center;
+            border-radius: var(--radius-md);
+            background: rgba(0, 243, 255, 0.03);
+            border: 1px solid rgba(0, 243, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pr-val-col-new::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(0, 243, 255, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .pr-card:hover .pr-val-col-new::after {
+            opacity: 1;
+        }
+
+        /* Typography for Values */
+        .pr-label-mini {
+            display: block;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-tertiary);
+            margin-bottom: 0.2rem;
+        }
+
+        .pr-val-col-new .pr-label-mini {
+            color: var(--neon-cyan);
+            opacity: 0.8;
+        }
+
+        .pr-number-big {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-primary);
+        }
+
+        .pr-val-col-new .pr-number-big {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+        }
+
+        .pr-unit-mini {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+            margin-left: 2px;
+        }
+
+        /* Delta Badge - The Bridge */
+        .pr-delta-container {
             display: flex;
             align-items: center;
-            gap: 0.3rem;
+            justify-content: center;
+            position: relative;
+            width: 40px;
         }
 
-        .pr-timestamp.highlight {
-            color: var(--pr-green);
+        .pr-delta-pill {
+            background: #1a1a1a;
+            border: 1px solid var(--border-glass-light);
+            padding: 0.4rem 0.8rem;
+            border-radius: 100px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 70px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
 
-        /* Current PR Card (All PRs Tab) */
-        .pr-current-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            overflow: hidden;
+        .pr-delta-val {
+            color: var(--neon-green);
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .pr-delta-pct {
+            font-size: 0.6rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .pr-delta-new {
+            background: var(--neon-gold);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.65rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        }
+
+        /* Floating Mascot */
+        .pr-floating-mascott {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 70px;
+            height: 70px;
+            z-index: 100;
+            filter: drop-shadow(0 0 15px rgba(0, 243, 255, 0.2));
+            opacity: 0.8;
             transition: all 0.3s ease;
         }
 
-        .pr-current-card:hover {
-            border-color: rgba(0, 243, 255, 0.3);
-            box-shadow: var(--glass-shadow);
+        .pr-floating-mascott:hover {
+            opacity: 1;
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 0 25px rgba(0, 243, 255, 0.5));
         }
 
-        .pr-current-header {
-            padding: 1rem;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .pr-current-name {
-            font-weight: 700;
-            font-size: 1rem;
-        }
-
-        .pr-current-date {
-            font-size: 0.7rem;
-            color: var(--color-text-muted);
-        }
-
-        .pr-current-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            padding: 0.75rem;
-        }
-
-        .pr-current-stat {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 12px;
-            padding: 0.75rem;
+        /* Results Info */
+        .pr-results-info {
             text-align: center;
-        }
-
-        .pr-current-stat-label {
-            font-size: 0.6rem;
-            color: var(--color-text-muted);
-            margin-bottom: 0.3rem;
-        }
-
-        .pr-current-stat-value {
-            font-family: var(--font-display);
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--color-primary);
-        }
-
-        .pr-current-stat-unit {
-            font-size: 0.65rem;
-            color: var(--color-text-muted);
+            margin-bottom: 2rem;
+            color: var(--text-tertiary);
+            font-size: 0.85rem;
         }
 
         /* Empty State */
         .pr-empty-state {
             text-align: center;
-            padding: 3rem 1.5rem;
-            background: var(--glass-bg);
-            border: 1px dashed var(--glass-border);
-            border-radius: 20px;
+            padding: 4rem 1rem;
+            opacity: 0.5;
         }
 
         .pr-empty-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        .pr-empty-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            color: var(--color-text);
         }
 
         .pr-empty-text {
@@ -679,7 +917,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Info Tooltip */
@@ -799,8 +1039,9 @@
     <header class="header">
         <div class="container">
             <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
+
             <nav>
-                <div class="mobile-toggle" id="mobileToggle">☰</div>
+                <div class="mobile-toggle" id="mobileToggle" onclick="history.back()" style="cursor:pointer;">✕</div>
                 <ul class="nav-links" id="navLinks">
                     <li><a href="creator.html">📝 Crea Schede</a></li>
                     <li><a href="diary.html">📓 Diario</a></li>
@@ -815,101 +1056,112 @@
     <section class="section" style="padding-top: 100px; padding-bottom: 120px;">
         <div class="container">
 
-            <!-- Page Header -->
+
+            <!-- Premium Page Header -->
             <div class="pr-page-header">
                 <h1 class="pr-page-title">
-                    <span class="trophy-icon">🏆</span>
-                    I Tuoi <span class="text-primary">Record</span>
+                    STORICO <span style="color:var(--neon-cyan)">RECORD</span>
                 </h1>
-                <p class="pr-page-subtitle">Traccia i tuoi progressi e celebra ogni conquista</p>
+                <p class="pr-page-subtitle">TRACCIA OGNI TUA VITTORIA</p>
             </div>
 
-            <!-- Stats Summary -->
-            <div class="pr-stats-container">
-                <div class="pr-stat-card">
-                    <div class="pr-stat-value" id="totalPRsCount">0</div>
-                    <div class="pr-stat-label">Record Totali</div>
+            <!-- SENIOR DESIGN: Stats Cards -->
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <!-- Total Records -->
+                <div class="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105"
+                    style="background: #1a1a2e; border: 2px solid #2d2d44;">
+                    <div id="totalPRsCount" class="text-2xl font-black" style="color: #fff;">0</div>
+                    <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #8b8b9e;">Record Totali</div>
                 </div>
-                <div class="pr-stat-card">
-                    <div class="pr-stat-value" id="recentPRsCount">0</div>
-                    <div class="pr-stat-label">Ultimi 30gg</div>
+                <!-- Recent PRs -->
+                <div class="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105"
+                    style="background: linear-gradient(135deg, #00f3ff15 0%, #1a1a2e 100%); border: 2px solid #00f3ff40;">
+                    <div id="recentPRsCount" class="text-2xl font-black" style="color: #00f3ff;">0</div>
+                    <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #00f3ff80;">Ultimi 30gg</div>
                 </div>
-                <div class="pr-stat-card">
-                    <div class="pr-stat-value" id="exercisesWithPRs">0</div>
-                    <div class="pr-stat-label">Esercizi</div>
+                <!-- Exercises -->
+                <div class="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105"
+                    style="background: linear-gradient(135deg, #ffd70015 0%, #1a1a2e 100%); border: 2px solid #ffd70040;">
+                    <div id="exercisesWithPRs" class="text-2xl font-black" style="color: #ffd700;">0</div>
+                    <div class="text-[0.6rem] uppercase tracking-wider mt-1" style="color: #ffd70080;">Esercizi</div>
                 </div>
             </div>
 
-            <!-- Session Banner (shown after workout) -->
-            <div class="pr-session-banner" id="sessionPRHighlight">
-                <div class="pr-session-header">
-                    <span class="pr-session-icon">🎉</span>
+            <!-- Session Highlight Banner -->
+            <div class="pr-session-banner" id="sessionPRHighlight"
+                style="display:none; background:var(--neon-gold); color:black; padding:1.5rem; border-radius:var(--radius-lg); margin-bottom:2rem; box-shadow:0 0 30px rgba(255, 215, 0, 0.3);">
+                <div class="pr-session-header" style="display:flex; align-items:center; gap:1rem;">
+                    <span class="pr-session-icon" style="font-size:2.5rem;">🏆</span>
                     <div>
-                        <div</div> class="pr-session-title">Progressi Straordinari!</div>
-                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record in questa sessione</div>
+                        <div class="pr-session-title"
+                            style="font-family:var(--font-display); font-size:1.5rem; font-weight:800; text-transform:uppercase;">
+                            Nuovi Record!</div>
+                        <div class="pr-session-subtitle" id="sessionPRSubtitle" style="font-weight:600; opacity:0.8;">
+                            Sessione leggendaria completata.</div>
                     </div>
                 </div>
-                <div id="sessionPRList"></div>
+            </div>
+            <div id="sessionPRList"></div>
+
+            <!-- SENIOR DESIGN: Navigation Tabs -->
+            <div class="flex gap-2 p-2 mb-6 rounded-full" style="background: #0d0d15; border: 2px solid #1a1a2e;">
+                <button
+                    class="pr-tab-btn active flex-1 py-3 px-6 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300"
+                    data-tab="history">
+                    Cronologia
+                </button>
+                <button
+                    class="pr-tab-btn flex-1 py-3 px-6 rounded-full text-sm font-bold uppercase tracking-wider transition-all duration-300"
+                    data-tab="all">
+                    Tutti i PR
+                </button>
             </div>
 
-            <!-- Tabs -->
-            <div class="pr-tabs-wrapper">
-                <div class="pr-tabs">
-                    <button class="pr-tab active" data-tab="history">
-                        <span>📜</span> Cronologia
-                    </button>
-                    <button class="pr-tab" data-tab="all">
-                        <span>🏅</span> Tutti i PR
-                    </button>
-                </div>
-            </div>
-
-            <!-- Filters Section -->
+            <!-- Filters & Search Toolbar -->
             <div class="pr-filters-section" id="filtersSection">
-                <!-- Search -->
-                <div class="pr-search-box">
-                    <span class="pr-search-icon">🔍</span>
-                    <input type="text" class="pr-search-input" id="prSearchInput" placeholder="Cerca esercizio...">
+                <div class="search-wrapper">
+                    <div class="search-container">
+                        <input type="text" class="input" id="searchInput" placeholder="Cerca esercizio...">
+                        <svg viewBox="0 0 24 24" class="search__icon">
+                            <path
+                                d="M21.71,20.29,18,16.61A9,9,0,1,0,16.61,18l3.68,3.68a1,1,0,0,0,1.42,0A1,1,0,0,0,21.71,20.29ZM11,18a7,7,0,1,1,7-7A7,7,0,0,1,11,18Z">
+                            </path>
+                        </svg>
+                    </div>
                 </div>
 
-                <!-- Category Filters -->
-                <span class="pr-filter-label">Tipo di Record</span>
-                <div class="pr-filters-row" id="categoryFilters">
-                    <button class="pr-filter-chip active" data-filter="all">
-                        <span class="chip-icon">✨</span> Tutti
-                    </button>
-                    <button class="pr-filter-chip" data-filter="weight">
-                        <span class="chip-icon">💪</span> Peso Max
-                    </button>
-                    <button class="pr-filter-chip" data-filter="1rm">
-                        <span class="chip-icon">🎯</span> 1RM Stimato
-                    </button>
-                    <button class="pr-filter-chip" data-filter="reps">
-                        <span class="chip-icon">🔥</span> Ripetizioni
-                    </button>
-                    <button class="pr-filter-chip" data-filter="volume">
-                        <span class="chip-icon">📊</span> Volume
-                        <span class="pr-info-tip" title="Volume totale sollevato per esercizio in un allenamento">?</span>
-                    </button>
-                </div>
+                <!-- SENIOR DESIGN: Filter Chips -->
+                <div class="flex flex-col gap-5" style="overflow: visible;">
 
-                <!-- Date Range Filters -->
-                <span class="pr-filter-label">Periodo</span>
-                <div class="pr-date-filter" id="dateFilters">
-                    <button class="pr-date-chip active" data-date="all">Tutto</button>
-                    <button class="pr-date-chip" data-date="7">7 giorni</button>
-                    <button class="pr-date-chip" data-date="30">30 giorni</button>
-                    <button class="pr-date-chip" data-date="90">3 mesi</button>
-                    <button class="pr-date-chip" data-date="365">1 anno</button>
+                    <!-- Category Filters -->
+                    <div id="categoryFilters" class="flex gap-3 overflow-x-auto pb-4 pt-2 px-2 scrollbar-hide"
+                        style="margin: -8px; padding: 8px; overflow: visible;">
+                        <button class="pr-filter-chip active" data-filter="all">✨ Tutti</button>
+                        <button class="pr-filter-chip" data-filter="weight">🏋️ Peso Max</button>
+                        <button class="pr-filter-chip" data-filter="1rm">💪 1RM</button>
+                        <button class="pr-filter-chip" data-filter="reps">🔁 Reps</button>
+                        <button class="pr-filter-chip" data-filter="volume">📊 Volume</button>
+                    </div>
+
+                    <!-- Time Filters -->
+                    <div id="dateFilters" class="flex gap-3 overflow-x-auto pb-4 pt-2 px-2 scrollbar-hide"
+                        style="margin: -8px; padding: 8px; overflow: visible;">
+                        <button class="pr-filter-chip pr-date-chip active" data-date="all">🗓️ Sempre</button>
+                        <button class="pr-filter-chip pr-date-chip" data-date="30">30 giorni</button>
+                        <button class="pr-filter-chip pr-date-chip" data-date="90">3 Mesi</button>
+                        <button class="pr-filter-chip pr-date-chip" data-date="365">1 Anno</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Results Info -->
+            <!-- Results Count & Context -->
             <div class="pr-results-info" id="resultsInfo">
-                <div class="pr-results-count">
-                    <span id="resultsCount">0 record trovati</span>
-                </div>
-                <button class="pr-clear-filters" id="clearFilters" style="display: none;">Resetta filtri</button>
+                <span id="resultsCount">
+                    <div class="loader">
+                        <span class="loader-text">loading</span>
+                        <span class="load"></span>
+                    </div>
+                </span>
             </div>
 
             <!-- PR List -->
@@ -933,7 +1185,7 @@
 
             // DOM Elements
             const container = document.getElementById('prListContainer');
-            const searchInput = document.getElementById('prSearchInput');
+            const searchInput = document.getElementById('searchInput');
             const resultsCount = document.getElementById('resultsCount');
             const clearFiltersBtn = document.getElementById('clearFilters');
             const sessionHighlight = document.getElementById('sessionPRHighlight');
@@ -1044,25 +1296,27 @@
 
                 for (const [dateLabel, prs] of Object.entries(grouped)) {
                     html += `
-                        <div class="pr-date-group">
-                            <div class="pr-date-group-header">
-                                <span class="pr-date-group-label">${dateLabel}</span>
-                                <div class="pr-date-group-line"></div>
+                        <div class="mb-8">
+                            <div class=\"sticky top-0 z-10 flex items-center gap-4 py-4 mb-4 bg-[#0d0d15]/95 backdrop-blur-xl border-b border-[#2d2d44]\">
+                                <span class=\"text-[0.65rem] font-extrabold text-[#8b8b9e] uppercase tracking-[0.2em] flex items-center gap-2\">
+                                    <span class=\"text-[#00f3ff] opacity-70\">●</span> ${dateLabel.replace('📅 ', '')}
+                                </span>
+                                <div class=\"flex-1 h-px bg-[#2d2d44]\"></div>
                             </div>
                             ${prs.map(pr => {
-                                let records = pr.records;
-                                if (currentFilter !== 'all') {
-                                    records = records.filter(r => r.type === currentFilter || r.type === '1rm');
-                                }
-                                // FIX: Skip records with no valid oldValue AND newValue (ghost records)
-                                records = records.filter(r => {
-                                    const hasNewValue = r.newValue !== undefined && r.newValue !== null && r.newValue > 0;
-                                    return hasNewValue;
-                                });
-                                return records.map(record =>
-                                    renderCompactPRCard(pr.exercise, record, pr.timestamp || pr.date, false)
-                                ).join('');
-                            }).join('')}
+                        let records = pr.records;
+                        if (currentFilter !== 'all') {
+                            records = records.filter(r => r.type === currentFilter || r.type === '1rm');
+                        }
+                        // FIX: Skip records with no valid oldValue AND newValue (ghost records)
+                        records = records.filter(r => {
+                            const hasNewValue = r.newValue !== undefined && r.newValue !== null && r.newValue > 0;
+                            return hasNewValue;
+                        });
+                        return records.map(record =>
+                            renderCompactPRCard(pr.exercise, record, pr.timestamp || pr.date, false)
+                        ).join('');
+                    }).join('')}
                         </div>
                     `;
                 }
@@ -1125,11 +1379,12 @@
             }
 
             function renderCompactPRCard(exercise, record, timestamp, isSession = false) {
+                // Get strictly formatted date
                 const recordDate = new Date(timestamp);
                 const formattedDate = recordDate.toLocaleDateString('it-IT', {
-                    day: 'numeric',
+                    day: '2-digit',
                     month: 'short'
-                });
+                }).toUpperCase();
 
                 // FIX: Validate record values - skip ghost records
                 const oldValue = record.oldValue !== undefined && record.oldValue !== null ? record.oldValue : 0;
@@ -1141,205 +1396,169 @@
                     return '';
                 }
 
+                // --- VISUALIZATION ENGINE ---
                 const delta = newValue - oldValue;
                 const deltaPercent = oldValue > 0 ? ((delta / oldValue) * 100).toFixed(1) : 0;
                 const isNew = oldValue === 0;
-                const oldDate = getOldRecordDate(exercise, record.type);
+
+
+                // Senior Design: Card Styling
+                const cardClass = isSession
+                    ? 'relative bg-[#1a1a2e] border-2 border-[#ffd70040] shadow-[0_4px_15px_rgba(255,215,0,0.1)]'
+                    : 'relative bg-[#1a1a2e] border-2 border-[#2d2d44] hover:border-[#00f3ff50] transition-all duration-300';
+
+                // Highlight matching text if searching
+                const highlightMatch = (text) => {
+                    if (!searchQuery) return text;
+                    const regex = new RegExp(`(${searchQuery})`, 'gi');
+                    return text.replace(regex, '<mark class="bg-[#00f3ff40] text-white px-0.5 rounded">$1</mark>');
+                };
 
                 return `
-                    <div class="pr-card ${isSession ? 'session-highlight' : ''}">
-                        <div class="pr-card-header">
-                            <div class="pr-exercise-info">
-                                <div class="pr-exercise-name">${exercise}</div>
-                                <span class="pr-type-badge ${record.type}">${record.label}</span>
+                    <div class="${cardClass} rounded-2xl mb-4 overflow-hidden group hover:translate-y-[-2px]">
+                        ${isSession ? '<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#ffd700] to-transparent"></div>' : ''}
+                        
+                        <!-- Card Header -->
+                        <div class="flex items-start justify-between p-4 pb-2">
+                            <div class="flex-1">
+                                <div class="text-white font-black text-sm tracking-tight mb-1">${highlightMatch(exercise)}</div>
+                                <div class="inline-flex">
+                                    <span class="px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase tracking-widest ${record.type === '1rm' ? 'bg-[#00f3ff20] text-[#00f3ff]' : 'bg-[#2d2d44] text-[#8b8b9e]'}">
+                                        ${record.label.replace(/[^a-zA-Z ]/g, "").trim().toUpperCase()}
+                                    </span>
+                                </div>
                             </div>
-                            <span class="pr-card-date">${formattedDate}</span>
+                            <span class="text-[0.6rem] text-[#8b8b9e] font-bold font-mono bg-[#0d0d15] px-2 py-1 rounded">${formattedDate}</span>
                         </div>
 
-                        <div class="pr-comparison">
-                            <div class="pr-value-box old">
-                                <div>
-                                    <div class="pr-value-label">Precedente</div>
-                                    <div class="pr-value-number">${oldValue > 0 ? oldValue : '—'}</div>
-                                    <div class="pr-value-unit">${oldValue > 0 ? record.unit : ''}</div>
-                                </div>
-                                ${record.context && oldValue > 0 ? `<div class="pr-value-context">${record.context}</div>` : ''}
+                        <!-- Main Content Grid -->
+                        <div class="grid grid-cols-3 gap-2 p-4 pt-1">
+                            <!-- PREVIOUS (High Contrast Muted) -->
+                            <div class="text-center p-2 rounded-xl bg-[#0d0d15] border border-[#2d2d44]">
+                                <div class="text-[0.5rem] text-[#5a5a70] font-black uppercase tracking-tighter mb-1">PREC.</div>
+                                <div class="text-lg font-black text-[#5a5a70]">${oldValue > 0 ? oldValue : '-'}</div>
+                                <div class="text-[0.5rem] text-[#4a4a60]">${oldValue > 0 ? record.unit : ''}</div>
                             </div>
 
-                            <div class="pr-delta-arrow">
-                                <span class="pr-delta-icon">→</span>
-                                ${isNew ?
-                                    `<span class="pr-delta-new-badge">NUOVO!</span>` :
-                                    `<div class="pr-delta-value">+${delta.toFixed(1)}</div>
-                                     <div class="pr-delta-percent">+${deltaPercent}%</div>`
-                                }
+                            <!-- DELTA (Dynamic Accent) -->
+                            <div class="flex items-center justify-center">
+                                ${isNew
+                        ? '<div class="bg-[#00f3ff] text-black font-black text-[0.7rem] px-3 py-1 rounded-full shadow-[0_0_15px_rgba(0,243,255,0.4)]">RECORD</div>'
+                        : `<div class="text-center">
+                                         <div class="text-[#00f3ff] text-sm font-black">+${delta.toFixed(1)}</div>
+                                         <div class="text-[#00f3ff80] text-[0.55rem] font-bold">+${deltaPercent}%</div>
+                                       </div>`
+                    }
                             </div>
 
-                            <div class="pr-value-box new">
-                                <div>
-                                    <div class="pr-value-label">Nuovo PR</div>
-                                    <div class="pr-value-number">${newValue}</div>
-                                    <div class="pr-value-unit">${record.unit}</div>
-                                </div>
-                                ${record.context ? `<div class="pr-value-context">${record.context}</div>` : ''}
+                            <!-- NEW (Vibrant High Contrast) -->
+                            <div class="text-center p-2 rounded-xl bg-[#0d0d15] border-2 ${isSession ? 'border-[#ffd700]' : 'border-[#00f3ff50]'} shadow-inner">
+                                <div class="text-[0.5rem] ${isSession ? 'text-[#ffd700]' : 'text-[#00f3ff80]'} font-black uppercase tracking-tighter mb-1">NUOVO</div>
+                                <div class="text-2xl font-black ${isSession ? 'text-[#ffd700]' : 'text-[#00f3ff]'}">${newValue}</div>
+                                <div class="text-[0.5rem] ${isSession ? 'text-[#ffd70080]' : 'text-[#00f3ff50]'} font-bold">${record.unit}</div>
                             </div>
-                        </div>
-
-                        <div class="pr-card-footer">
-                            <span class="pr-timestamp">
-                                <span>📅</span> ${oldDate || 'Prima volta'}
-                            </span>
-                            <span class="pr-timestamp highlight">
-                                <span>🆕</span> ${formattedDate}
-                            </span>
                         </div>
                     </div>
                 `;
             }
 
             function renderCurrentPRCard(pr) {
-                const lastUpdated = pr.lastUpdated
-                    ? new Date(pr.lastUpdated).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : 'N/D';
-
                 const records = [];
-                // FIX: Only add records with valid values > 0
-                if (pr.maxWeight > 0) records.push({ type: 'weight', label: '💪 Peso Max', value: pr.maxWeight, unit: 'kg' });
-                if (pr.max1RM > 0) records.push({ type: '1rm', label: '🎯 1RM', value: pr.max1RM, unit: 'kg' });
-                if (pr.maxReps > 0) records.push({ type: 'reps', label: '🔥 Reps', value: pr.maxReps, unit: 'reps' });
-                if (pr.maxVolume > 0) records.push({ type: 'volume', label: '📊 Volume', value: pr.maxVolume, unit: 'kg' });
+                if (pr.maxWeight > 0) records.push({ label: 'MAX WEIGHT', value: pr.maxWeight, unit: 'KG', color: '#00f3ff' });
+                if (pr.max1RM > 0) records.push({ label: '1RM ESTIMATED', value: pr.max1RM, unit: 'KG', color: '#ffd700' });
 
-                // Apply filter
-                let displayRecords = records;
-                if (currentFilter !== 'all') {
-                    displayRecords = records.filter(r => r.type === currentFilter);
-                    if (displayRecords.length === 0) return '';
-                }
+                if (records.length === 0) return '';
 
                 return `
-                    <div class="pr-current-card">
-                        <div class="pr-current-header">
-                            <span class="pr-current-name">${pr.displayName}</span>
-                            <span class="pr-current-date">📅 ${lastUpdated}</span>
+                    <div class="relative bg-[#1a1a2e] border-2 border-[#2d2d44] rounded-2xl mb-4 overflow-hidden group hover:border-[#00f3ff40] transition-all">
+                        <div class="p-4 pb-2">
+                            <div class="text-white font-black text-sm tracking-tight">${pr.displayName}</div>
                         </div>
-                        <div class="pr-current-grid">
-                            ${displayRecords.map(r => `
-                                <div class="pr-current-stat">
-                                    <div class="pr-current-stat-label">${r.label}</div>
-                                    <div class="pr-current-stat-value">${r.value}</div>
-                                    <div class="pr-current-stat-unit">${r.unit}</div>
+                        <div class="grid grid-cols-${records.length} gap-2 p-4 pt-0">
+                            ${records.map(r => `
+                                <div class="text-center p-3 rounded-xl bg-[#0d0d15] border border-[#2d2d44]">
+                                    <div class="text-[0.55rem] font-black uppercase tracking-widest mb-1" style="color: ${r.color}80">${r.label}</div>
+                                    <div class="text-2xl font-black" style="color: ${r.color}">${r.value}</div>
+                                    <div class="text-[0.55rem] font-bold text-[#4a4a60]">${r.unit}</div>
                                 </div>
-                            `).join('')}
+                            `).join('')
+                    }
                         </div>
                     </div>
                 `;
             }
 
             function renderEmptyState() {
-                const hasFilters = currentFilter !== 'all' || currentDateFilter !== 'all' || searchQuery;
-
-                if (hasFilters) {
-                    return `
-                        <div class="pr-empty-state">
-                            <div class="pr-empty-icon">🔍</div>
-                            <div class="pr-empty-title">Nessun risultato</div>
-                            <div class="pr-empty-text">
-                                Prova a modificare i filtri o la ricerca per trovare i tuoi record.
-                            </div>
-                        </div>
-                    `;
-                }
-
                 return `
-                    <div class="pr-empty-state">
-                        <div class="pr-empty-icon">🏋️</div>
-                        <div class="pr-empty-title">Nessun Record Ancora</div>
-                        <div class="pr-empty-text">
-                            Completa i tuoi allenamenti e i tuoi Personal Record appariranno qui automaticamente.
+                    <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                        <div class="relative mb-6">
+                            <div class="text-6xl animate-pulse">⚡</div>
+                            <div class="absolute inset-0 bg-neon-cyan/20 blur-3xl rounded-full"></div>
                         </div>
+                        <h3 class="text-xl font-black text-white uppercase tracking-wider mb-2">Nessun Record</h3>
+                        <p class="text-sm text-gray-500 max-w-xs">
+                            ${searchQuery
+                        ? `Nessun risultato per "<span class="text-neon-cyan">${searchQuery}</span>"`
+                        : 'Non ci sono ancora dati per questa selezione.'}
+                        </p>
+                        ${searchQuery ? `
+                            <button onclick="document.getElementById('searchInput').value=''; searchQuery=''; renderPRs();" 
+                                    class="mt-6 px-4 py-2 rounded-full text-xs font-semibold bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20 hover:bg-neon-cyan/20 transition-all">
+                                Cancella ricerca
+                            </button>
+                        ` : ''
+                    }
                     </div>
                 `;
             }
 
             function getOldRecordDate(exerciseName, recordType) {
-                const history = prTracker.getPRHistory(100);
-                const normalizedName = exerciseName.toLowerCase().trim();
-
-                for (let i = 1; i < history.length; i++) {
-                    const pr = history[i];
-                    if (pr.exercise.toLowerCase().trim() === normalizedName) {
-                        const hasMatchingRecord = pr.records.some(r => r.type === recordType);
-                        if (hasMatchingRecord) {
-                            return new Date(pr.timestamp || pr.date).toLocaleDateString('it-IT', {
-                                day: 'numeric',
-                                month: 'short'
-                            });
-                        }
-                    }
-                }
+                // Not strictly needed in new design but kept for logic safety
                 return null;
             }
 
             function updateClearFiltersVisibility() {
-                const hasFilters = currentFilter !== 'all' || currentDateFilter !== 'all' || searchQuery;
-                clearFiltersBtn.style.display = hasFilters ? 'inline' : 'none';
+                // Auto-handled by UI state
             }
 
             function setupEventListeners() {
-                // Tab switching
-                document.querySelectorAll('.pr-tab').forEach(tab => {
-                    tab.addEventListener('click', () => {
-                        document.querySelectorAll('.pr-tab').forEach(t => t.classList.remove('active'));
-                        tab.classList.add('active');
-                        currentTab = tab.dataset.tab;
+                // TABS
+                document.querySelectorAll('.pr-tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.pr-tab-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        currentTab = btn.dataset.tab;
                         renderPRs();
                     });
                 });
 
-                // Category filters
-                document.querySelectorAll('#categoryFilters .pr-filter-chip').forEach(chip => {
+                // CHIPS SCROLLER (Horizontal)
+                document.querySelectorAll('.pr-filter-chip').forEach(chip => {
                     chip.addEventListener('click', () => {
-                        document.querySelectorAll('#categoryFilters .pr-filter-chip').forEach(c => c.classList.remove('active'));
+                        // Toggle logic for smoother feeling
+                        const isDate = chip.classList.contains('pr-date-chip');
+                        const group = isDate ? '#dateFilters' : '#categoryFilters';
+
+                        document.querySelectorAll(`${group} .pr - filter - chip`).forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
-                        currentFilter = chip.dataset.filter;
+
+                        if (isDate) currentDateFilter = chip.dataset.date;
+                        else currentFilter = chip.dataset.filter;
+
                         renderPRs();
                     });
                 });
 
-                // Date filters
-                document.querySelectorAll('#dateFilters .pr-date-chip').forEach(chip => {
-                    chip.addEventListener('click', () => {
-                        document.querySelectorAll('#dateFilters .pr-date-chip').forEach(c => c.classList.remove('active'));
-                        chip.classList.add('active');
-                        currentDateFilter = chip.dataset.date;
-                        renderPRs();
-                    });
-                });
+                // LIVE SEARCH with Debounce
+                const searchInput = document.getElementById('searchInput');
+                let debounceTimer;
 
-                // Search
-                let searchTimeout;
                 searchInput.addEventListener('input', (e) => {
-                    clearTimeout(searchTimeout);
-                    searchTimeout = setTimeout(() => {
-                        searchQuery = e.target.value.trim();
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        searchQuery = e.target.value.toLowerCase().trim();
                         renderPRs();
-                    }, 300);
-                });
-
-                // Clear filters
-                clearFiltersBtn.addEventListener('click', () => {
-                    currentFilter = 'all';
-                    currentDateFilter = 'all';
-                    searchQuery = '';
-                    searchInput.value = '';
-
-                    document.querySelectorAll('.pr-filter-chip').forEach(c => c.classList.remove('active'));
-                    document.querySelector('.pr-filter-chip[data-filter="all"]').classList.add('active');
-
-                    document.querySelectorAll('.pr-date-chip').forEach(c => c.classList.remove('active'));
-                    document.querySelector('.pr-date-chip[data-date="all"]').classList.add('active');
-
-                    renderPRs();
+                    }, 150); // 150ms debounce for smooth typing
                 });
             }
 
