@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>GYMBRO | Advanced Training Systems</title>
-    <meta name="description" content="Pianifica, traccia e analizza i tuoi allenamenti con GYMBRO. Strumenti professionali per atleti e bodybuilder.">
-    
+    <meta name="description"
+        content="Pianifica, traccia e analizza i tuoi allenamenti con GYMBRO. Strumenti professionali per atleti e bodybuilder.">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oswald:wght@500;700&display=swap"
+        rel="stylesheet">
+
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00f3ff">
-    
+
     <!-- iOS Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -25,14 +28,16 @@
     <!-- Styles -->
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gymbro-chat.css">
 </head>
+
 <body>
 
     <!-- Header -->
     <header class="header">
         <div class="container">
             <a href="index.html" class="logo">GYM<span class="text-primary">BRO</span></a>
-            
+
             <nav>
                 <div class="mobile-toggle" id="mobileToggle">☰</div>
                 <ul class="nav-links" id="navLinks">
@@ -62,7 +67,7 @@
     <section class="section">
         <div class="container">
             <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-                
+
                 <div class="card">
                     <div class="card-icon">⚡</div>
                     <h3>Workout Creator</h3>
@@ -78,7 +83,8 @@
                 <div class="card">
                     <div class="card-icon">📈</div>
                     <h3>Analisi Dati</h3>
-                    <p>Visualizza il volume settimanale, l'intensità e i miglioramenti nel tempo con grafici essenziali.</p>
+                    <p>Visualizza il volume settimanale, l'intensità e i miglioramenti nel tempo con grafici essenziali.
+                    </p>
                 </div>
 
             </div>
@@ -93,5 +99,7 @@
     </footer>
 
     <script src="js/main.js"></script>
+    <script type="module" src="./js/gymbro-chat.js"></script>
 </body>
+
 </html>

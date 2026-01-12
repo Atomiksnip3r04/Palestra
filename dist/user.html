@@ -103,6 +103,7 @@
 
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gymbro-chat.css">
     <style>
         /* =========================
            PAGE-WIDE SYMMETRY
@@ -110,7 +111,7 @@
         .profile-section-container {
             padding: 0 var(--page-padding, 1rem);
         }
-        
+
         /* =========================
            PROFILE HEADER
            ========================= */
@@ -129,7 +130,7 @@
         .avatar {
             width: 72px;
             height: 72px;
-            background: linear-gradient(145deg, var(--color-surface), rgba(0,0,0,0.3));
+            background: linear-gradient(145deg, var(--color-surface), rgba(0, 0, 0, 0.3));
             border: 3px solid var(--color-primary);
             border-radius: 50%;
             display: flex;
@@ -159,7 +160,7 @@
             border: 3px solid var(--color-bg);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         }
-        
+
         /* =========================
            SETTING ITEMS - Professionali
            ========================= */
@@ -191,7 +192,7 @@
             flex-grow: 1;
             justify-content: flex-end;
         }
-        
+
         /* Input Group Professionale - Inline */
         .input-group-inline {
             display: flex;
@@ -203,11 +204,11 @@
             overflow: hidden;
             transition: border-color 0.2s;
         }
-        
+
         .input-group-inline:focus-within {
             border-color: var(--color-primary);
         }
-        
+
         .input-group-inline input {
             flex: 1;
             background: transparent;
@@ -217,11 +218,11 @@
             font-size: 0.85rem;
             min-width: 0;
         }
-        
+
         .input-group-inline input:focus {
             outline: none;
         }
-        
+
         .input-group-inline .btn-inline-save {
             background: var(--color-primary);
             color: var(--color-bg);
@@ -233,11 +234,11 @@
             white-space: nowrap;
             transition: background 0.2s;
         }
-        
+
         .input-group-inline .btn-inline-save:hover {
             background: #00d4e0;
         }
-        
+
         .input-group-inline .password-toggle-inline {
             background: transparent;
             border: none;
@@ -246,7 +247,7 @@
             cursor: pointer;
             font-size: 0.9rem;
         }
-        
+
         /* Health Connect Toggle Style */
         .health-toggle-container {
             display: flex;
@@ -257,14 +258,14 @@
             border-radius: 10px;
             margin-bottom: 0.75rem;
         }
-        
+
         .health-toggle-label {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             font-size: 0.9rem;
         }
-        
+
         .toggle-switch {
             position: relative;
             width: 48px;
@@ -274,11 +275,11 @@
             cursor: pointer;
             transition: background 0.3s;
         }
-        
+
         .toggle-switch.active {
             background: var(--color-primary);
         }
-        
+
         .toggle-switch::after {
             content: '';
             position: absolute;
@@ -291,7 +292,7 @@
             transition: transform 0.3s;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
-        
+
         .toggle-switch.active::after {
             transform: translateX(22px);
         }
@@ -310,7 +311,7 @@
             font-size: 0.8rem;
             min-width: 80px;
         }
-        
+
         /* Logout Button - Ridotto */
         .btn-logout {
             background: transparent;
@@ -326,7 +327,7 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .btn-logout:hover {
             background: rgba(255, 68, 68, 0.15);
         }
@@ -440,13 +441,13 @@
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
         }
-        
+
         .wellness-field {
             display: flex;
             flex-direction: column;
             gap: 0.35rem;
         }
-        
+
         .wellness-field-label {
             display: flex;
             align-items: center;
@@ -454,16 +455,16 @@
             font-size: 0.8rem;
             color: var(--color-text);
         }
-        
+
         .wellness-field-label .emoji {
             font-size: 1rem;
         }
-        
+
         .step-buttons-row {
             display: flex;
             gap: 2px;
         }
-        
+
         .step-btn {
             flex: 1;
             min-width: 0;
@@ -476,87 +477,87 @@
             cursor: pointer;
             transition: all 0.15s ease;
         }
-        
+
         .step-btn:first-child {
             border-radius: 6px 0 0 6px;
         }
-        
+
         .step-btn:last-child {
             border-radius: 0 6px 6px 0;
         }
-        
+
         .step-btn.active {
             background: var(--color-primary);
             color: #000;
             font-weight: 600;
         }
-        
+
         .step-btn:hover:not(.active) {
             background: rgba(255, 255, 255, 0.15);
         }
-        
+
         /* Color gradient for step buttons based on value */
         .step-btn.active[data-value="1"],
         .step-btn.active[data-value="2"] {
             background: #ef4444;
             color: #fff;
         }
-        
+
         .step-btn.active[data-value="3"],
         .step-btn.active[data-value="4"] {
             background: #f97316;
             color: #fff;
         }
-        
+
         .step-btn.active[data-value="5"],
         .step-btn.active[data-value="6"] {
             background: #eab308;
             color: #000;
         }
-        
+
         .step-btn.active[data-value="7"],
         .step-btn.active[data-value="8"] {
             background: #22c55e;
             color: #fff;
         }
-        
+
         .step-btn.active[data-value="9"],
         .step-btn.active[data-value="10"] {
             background: var(--color-primary);
             color: #000;
         }
-        
+
         /* Inverted colors for stress and DOMS (lower is better) */
         .step-btn.inverted.active[data-value="1"],
         .step-btn.inverted.active[data-value="2"] {
             background: var(--color-primary);
             color: #000;
         }
-        
+
         .step-btn.inverted.active[data-value="3"],
         .step-btn.inverted.active[data-value="4"] {
             background: #22c55e;
             color: #fff;
         }
-        
+
         .step-btn.inverted.active[data-value="5"],
         .step-btn.inverted.active[data-value="6"] {
             background: #eab308;
             color: #000;
         }
-        
+
         .step-btn.inverted.active[data-value="7"],
         .step-btn.inverted.active[data-value="8"] {
             background: #f97316;
             color: #fff;
         }
-        
+
         .step-btn.inverted.active[data-value="9"],
         .step-btn.inverted.active[data-value="10"] {
             background: #ef4444;
             color: #fff;
         }
-        
+
         /* DOMS Muscle Category Separators */
         .doms-category-section {
             background: rgba(255, 255, 255, 0.03);
@@ -564,17 +565,17 @@
             padding: 0.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .doms-category-section:last-child {
             margin-bottom: 0;
         }
-        
+
         .doms-chip-wrapper {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
             gap: 0.35rem;
         }
-        
+
         .doms-chip {
             text-align: center;
             padding: 0.35rem 0.5rem;
@@ -583,7 +584,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         /* Expandable notes field */
         .notes-expandable {
             min-height: 36px;
@@ -592,7 +593,7 @@
             transition: max-height 0.2s ease;
             overflow: hidden;
         }
-        
+
         .notes-expandable:focus,
         .notes-expandable.has-content {
             max-height: 80px;
@@ -626,7 +627,7 @@
            WORKOUT LIST ITEMS - Compatte
            ========================= */
         .workout-list-item {
-            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0,0,0,0.2) 100%);
+            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0, 0, 0, 0.2) 100%);
             padding: 1rem;
             margin-bottom: 0.75rem;
             border-radius: 14px;
@@ -662,7 +663,7 @@
             gap: 0.4rem;
             flex-wrap: wrap;
         }
-        
+
         /* Badge AI integrato inline */
         .workout-list-item .ai-badge {
             font-size: 0.6rem;
@@ -678,7 +679,7 @@
             gap: 0.5rem;
             flex-wrap: wrap;
         }
-        
+
         .workout-list-item .workout-meta .meta-separator {
             width: 3px;
             height: 3px;
@@ -728,7 +729,7 @@
         .workout-list-item .btn-play:active {
             transform: scale(0.95);
         }
-        
+
         /* Spacer per pushare icone a destra */
         .workout-actions-spacer {
             flex: 1;
@@ -765,7 +766,7 @@
         .workout-list-item .btn-icon-action.delete:hover {
             background: rgba(255, 68, 68, 0.12);
         }
-        
+
         /* Rimuovo btn-edit testuale, ora è icona */
         .workout-list-item .btn-edit {
             display: none;
@@ -872,51 +873,58 @@
             padding: 0.3rem 0.8rem;
             font-size: clamp(0.75rem, 2.5vw, 0.85rem);
         }
-        
+
         /* Highlight animation for scroll target */
         @keyframes highlightPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
-            50% { box-shadow: 0 0 0 8px rgba(0, 243, 255, 0.3); }
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(0, 243, 255, 0.3);
+            }
         }
-        
+
         .highlight-target {
             animation: highlightPulse 1s ease-in-out 2;
             border-color: var(--color-primary) !important;
         }
     </style>
-    
+
     <!-- Hash scroll handler -->
     <script>
         // Scroll to hash target when page loads (for links like user.html#healthConnect)
         let scrollAttempts = 0;
         const MAX_SCROLL_ATTEMPTS = 20;
-        
+
         function scrollToHashTarget() {
             if (!window.location.hash) return;
-            
+
             const targetId = window.location.hash.substring(1);
             const targetEl = document.getElementById(targetId);
-            
+
             if (!targetEl) {
                 console.log('Hash target element not found:', targetId);
                 return;
             }
-            
+
             // Check if element is visible (not hidden by auth state)
             const profileContent = document.getElementById('profileContent');
             const isProfileVisible = profileContent && profileContent.classList.contains('visible');
-            
+
             if (!isProfileVisible && scrollAttempts < MAX_SCROLL_ATTEMPTS) {
                 scrollAttempts++;
                 setTimeout(scrollToHashTarget, 250);
                 return;
             }
-            
+
             // Check if target is inside a collapsed dropdown (settingsContent)
             const settingsContent = document.getElementById('settingsContent');
             const settingsHeader = document.getElementById('settingsHeader');
             const settingsToggle = document.getElementById('settingsToggle');
-            
+
             if (settingsContent && settingsContent.contains(targetEl)) {
                 // Open the dropdown first
                 if (settingsContent.style.display === 'none') {
@@ -924,12 +932,12 @@
                     if (settingsToggle) settingsToggle.style.transform = 'rotate(180deg)';
                 }
             }
-            
+
             // Wait a tick for layout to update after opening dropdown
             setTimeout(() => {
                 const rect = targetEl.getBoundingClientRect();
                 const isElementVisible = rect.width > 0 && rect.height > 0;
-                
+
                 if (isElementVisible) {
                     scrollAttempts = 0;
                     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -942,15 +950,15 @@
                 }
             }, 100);
         }
-        
+
         // Wait for DOM and initial render
-        window.addEventListener('load', function() {
+        window.addEventListener('load', function () {
             // Start checking after short initial delay
             setTimeout(scrollToHashTarget, 300);
         });
-        
+
         // Also listen for hashchange (in case user clicks link while on page)
-        window.addEventListener('hashchange', function() {
+        window.addEventListener('hashchange', function () {
             scrollAttempts = 0;
             setTimeout(scrollToHashTarget, 100);
         });
@@ -1031,14 +1039,18 @@
                     <!-- Saved Workouts -->
                     <div>
                         <!-- AI GENERATOR - Now in Creator Page -->
-                        <a href="creator.html" class="card" style="display: block; margin-bottom: 2rem; border-radius: 16px; border: 1px solid rgba(0, 243, 255, 0.2); background: linear-gradient(145deg, rgba(0, 243, 255, 0.08) 0%, rgba(0, 150, 170, 0.03) 50%, rgba(0,0,0,0.1) 100%); text-decoration: none; padding: 1rem; transition: all 0.2s;">
+                        <a href="creator.html" class="card"
+                            style="display: block; margin-bottom: 2rem; border-radius: 16px; border: 1px solid rgba(0, 243, 255, 0.2); background: linear-gradient(145deg, rgba(0, 243, 255, 0.08) 0%, rgba(0, 150, 170, 0.03) 50%, rgba(0,0,0,0.1) 100%); text-decoration: none; padding: 1rem; transition: all 0.2s;">
                             <div style="display: flex; align-items: center; gap: 1rem;">
-                                <div style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--color-primary) 0%, #00c8d4 100%); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 12px rgba(0, 243, 255, 0.3);">
+                                <div
+                                    style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--color-primary) 0%, #00c8d4 100%); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 12px rgba(0, 243, 255, 0.3);">
                                     🤖
                                 </div>
                                 <div style="flex: 1;">
-                                    <h3 style="font-size: 1rem; margin: 0; font-weight: 600; color: white;">AI Workout Generator</h3>
-                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0 0;">
+                                    <h3 style="font-size: 1rem; margin: 0; font-weight: 600; color: white;">AI Workout
+                                        Generator</h3>
+                                    <p
+                                        style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0 0;">
                                         Genera schede personalizzate con Gemini AI →
                                     </p>
                                 </div>
@@ -1055,138 +1067,152 @@
 
                     <!-- Settings -->
                     <div class="card">
-                        <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);" id="settingsHeader">
+                        <div style="cursor: pointer; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);"
+                            id="settingsHeader">
                             <h3 style="margin: 0;">⚙️ Impostazioni</h3>
                             <span id="settingsToggle" style="font-size: 1.5rem; transition: transform 0.3s;">▼</span>
                         </div>
 
                         <div id="settingsContent" style="display: none; margin-top: 1rem;">
-                        <div class="setting-item">
-                            <span class="setting-label">Nome Visualizzato</span>
-                            <div class="setting-control">
-                                <input type="text" id="profileNameInput" class="input-compact"
-                                    style="width: 100%; max-width: 200px;">
-                            </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <span class="setting-label">Unità di misura</span>
-                            <div class="setting-control">
-                                <select class="input-compact" style="width: 100%; max-width: 200px;">
-                                    <option>Metrico (kg/cm)</option>
-                                    <option>Imperiale (lbs/in)</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- AI CONFIG SECTION - Input Group Inline -->
-                        <div class="setting-item">
-                            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.4rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span class="setting-label">Gemini AI Key</span>
-                                    <a href="https://aistudio.google.com/app/apikey" target="_blank"
-                                        style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key →</a>
+                            <div class="setting-item">
+                                <span class="setting-label">Nome Visualizzato</span>
+                                <div class="setting-control">
+                                    <input type="text" id="profileNameInput" class="input-compact"
+                                        style="width: 100%; max-width: 200px;">
                                 </div>
-                                <div class="input-group-inline">
-                                    <input type="password" id="aiKeyInput" placeholder="Incolla la tua API Key" autocomplete="off">
-                                    <button type="button" class="password-toggle-inline" title="Mostra">👁️</button>
-                                    <button id="saveAiKeyBtn" type="button" class="btn-inline-save">Salva</button>
-                                </div>
-                                <p id="aiKeyStatus" style="font-size: 0.7rem; color: var(--color-text-muted); margin: 0; min-height: 1em;"></p>
-                            </div>
-                        </div>
-
-                        <!-- IMGBB CONFIG SECTION - Input Group Inline -->
-                        <div class="setting-item">
-                            <div style="width: 100%; display: flex; flex-direction: column; gap: 0.4rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span class="setting-label">ImgBB API Key</span>
-                                    <a href="https://api.imgbb.com/" target="_blank"
-                                        style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key →</a>
-                                </div>
-                                <div class="input-group-inline">
-                                    <input type="password" id="imgbbKeyInput" placeholder="Incolla la tua API Key" autocomplete="off">
-                                    <button type="button" class="password-toggle-inline" title="Mostra">👁️</button>
-                                    <button id="saveImgbbKeyBtn" type="button" class="btn-inline-save">Salva</button>
-                                </div>
-                                <p id="imgbbKeyStatus" style="font-size: 0.7rem; color: var(--color-text-muted); margin: 0; min-height: 1em;"></p>
-                            </div>
-                        </div>
-
-                        <!-- Health Connect Section - Design Pulito -->
-                        <div id="healthConnect" class="setting-item" style="flex-direction: column; align-items: stretch;">
-                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                <span style="font-size: 1.2rem;">🏥</span>
-                                <span class="setting-label" style="font-size: 0.95rem;">Connessione Salute</span>
                             </div>
 
-                            <div id="healthConnectStatus" class="health-toggle-container">
-                                <div class="health-toggle-label">
-                                    <span id="healthStatusIcon">⚪</span>
-                                    <span id="healthStatusText" style="font-size: 0.85rem;">Non connesso</span>
+                            <div class="setting-item">
+                                <span class="setting-label">Unità di misura</span>
+                                <div class="setting-control">
+                                    <select class="input-compact" style="width: 100%; max-width: 200px;">
+                                        <option>Metrico (kg/cm)</option>
+                                        <option>Imperiale (lbs/in)</option>
+                                    </select>
                                 </div>
-                                <div id="healthToggleSwitch" class="toggle-switch" role="switch" aria-checked="false"></div>
                             </div>
-                            
-                            <small id="healthLastSync" style="font-size: 0.7rem; color: var(--color-text-muted); display: none;">
-                                Ultimo sync: <span id="lastSyncTime"></span>
-                            </small>
 
-                            <!-- Provider Selection (shown when not connected) -->
-                            <div id="healthProviderSelection" style="margin-top: 0.5rem;">
-                                <p style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">
-                                    Scegli il provider:
+                            <!-- AI CONFIG SECTION - Input Group Inline -->
+                            <div class="setting-item">
+                                <div style="width: 100%; display: flex; flex-direction: column; gap: 0.4rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span class="setting-label">Gemini AI Key</span>
+                                        <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                                            style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key →</a>
+                                    </div>
+                                    <div class="input-group-inline">
+                                        <input type="password" id="aiKeyInput" placeholder="Incolla la tua API Key"
+                                            autocomplete="off">
+                                        <button type="button" class="password-toggle-inline" title="Mostra">👁️</button>
+                                        <button id="saveAiKeyBtn" type="button" class="btn-inline-save">Salva</button>
+                                    </div>
+                                    <p id="aiKeyStatus"
+                                        style="font-size: 0.7rem; color: var(--color-text-muted); margin: 0; min-height: 1em;">
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- IMGBB CONFIG SECTION - Input Group Inline -->
+                            <div class="setting-item">
+                                <div style="width: 100%; display: flex; flex-direction: column; gap: 0.4rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span class="setting-label">ImgBB API Key</span>
+                                        <a href="https://api.imgbb.com/" target="_blank"
+                                            style="font-size: 0.7rem; color: var(--color-primary);">Ottieni Key →</a>
+                                    </div>
+                                    <div class="input-group-inline">
+                                        <input type="password" id="imgbbKeyInput" placeholder="Incolla la tua API Key"
+                                            autocomplete="off">
+                                        <button type="button" class="password-toggle-inline" title="Mostra">👁️</button>
+                                        <button id="saveImgbbKeyBtn" type="button"
+                                            class="btn-inline-save">Salva</button>
+                                    </div>
+                                    <p id="imgbbKeyStatus"
+                                        style="font-size: 0.7rem; color: var(--color-text-muted); margin: 0; min-height: 1em;">
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Health Connect Section - Design Pulito -->
+                            <div id="healthConnect" class="setting-item"
+                                style="flex-direction: column; align-items: stretch;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <span style="font-size: 1.2rem;">🏥</span>
+                                    <span class="setting-label" style="font-size: 0.95rem;">Connessione Salute</span>
+                                </div>
+
+                                <div id="healthConnectStatus" class="health-toggle-container">
+                                    <div class="health-toggle-label">
+                                        <span id="healthStatusIcon">⚪</span>
+                                        <span id="healthStatusText" style="font-size: 0.85rem;">Non connesso</span>
+                                    </div>
+                                    <div id="healthToggleSwitch" class="toggle-switch" role="switch"
+                                        aria-checked="false"></div>
+                                </div>
+
+                                <small id="healthLastSync"
+                                    style="font-size: 0.7rem; color: var(--color-text-muted); display: none;">
+                                    Ultimo sync: <span id="lastSyncTime"></span>
+                                </small>
+
+                                <!-- Provider Selection (shown when not connected) -->
+                                <div id="healthProviderSelection" style="margin-top: 0.5rem;">
+                                    <p
+                                        style="font-size: 0.75rem; color: var(--color-text-muted); margin-bottom: 0.5rem;">
+                                        Scegli il provider:
+                                    </p>
+                                    <div style="display: flex; gap: 0.4rem;">
+                                        <button id="connectGoogleFitBtn" class="btn btn-outline btn-compact"
+                                            style="flex: 1; font-size: 0.75rem; padding: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                                            🤖 Google Fit
+                                        </button>
+                                        <button id="connectAppleHealthBtn" class="btn btn-outline btn-compact"
+                                            style="flex: 1; font-size: 0.75rem; padding: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
+                                            🍎 Apple Health
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Connected Actions (shown when connected) -->
+                                <div id="healthConnectedActions" style="display: none; margin-top: 0.5rem;">
+                                    <div style="display: flex; gap: 0.4rem;">
+                                        <button id="syncHealthBtn" class="btn btn-primary btn-compact"
+                                            style="flex: 1; font-size: 0.75rem; padding: 0.5rem;">
+                                            🔄 Sincronizza
+                                        </button>
+                                        <button id="disconnectHealthBtn" class="btn btn-outline btn-compact"
+                                            style="flex: 1; font-size: 0.75rem; padding: 0.5rem; color: #ff4444; border-color: rgba(255,68,68,0.3);">
+                                            Disconnetti
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div
+                                    style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
+                                    <span class="setting-label">Sincronizzazione</span>
+                                    <div class="setting-control" style="width: auto; justify-content: flex-end;">
+                                        <button id="syncBtn" class="btn btn-outline btn-compact">Sincronizza
+                                            Ora</button>
+                                    </div>
+                                </div>
+                                <p id="syncStatus"
+                                    style="font-size: 0.75rem; color: var(--color-text-muted); width: 100%; text-align: right; margin-top: 0.25rem;">
                                 </p>
-                                <div style="display: flex; gap: 0.4rem;">
-                                    <button id="connectGoogleFitBtn" class="btn btn-outline btn-compact"
-                                        style="flex: 1; font-size: 0.75rem; padding: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
-                                        🤖 Google Fit
-                                    </button>
-                                    <button id="connectAppleHealthBtn" class="btn btn-outline btn-compact"
-                                        style="flex: 1; font-size: 0.75rem; padding: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.3rem;">
-                                        🍎 Apple Health
-                                    </button>
+                            </div>
+
+                            <div class="setting-item">
+                                <span class="setting-label">Esporta Dati (JSON)</span>
+                                <div class="setting-control">
+                                    <button id="exportBtn" class="btn btn-outline btn-compact">Download</button>
                                 </div>
                             </div>
 
-                            <!-- Connected Actions (shown when connected) -->
-                            <div id="healthConnectedActions" style="display: none; margin-top: 0.5rem;">
-                                <div style="display: flex; gap: 0.4rem;">
-                                    <button id="syncHealthBtn" class="btn btn-primary btn-compact"
-                                        style="flex: 1; font-size: 0.75rem; padding: 0.5rem;">
-                                        🔄 Sincronizza
-                                    </button>
-                                    <button id="disconnectHealthBtn" class="btn btn-outline btn-compact"
-                                        style="flex: 1; font-size: 0.75rem; padding: 0.5rem; color: #ff4444; border-color: rgba(255,68,68,0.3);">
-                                        Disconnetti
-                                    </button>
-                                </div>
+                            <div class="setting-item"
+                                style="border-bottom: none; margin-top: 1rem; justify-content: center;">
+                                <button id="logoutBtn" class="btn-logout">🚪 Esci</button>
                             </div>
-                        </div>
-
-                        <div class="setting-item">
-                            <div
-                                style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.5rem;">
-                                <span class="setting-label">Sincronizzazione</span>
-                                <div class="setting-control" style="width: auto; justify-content: flex-end;">
-                                    <button id="syncBtn" class="btn btn-outline btn-compact">Sincronizza Ora</button>
-                                </div>
-                            </div>
-                            <p id="syncStatus"
-                                style="font-size: 0.75rem; color: var(--color-text-muted); width: 100%; text-align: right; margin-top: 0.25rem;">
-                            </p>
-                        </div>
-
-                        <div class="setting-item">
-                            <span class="setting-label">Esporta Dati (JSON)</span>
-                            <div class="setting-control">
-                                <button id="exportBtn" class="btn btn-outline btn-compact">Download</button>
-                            </div>
-                        </div>
-
-                        <div class="setting-item" style="border-bottom: none; margin-top: 1rem; justify-content: center;">
-                            <button id="logoutBtn" class="btn-logout">🚪 Esci</button>
-                        </div>
                         </div>
                     </div>
                 </div>
@@ -1207,13 +1233,17 @@
             <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 1rem;">
                 Imposta i tempi di recupero personalizzati per ogni serie
             </p>
-            <div id="editRestWorkoutName" style="font-weight: 600; margin-bottom: 1rem; padding: 0.5rem; background: rgba(0,243,255,0.1); border-radius: 8px;"></div>
+            <div id="editRestWorkoutName"
+                style="font-weight: 600; margin-bottom: 1rem; padding: 0.5rem; background: rgba(0,243,255,0.1); border-radius: 8px;">
+            </div>
             <div id="editRestContent" style="display: flex; flex-direction: column; gap: 1rem;">
                 <!-- Dynamic content -->
             </div>
             <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
-                <button id="cancelEditRest" class="btn btn-outline" style="flex: 1; border-radius: 10px;">Annulla</button>
-                <button id="saveEditRest" class="btn btn-primary" style="flex: 2; border-radius: 10px;">💾 Salva Modifiche</button>
+                <button id="cancelEditRest" class="btn btn-outline"
+                    style="flex: 1; border-radius: 10px;">Annulla</button>
+                <button id="saveEditRest" class="btn btn-primary" style="flex: 2; border-radius: 10px;">💾 Salva
+                    Modifiche</button>
             </div>
         </div>
     </div>
@@ -1223,8 +1253,9 @@
         aria-labelledby="wellnessPromptTitle" style="display:none;">
         <div class="card wellness-modal-card">
             <h3 id="wellnessPromptTitle" style="margin-bottom:0.25rem; font-size: 1.1rem;">🏋️ Pre-Allenamento</h3>
-            <p style="color: var(--color-text-muted); font-size:0.75rem; margin-bottom:0.75rem;">Check rapido: valuta il tuo stato (1-10)</p>
-            
+            <p style="color: var(--color-text-muted); font-size:0.75rem; margin-bottom:0.75rem;">Check rapido: valuta il
+                tuo stato (1-10)</p>
+
             <form id="wellnessForm" style="display:flex; flex-direction:column; gap:0.6rem;">
                 <!-- Wellness Grid 2x2 -->
                 <div class="wellness-grid-2x2">
@@ -1248,7 +1279,7 @@
                         </div>
                         <input type="hidden" id="sleepQualityInput" value="7">
                     </div>
-                    
+
                     <!-- Energia -->
                     <div class="wellness-field">
                         <div class="wellness-field-label">
@@ -1269,7 +1300,7 @@
                         </div>
                         <input type="hidden" id="energyLevelInput" value="7">
                     </div>
-                    
+
                     <!-- Stress -->
                     <div class="wellness-field">
                         <div class="wellness-field-label">
@@ -1290,7 +1321,7 @@
                         </div>
                         <input type="hidden" id="stressLevelInput" value="4">
                     </div>
-                    
+
                     <!-- DOMS -->
                     <div class="wellness-field">
                         <div class="wellness-field-label">
@@ -1312,35 +1343,40 @@
                         <input type="hidden" id="sorenessLevelInput" value="3">
                     </div>
                 </div>
-                
+
                 <!-- DOMS Muscle Selection -->
                 <div style="margin-top: 0.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
                         <span style="font-size: 0.8rem; color: var(--color-text);">Muscoli con DOMS</span>
-                        <button type="button" id="clearSorenessSelection" class="link-btn" style="font-size: 0.7rem;">Azzera</button>
+                        <button type="button" id="clearSorenessSelection" class="link-btn"
+                            style="font-size: 0.7rem;">Azzera</button>
                     </div>
                     <div id="sorenessMusclePicker" class="doms-chip-grid" role="listbox" aria-multiselectable="true">
                     </div>
-                    <small id="sorenessMuscleHint" style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-top: 0.3rem;">Nessun distretto selezionato</small>
+                    <small id="sorenessMuscleHint"
+                        style="font-size: 0.7rem; color: var(--color-text-muted); display: block; margin-top: 0.3rem;">Nessun
+                        distretto selezionato</small>
                 </div>
-                
+
                 <!-- Notes field (expandable) -->
                 <div style="margin-top: 0.25rem;">
                     <label style="font-size: 0.8rem; color: var(--color-text); display: block; margin-bottom: 0.25rem;">
                         Causa DOMS <span style="color: var(--color-text-muted); font-size: 0.7rem;">(opzionale)</span>
                     </label>
                     <textarea id="domsExternalCauseInput" class="input-compact notes-expandable"
-                        style="width: 100%; font-size: 0.8rem;"
-                        placeholder="es. Padel, corsa, lavoro fisico..."
+                        style="width: 100%; font-size: 0.8rem;" placeholder="es. Padel, corsa, lavoro fisico..."
                         rows="1"></textarea>
                 </div>
-                
+
                 <!-- CTA Footer -->
                 <div style="margin-top: 0.75rem;">
-                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 600; border-radius: 10px;">
+                    <button type="submit" class="btn btn-primary"
+                        style="width: 100%; padding: 0.85rem; font-size: 0.95rem; font-weight: 600; border-radius: 10px;">
                         🚀 INIZIA FOCUS MODE
                     </button>
-                    <button type="button" id="cancelWellnessBtn" style="width: 100%; margin-top: 0.5rem; background: none; border: none; color: var(--color-text-muted); font-size: 0.8rem; cursor: pointer; padding: 0.5rem;">
+                    <button type="button" id="cancelWellnessBtn"
+                        style="width: 100%; margin-top: 0.5rem; background: none; border: none; color: var(--color-text-muted); font-size: 0.8rem; cursor: pointer; padding: 0.5rem;">
                         Annulla
                     </button>
                 </div>
@@ -1448,7 +1484,8 @@
                         <label
                             style="display: flex; align-items: center; justify-content: center; gap: 0.3rem; color: var(--color-text-muted); font-size: 0.7rem; margin-bottom: 0.3rem;">
                             RPE
-                            <span onclick="openRpeInfoModal()" style="cursor: pointer; border: 1px solid var(--color-primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--color-primary); background: rgba(0, 243, 255, 0.1);">?</span>
+                            <span onclick="openRpeInfoModal()"
+                                style="cursor: pointer; border: 1px solid var(--color-primary); border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--color-primary); background: rgba(0, 243, 255, 0.1);">?</span>
                         </label>
                         <input type="number" id="focusRpeInput" min="6" max="10" step="0.5"
                             style="width: 100%; background: transparent; border: none; color: white; font-size: 2rem; text-align: center; font-weight: bold; font-family: var(--font-display);"
@@ -1587,26 +1624,35 @@
         <div
             style="background: var(--color-surface); padding: 1.5rem; border-radius: 16px; width: 90%; max-width: 380px; border: 1px solid var(--color-primary); box-shadow: 0 8px 32px rgba(0, 243, 255, 0.2);">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <h3 style="margin: 0; color: var(--color-primary); font-size: 1.1rem;">💪 RPE - Rate of Perceived Exertion</h3>
-                <button onclick="closeRpeInfoModal()" style="background: rgba(255,255,255,0.1); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem;">&times;</button>
+                <h3 style="margin: 0; color: var(--color-primary); font-size: 1.1rem;">💪 RPE - Rate of Perceived
+                    Exertion</h3>
+                <button onclick="closeRpeInfoModal()"
+                    style="background: rgba(255,255,255,0.1); border: none; color: white; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 1rem;">&times;</button>
             </div>
             <p style="color: var(--color-text-muted); font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5;">
-                La scala RPE misura lo <strong style="color: white;">sforzo percepito</strong> durante una serie, da 6 a 10:
+                La scala RPE misura lo <strong style="color: white;">sforzo percepito</strong> durante una serie, da 6 a
+                10:
             </p>
             <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 0.75rem; margin-bottom: 1rem;">
-                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div
+                    style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <span style="color: #4ade80; font-weight: 600;">RPE 6</span>
-                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto facile, 4+ reps in riserva</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto facile, 4+ reps in
+                        riserva</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div
+                    style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <span style="color: #86efac; font-weight: 600;">RPE 7</span>
                     <span style="color: var(--color-text-muted); font-size: 0.8rem;">Moderato, 3 reps in riserva</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div
+                    style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <span style="color: #fbbf24; font-weight: 600;">RPE 8</span>
-                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Impegnativo, 2 reps in riserva</span>
+                    <span style="color: var(--color-text-muted); font-size: 0.8rem;">Impegnativo, 2 reps in
+                        riserva</span>
                 </div>
-                <div style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                <div
+                    style="display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                     <span style="color: #fb923c; font-weight: 600;">RPE 9</span>
                     <span style="color: var(--color-text-muted); font-size: 0.8rem;">Molto duro, 1 rep in riserva</span>
                 </div>
@@ -2068,7 +2114,7 @@
             document.querySelectorAll('.step-buttons-row').forEach(row => {
                 const targetId = row.dataset.target;
                 const hiddenInput = document.getElementById(targetId);
-                
+
                 row.querySelectorAll('.step-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
                         // Remove active from all siblings
@@ -2082,7 +2128,7 @@
                     });
                 });
             });
-            
+
             // Notes field auto-expand
             const notesField = document.getElementById('domsExternalCauseInput');
             if (notesField) {
@@ -2462,7 +2508,7 @@
                         // Category section with background
                         const section = document.createElement('div');
                         section.className = 'doms-category-section';
-                        
+
                         const header = document.createElement('div');
                         header.className = 'doms-chip-group';
                         header.textContent = groupLabels[category] || category;
@@ -2738,7 +2784,7 @@
             function startFocusSession(workout) {
                 // Ricarica stime 1RM prima di iniziare (per avere dati aggiornati)
                 loadExerciseEstimates();
-                
+
                 // 🏆 Reset sessione PR per nuovo allenamento Focus Mode
                 if (typeof prTracker !== 'undefined') {
                     prTracker.resetSessionPRs();
@@ -2840,7 +2886,7 @@
                 }
 
                 stopTimer();
-                
+
                 // 🔴 KILL SWITCH v2.0 - Terminazione su abort/exit (sequenziale)
                 (async () => {
                     try {
@@ -2857,7 +2903,7 @@
                         console.warn('Kill switch on exit error:', e);
                     }
                 })();
-                
+
                 // Ripristina scroll del body
                 const scrollY = document.body.style.top;
                 document.body.style.overflow = '';
@@ -3675,19 +3721,19 @@
                 } else {
                     // Standard rest logic for non-superset exercises
                     const currentSet = currentEx.sets[currentSetIndex];
-                    
+
                     // PRIORITY LOGIC:
                     // 1. If current set has customRest defined (any value, including 0), use it EXCLUSIVELY
                     // 2. Only if customRest is NOT defined (null/undefined), check exercise-level rest
                     // 3. Fallback to defaults based on exercise type
-                    
+
                     const hasCustomRestDefined = currentSet && currentSet.customRest !== null && currentSet.customRest !== undefined && currentSet.customRest !== '';
-                    
+
                     if (hasCustomRestDefined) {
                         // Serie has its own rest time - use it (even if 0 = no rest)
                         restTime = parseInt(currentSet.customRest) || 0;
                         console.log(`⏱️ Using custom rest time for this set: ${restTime}s (series override)`);
-                        
+
                         if (restTime === 0) {
                             // Custom rest = 0 means skip rest entirely for this set
                             console.log('⏱️ Custom rest is 0 - skipping rest for this set');
@@ -3860,11 +3906,11 @@
                         // 1. Kill notification manager (audio context, oscillator)
                         await notificationManager.killAllTimersAndNotifications();
                         console.log('✅ NotificationManager killed');
-                        
+
                         // 2. Kill media session manager (audio element, MediaSession)
                         await mediaSessionManager.killSession();
                         console.log('✅ MediaSessionManager killed');
-                        
+
                         // 3. WEBAPP FIX: Forza pulizia MediaSession con piccolo delay
                         setTimeout(() => {
                             if ('mediaSession' in navigator) {
@@ -3873,7 +3919,7 @@
                                 console.log('✅ MediaSession force-cleared after delay');
                             }
                         }, 100);
-                        
+
                     } catch (e) {
                         console.warn('Kill switch error:', e);
                     }
@@ -4026,7 +4072,7 @@
                         if (newPRs.length > 0) {
                             console.log('🏆 [Focus] Nuovi PR rilevati:', newPRs);
                         }
-                        
+
                         // Notifica aggregata post-workout
                         const sessionPRs = prTracker.getSessionPRs();
                         if (sessionPRs.length > 0) {
@@ -4164,14 +4210,14 @@
                                 aiBadge = '<span class="ai-badge">AI</span>';
                             }
                         }
-                        
+
                         // Format creation date
                         let createdDateStr = '';
                         if (w.createdAt) {
                             const createdDate = new Date(w.createdAt);
                             createdDateStr = createdDate.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
                         }
-                        
+
                         div.innerHTML = `
                             <div class="workout-header">
                                 <button class="btn-play start-workout" data-index="${index}" ${workoutIdAttr} title="Avvia Focus Mode">
@@ -4334,13 +4380,13 @@
                 const contentEl = document.getElementById('editRestContent');
 
                 workoutNameEl.textContent = `📋 ${workout.name || 'Workout'}`;
-                
+
                 let html = '';
                 if (workout.exercises && workout.exercises.length > 0) {
                     workout.exercises.forEach((ex, exIdx) => {
                         html += `<div style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 1rem; border: 1px solid rgba(255,255,255,0.08);">`;
                         html += `<div style="font-weight: 600; margin-bottom: 0.75rem; color: var(--color-primary);">${ex.name || 'Esercizio ' + (exIdx + 1)}</div>`;
-                        
+
                         if (ex.sets && ex.sets.length > 0) {
                             html += `<div style="display: flex; flex-direction: column; gap: 0.5rem;">`;
                             ex.sets.forEach((set, setIdx) => {
@@ -4369,7 +4415,7 @@
                 } else {
                     html = '<p style="color: var(--color-text-muted);">Nessun esercizio in questa scheda.</p>';
                 }
-                
+
                 contentEl.innerHTML = html;
                 modal.style.display = 'flex';
             }
@@ -4381,7 +4427,7 @@
 
             async function saveRestTimes() {
                 if (currentEditingWorkoutIndex === null) return;
-                
+
                 const workouts = getStoredWorkouts();
                 const workout = workouts[currentEditingWorkoutIndex];
                 if (!workout) return;
@@ -4392,7 +4438,7 @@
                     const exIdx = parseInt(input.dataset.exercise);
                     const setIdx = parseInt(input.dataset.set);
                     const value = input.value.trim();
-                    
+
                     if (workout.exercises[exIdx] && workout.exercises[exIdx].sets[setIdx]) {
                         workout.exercises[exIdx].sets[setIdx].customRest = value ? parseInt(value) : null;
                     }
@@ -4400,7 +4446,7 @@
 
                 // Save to localStorage
                 localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
-                
+
                 // Sync to cloud if logged in
                 if (authService.getCurrentUser()) {
                     await firestoreService.syncToCloud();
@@ -4408,7 +4454,7 @@
 
                 closeEditRestModal();
                 renderWorkouts();
-                
+
                 // Show feedback
                 const toast = document.createElement('div');
                 toast.style.cssText = 'position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: var(--color-primary); color: black; padding: 0.75rem 1.5rem; border-radius: 999px; font-weight: 600; z-index: 9999; animation: fadeIn 0.3s;';
@@ -4481,7 +4527,7 @@
                     statusText.textContent = providerName;
                     statusText.style.color = '#10b981';
                     statusIcon.textContent = '🟢';
-                    
+
                     // Update toggle state
                     toggleSwitch?.classList.add('active');
                     toggleSwitch?.setAttribute('aria-checked', 'true');
@@ -4500,7 +4546,7 @@
                     statusText.textContent = 'Non connesso';
                     statusText.style.color = 'var(--color-text-muted)';
                     statusIcon.textContent = '⚪';
-                    
+
                     // Update toggle state
                     toggleSwitch?.classList.remove('active');
                     toggleSwitch?.setAttribute('aria-checked', 'false');
@@ -4730,5 +4776,8 @@
 
 <!-- Focus Mode Enhancements Loader -->
 <script type="module" src="./js/enhancements-loader.js"></script>
+<!-- GymBro AI Chat -->
+<script type="module" src="./js/gymbro-chat.js"></script>
 
 </html>
+```

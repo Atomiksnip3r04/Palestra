@@ -21,13 +21,14 @@
 
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gymbro-chat.css">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         /* =========================
            LOG ENTRY CARDS - Compatte e Professionali
            ========================= */
         .log-entry {
-            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0,0,0,0.15) 100%);
+            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0, 0, 0, 0.15) 100%);
             border-radius: 12px;
             padding: 0.75rem 1rem;
             margin-bottom: 0.6rem;
@@ -35,11 +36,11 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             transition: transform 0.15s, box-shadow 0.15s;
         }
-        
+
         .log-entry:active {
             transform: scale(0.98);
         }
-        
+
         /* Bordo laterale colorato - AI vs Manuale */
         .log-entry::before {
             content: '';
@@ -51,15 +52,15 @@
             background: var(--color-primary);
             border-radius: 12px 0 0 12px;
         }
-        
+
         .log-entry.ai-generated::before {
             background: linear-gradient(180deg, var(--color-primary) 0%, #00c8d4 100%);
         }
-        
+
         .log-entry.manual::before {
             background: rgba(255, 255, 255, 0.3);
         }
-        
+
         /* Header Card - Livello 1: Data + Azioni */
         .log-entry-header {
             display: flex;
@@ -73,14 +74,14 @@
             color: var(--color-text-muted);
             text-transform: capitalize;
         }
-        
+
         /* Azioni - Distanziate e touch-friendly */
         .log-actions {
             display: flex;
             gap: 0.75rem;
             align-items: center;
         }
-        
+
         .log-action-btn {
             background: none;
             border: none;
@@ -95,19 +96,19 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .log-action-btn:hover {
             background: rgba(255, 255, 255, 0.08);
         }
-        
+
         .log-action-btn:active {
             transform: scale(0.9);
         }
-        
+
         .log-action-btn.delete-btn {
             color: #ff4444;
         }
-        
+
         .log-action-btn.delete-btn:hover {
             background: rgba(255, 68, 68, 0.15);
         }
@@ -144,16 +145,16 @@
             font-size: 0.8rem;
             color: var(--color-text-muted);
         }
-        
+
         .stat-pill .stat-icon {
             font-size: 0.75rem;
         }
-        
+
         .stat-pill .stat-value {
             color: var(--color-text-main);
             font-weight: 500;
         }
-        
+
         /* Badge AI integrato nei pill */
         .stat-pill.ai-pill {
             background: rgba(0, 243, 255, 0.12);
@@ -172,7 +173,7 @@
             border: none;
             padding: 0;
         }
-        
+
         /* =========================
            FLOATING ACTION BUTTON
            ========================= */
@@ -182,7 +183,7 @@
             right: 1rem;
             z-index: 100;
         }
-        
+
         .fab {
             width: 56px;
             height: 56px;
@@ -198,16 +199,16 @@
             justify-content: center;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        
+
         .fab:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 28px rgba(0, 243, 255, 0.5), 0 4px 12px rgba(0, 0, 0, 0.4);
         }
-        
+
         .fab:active {
             transform: scale(0.95);
         }
-        
+
         /* Page Header Bilanciato */
         .diary-page-header {
             display: flex;
@@ -216,25 +217,25 @@
             margin-bottom: var(--spacing-md);
             gap: 1rem;
         }
-        
+
         .diary-page-header h1 {
             margin: 0;
             font-size: clamp(1.5rem, 5vw, 2rem);
         }
-        
+
         /* Empty State */
         .empty-state {
             text-align: center;
             color: var(--color-text-muted);
             padding: 3rem 1rem;
         }
-        
+
         .empty-state-icon {
             font-size: 3rem;
             margin-bottom: 1rem;
             opacity: 0.5;
         }
-        
+
         .empty-state-text {
             font-size: 0.95rem;
             margin-bottom: 1rem;
@@ -242,16 +243,17 @@
 
         /* Logging Form Styles - COMPATTO */
         .logging-section {
-            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0,0,0,0.2) 100%);
+            background: linear-gradient(145deg, var(--color-surface) 0%, rgba(0, 0, 0, 0.2) 100%);
             padding: clamp(0.75rem, 3vw, 1.25rem);
             border-radius: 16px;
             margin-bottom: var(--spacing-md);
             border: 1px solid rgba(0, 243, 255, 0.2);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
             max-width: 100%;
-            padding-bottom: 100px; /* Spazio per sticky footer */
+            padding-bottom: 100px;
+            /* Spazio per sticky footer */
         }
-        
+
         /* Header Metadati Compatto */
         .logging-header {
             display: flex;
@@ -259,9 +261,9 @@
             gap: 0.5rem;
             margin-bottom: 0.75rem;
             padding-bottom: 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
-        
+
         .logging-header-icon {
             width: 32px;
             height: 32px;
@@ -273,7 +275,7 @@
             font-size: 1rem;
             flex-shrink: 0;
         }
-        
+
         /* Grid compatta Data + Durata */
         .meta-row-primary {
             display: grid;
@@ -281,7 +283,7 @@
             gap: 0.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .meta-input-group {
             display: flex;
             align-items: center;
@@ -291,12 +293,12 @@
             border-radius: 10px;
             padding: 0.4rem 0.6rem;
         }
-        
+
         .meta-input-group .meta-icon {
             font-size: 0.9rem;
             opacity: 0.8;
         }
-        
+
         .meta-input-group input {
             flex: 1;
             background: transparent;
@@ -306,16 +308,16 @@
             padding: 0.2rem 0;
             min-width: 0;
         }
-        
+
         .meta-input-group input:focus {
             outline: none;
         }
-        
+
         .meta-input-group .meta-suffix {
             font-size: 0.7rem;
             color: var(--color-text-muted);
         }
-        
+
         /* Griglia Wellness 2x2 Compatta con Icone */
         .wellness-compact-grid {
             display: grid;
@@ -323,7 +325,7 @@
             gap: 0.4rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .wellness-mini-card {
             display: flex;
             flex-direction: column;
@@ -335,12 +337,12 @@
             padding: 0.5rem 0.25rem;
             position: relative;
         }
-        
+
         .wellness-mini-card .wellness-icon {
             font-size: 0.9rem;
             line-height: 1;
         }
-        
+
         /* Help icon on wellness cards */
         .wellness-help-icon {
             position: absolute;
@@ -357,12 +359,19 @@
             animation: softPulse 3s ease-in-out infinite;
             z-index: 5;
         }
-        
+
         @keyframes softPulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 1; }
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
         }
-        
+
         /* Stats Info Modal */
         .stats-info-modal-backdrop {
             position: fixed;
@@ -381,12 +390,12 @@
             visibility: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .stats-info-modal-backdrop.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .stats-info-modal {
             background: var(--color-surface);
             border: 1px solid rgba(0, 255, 255, 0.2);
@@ -399,11 +408,11 @@
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-        
+
         .stats-info-modal-backdrop.active .stats-info-modal {
             transform: scale(1);
         }
-        
+
         .stats-info-modal h3 {
             color: var(--color-primary);
             font-size: 1.1rem;
@@ -412,7 +421,7 @@
             align-items: center;
             gap: 0.5rem;
         }
-        
+
         .stats-info-section {
             margin-bottom: 1rem;
             padding: 0.75rem;
@@ -420,21 +429,21 @@
             border-radius: 10px;
             border-left: 3px solid var(--color-primary);
         }
-        
+
         .stats-info-section h4 {
             font-size: 0.85rem;
             color: var(--color-primary);
             margin-bottom: 0.5rem;
             font-weight: 600;
         }
-        
+
         .stats-info-section p {
             font-size: 0.8rem;
             color: var(--color-text-muted);
             line-height: 1.5;
             margin: 0;
         }
-        
+
         .stats-info-close-btn {
             width: 100%;
             padding: 0.75rem;
@@ -448,12 +457,12 @@
             margin-top: 0.5rem;
             transition: all 0.2s ease;
         }
-        
+
         .stats-info-close-btn:hover {
             background: var(--color-primary);
             color: var(--color-bg);
         }
-        
+
         .wellness-mini-card input {
             width: 100%;
             max-width: 40px;
@@ -465,12 +474,12 @@
             padding: 0.25rem;
             text-align: center;
         }
-        
+
         .wellness-mini-card input:focus {
             outline: none;
             border-color: var(--color-primary);
         }
-        
+
         /* Sticky Footer Actions */
         .sticky-footer-actions {
             position: fixed;
@@ -485,7 +494,7 @@
             z-index: 100;
             box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
         }
-        
+
         .sticky-footer-actions .btn-primary {
             flex: 2;
             padding: 0.9rem 1rem;
@@ -493,7 +502,7 @@
             font-weight: 600;
             border-radius: 12px;
         }
-        
+
         .sticky-footer-actions .btn-outline {
             flex: 1;
             padding: 0.9rem 0.75rem;
@@ -504,7 +513,7 @@
         .exercise-log-item {
             margin-bottom: 0.75rem;
             padding: 0.75rem;
-            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.12) 100%);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.12) 100%);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 12px;
             position: relative;
@@ -513,7 +522,7 @@
         .exercise-log-item:last-child {
             margin-bottom: 0.5rem;
         }
-        
+
         /* Exercise Card Header - Inline compatto */
         .exercise-card-header {
             display: flex;
@@ -521,7 +530,7 @@
             gap: 0.5rem;
             margin-bottom: 0.5rem;
         }
-        
+
         .drag-handle {
             display: flex;
             align-items: center;
@@ -534,7 +543,7 @@
             transition: opacity 0.2s;
             flex-shrink: 0;
         }
-        
+
         .drag-handle:active {
             cursor: grabbing;
         }
@@ -542,7 +551,7 @@
         .exercise-log-item:hover .drag-handle {
             opacity: 0.8;
         }
-        
+
         .exercise-name-input {
             flex: 1;
             min-width: 0;
@@ -557,18 +566,18 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
-        
+
         .exercise-name-input:focus {
             border-color: var(--color-primary) !important;
             outline: none;
         }
-        
+
         .exercise-header-actions {
             display: flex;
             gap: 0.3rem;
             flex-shrink: 0;
         }
-        
+
         .exercise-header-actions button {
             padding: 0.3rem 0.5rem !important;
             font-size: 0.7rem !important;
@@ -660,7 +669,7 @@
         /* ... existing styles ... */
         .exercise-log-item {
             margin-bottom: 1.5rem;
-            background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.15) 100%);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.15) 100%);
             padding: 1.25rem;
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -680,7 +689,7 @@
 
         .exercise-log-item.in-superset {
             border-left: 3px solid #ff6b6b;
-            background: linear-gradient(to right, rgba(255, 107, 107, 0.08), rgba(255,255,255,0.03) 20%, rgba(0,0,0,0.15) 100%);
+            background: linear-gradient(to right, rgba(255, 107, 107, 0.08), rgba(255, 255, 255, 0.03) 20%, rgba(0, 0, 0, 0.15) 100%);
         }
 
         .superset-indicator {
@@ -731,7 +740,7 @@
         .superset-rest-config.visible {
             display: block;
         }
-        
+
         .superset-rest-title {
             font-size: 0.75rem;
             color: #ff6b6b;
@@ -741,7 +750,7 @@
             align-items: center;
             gap: 0.3rem;
         }
-        
+
         /* Griglia allineata per Superset rest */
         .superset-rest-grid {
             display: grid;
@@ -749,19 +758,19 @@
             gap: 0.3rem 0.5rem;
             align-items: center;
         }
-        
+
         .superset-rest-grid .rest-label {
             font-size: 0.75rem;
             color: var(--color-text-muted);
             text-align: right;
         }
-        
+
         .superset-rest-grid .rest-value-box {
             display: flex;
             align-items: center;
             gap: 0.25rem;
         }
-        
+
         .superset-rest-grid input {
             width: 50px;
             background: rgba(0, 0, 0, 0.3);
@@ -772,12 +781,12 @@
             border-radius: 6px;
             font-size: 0.85rem;
         }
-        
+
         .superset-rest-grid input:focus {
             outline: none;
             border-color: #ff6b6b;
         }
-        
+
         .superset-rest-grid .rest-suffix {
             font-size: 0.7rem;
             color: var(--color-text-muted);
@@ -800,13 +809,13 @@
             text-align: center;
             border-radius: 4px;
         }
-        
+
         /* Normal Rest Config - Uniforme */
         .normal-rest-config {
             margin-top: 0.4rem;
             margin-bottom: 0.4rem;
         }
-        
+
         .rest-inline-box {
             display: inline-flex;
             align-items: center;
@@ -817,12 +826,12 @@
             padding: 0.3rem 0.5rem;
             font-size: 0.8rem;
         }
-        
+
         .rest-inline-box .rest-icon {
             font-size: 0.85rem;
             opacity: 0.7;
         }
-        
+
         .rest-inline-box input {
             width: 45px;
             background: transparent;
@@ -832,11 +841,11 @@
             font-size: 0.85rem;
             padding: 0;
         }
-        
+
         .rest-inline-box input:focus {
             outline: none;
         }
-        
+
         .rest-inline-box .rest-suffix {
             font-size: 0.7rem;
             color: var(--color-text-muted);
@@ -868,6 +877,7 @@
         }
 
         @media (max-width: 480px) {
+
             .set-row,
             .set-header {
                 grid-template-columns: 20px 55px 1fr 1fr 1fr 20px !important;
@@ -888,25 +898,25 @@
             .set-label {
                 font-size: 0.7rem !important;
             }
-            
+
             .wellness-compact-grid {
                 grid-template-columns: repeat(4, 1fr) !important;
                 gap: 0.3rem !important;
             }
-            
+
             .wellness-mini-card {
                 padding: 0.3rem 0.15rem !important;
             }
-            
+
             .wellness-mini-card input {
                 max-width: 36px !important;
                 font-size: 0.8rem !important;
             }
-            
+
             .exercise-name-input {
                 font-size: 0.85rem !important;
             }
-            
+
             .exercise-header-actions button {
                 padding: 0.25rem 0.4rem !important;
                 font-size: 0.65rem !important;
@@ -959,21 +969,25 @@
             <div class="diary-page-header">
                 <h1>Diario <span class="text-primary">Allenamento</span></h1>
             </div>
-            
+
             <!-- FAB - Floating Action Button -->
             <div class="fab-container" id="fabContainer">
                 <button id="startWorkoutBtn" class="fab" title="Registra Allenamento">➕</button>
             </div>
 
             <!-- Workout Selector (Hidden by default) -->
-            <div id="workoutSelector" class="card" style="display: none; margin-bottom: var(--spacing-md); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+            <div id="workoutSelector" class="card"
+                style="display: none; margin-bottom: var(--spacing-md); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
                 <h3 style="margin-bottom: 0.5rem;">🎯 Seleziona Scheda</h3>
-                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1rem;">Scegli quale routine registrare</p>
-                <select id="savedWorkoutsSelect" style="margin-bottom: 1rem; width: 100%; padding: 0.9rem; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: white;">
+                <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1rem;">Scegli quale routine
+                    registrare</p>
+                <select id="savedWorkoutsSelect"
+                    style="margin-bottom: 1rem; width: 100%; padding: 0.9rem; border-radius: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.12); color: white;">
                     <option value="">-- Scegli una routine --</option>
                 </select>
                 <div style="display: flex; gap: 1rem;">
-                    <button id="loadWorkoutBtn" class="btn btn-primary" style="flex: 1; border-radius: 12px;">✅ Carica Scheda</button>
+                    <button id="loadWorkoutBtn" class="btn btn-primary" style="flex: 1; border-radius: 12px;">✅ Carica
+                        Scheda</button>
                     <button id="cancelSelectBtn" class="btn btn-outline" style="border-radius: 12px;">Annulla</button>
                 </div>
             </div>
@@ -983,7 +997,9 @@
                 <!-- Header Compatto -->
                 <div class="logging-header">
                     <div class="logging-header-icon">📝</div>
-                    <h2 id="loggingTitle" style="margin: 0; font-size: 1.1rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Log Workout</h2>
+                    <h2 id="loggingTitle"
+                        style="margin: 0; font-size: 1.1rem; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        Log Workout</h2>
                 </div>
 
                 <!-- Data + Durata - Riga compatta -->
@@ -1026,8 +1042,7 @@
                 <!-- DOMS Details Section - Compatto -->
                 <div id="domsDetailsSection"
                     style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 0.5rem 0.6rem; margin-bottom: 0.75rem;">
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
                         <label style="font-size: 0.8rem; color: var(--color-text-muted); font-weight: 500;">💪 Dettagli
                             DOMS</label>
                         <button type="button" id="toggleDomsDetails"
@@ -1248,7 +1263,7 @@
                 fabContainer.style.display = 'none';
                 workoutSelector.style.display = 'block';
                 historyList.style.display = 'none';
-                
+
                 // 🏆 Reset sessione PR per nuovo allenamento
                 if (typeof prTracker !== 'undefined') {
                     prTracker.resetSessionPRs();
@@ -2069,7 +2084,7 @@
                     } else {
                         volumeDisplay = vol >= 1000 ? (vol / 1000).toFixed(1).replace('.0', '') + 't' : Math.round(vol) + 'kg';
                     }
-                    
+
                     // Duration formatting
                     const durationVal = typeof log.duration === 'string' ? log.duration : log.duration + ' min';
 
@@ -2670,26 +2685,26 @@
             const modal = document.getElementById('statsInfoModal');
             const titleEl = document.getElementById('statsModalTitle');
             const contentEl = document.getElementById('statsModalContent');
-            
+
             if (!modal || !statsInfoContent[type]) return;
-            
+
             const data = statsInfoContent[type];
             titleEl.textContent = data.title;
-            
+
             contentEl.innerHTML = data.sections.map(section => `
                 <div class="stats-info-section">
                     <h4>${section.heading}</h4>
                     <p>${section.text}</p>
                 </div>
             `).join('');
-            
+
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeStatsInfoModal(event) {
             if (event && event.target !== event.currentTarget) return;
-            
+
             const modal = document.getElementById('statsInfoModal');
             if (modal) {
                 modal.classList.remove('active');
@@ -2697,6 +2712,7 @@
             }
         }
     </script>
+    <script type="module" src="./js/gymbro-chat.js"></script>
 </body>
 
 </html>

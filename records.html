@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Record Storici | GymBro</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/gymbro-chat.css">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <meta name="theme-color" content="#00f3ff">
@@ -66,7 +67,7 @@
             display: flex;
             gap: 0.5rem;
             margin-bottom: 1.5rem;
-            background: rgba(255,255,255,0.03);
+            background: rgba(255, 255, 255, 0.03);
             padding: 0.25rem;
             border-radius: var(--radius-md);
         }
@@ -90,7 +91,7 @@
         }
 
         .pr-tab:not(.active):hover {
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--color-text);
         }
 
@@ -220,8 +221,17 @@
         }
 
         @keyframes pulseArrow {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.8; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
         }
 
         .pr-delta-value {
@@ -358,7 +368,7 @@
 
         .pr-filter-pill {
             padding: 0.4rem 0.75rem;
-            background: rgba(255,255,255,0.05);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid transparent;
             border-radius: 20px;
             font-size: 0.75rem;
@@ -368,7 +378,7 @@
         }
 
         .pr-filter-pill:hover {
-            background: rgba(255,255,255,0.08);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--color-text);
         }
 
@@ -399,7 +409,7 @@
 
     <section class="section" style="padding-top: 100px;">
         <div class="container">
-            
+
             <!-- Header -->
             <div class="pr-hub-header">
                 <h1>🏆 Record <span class="text-primary">Storici</span></h1>
@@ -428,7 +438,8 @@
                     <span class="pr-session-icon">🎉</span>
                     <div>
                         <div class="pr-session-title">Progressi Straordinari!</div>
-                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record nella sessione</div>
+                        <div class="pr-session-subtitle" id="sessionPRSubtitle">Hai superato nuovi record nella sessione
+                        </div>
                     </div>
                 </div>
                 <div id="sessionPRList"></div>
@@ -468,7 +479,7 @@
             // Check if coming from workout with new PRs
             const urlParams = new URLSearchParams(window.location.search);
             const sessionPRs = urlParams.get('session_prs');
-            
+
             if (sessionPRs) {
                 try {
                     const prs = JSON.parse(decodeURIComponent(sessionPRs));
@@ -490,7 +501,7 @@
             function updateStats() {
                 const allPRs = prTracker.getAllPRs();
                 const history = prTracker.getPRHistory(100);
-                
+
                 // Total unique PRs (count of record types across all exercises)
                 let totalRecords = 0;
                 allPRs.forEach(pr => {
@@ -499,10 +510,10 @@
                     if (pr.maxReps > 0) totalRecords++;
                     if (pr.maxVolume > 0) totalRecords++;
                 });
-                
+
                 document.getElementById('totalPRsCount').textContent = totalRecords;
                 document.getElementById('exercisesWithPRs').textContent = allPRs.length;
-                
+
                 // Recent PRs (last 30 days)
                 const thirtyDaysAgo = new Date();
                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -514,37 +525,37 @@
                 const container = document.getElementById('sessionPRHighlight');
                 const list = document.getElementById('sessionPRList');
                 const subtitle = document.getElementById('sessionPRSubtitle');
-                
+
                 container.style.display = 'block';
                 subtitle.textContent = `Hai battuto ${prs.reduce((sum, p) => sum + p.records.length, 0)} record in ${prs.length} esercizi!`;
-                
+
                 list.innerHTML = prs.map(pr => renderPRCard(pr, true)).join('');
             }
 
             function renderPRs() {
                 const container = document.getElementById('prListContainer');
-                
+
                 if (currentTab === 'history') {
                     const history = prTracker.getPRHistory(50);
-                    const filtered = currentFilter === 'all' 
-                        ? history 
+                    const filtered = currentFilter === 'all'
+                        ? history
                         : history.filter(pr => pr.records.some(r => r.type === currentFilter));
-                    
+
                     if (filtered.length === 0) {
                         container.innerHTML = renderEmptyState();
                         return;
                     }
-                    
+
                     container.innerHTML = filtered.map(pr => renderPRCard(pr)).join('');
                 } else {
                     // All current PRs grouped by exercise
                     const allPRs = prTracker.getAllPRs();
-                    
+
                     if (allPRs.length === 0) {
                         container.innerHTML = renderEmptyState();
                         return;
                     }
-                    
+
                     container.innerHTML = allPRs.map(pr => renderCurrentPRCard(pr)).join('');
                 }
             }
@@ -560,12 +571,12 @@
 
                 return records.map(record => {
                     const delta = record.newValue - record.oldValue;
-                    const deltaPercent = record.oldValue > 0 
+                    const deltaPercent = record.oldValue > 0
                         ? ((delta / record.oldValue) * 100).toFixed(1)
                         : 100;
-                    
+
                     const oldDate = getOldRecordDate(exercise, record.type);
-                    
+
                     return `
                         <div class="pr-record-card ${isSession ? 'session-card' : ''}">
                             <div class="pr-record-header">
@@ -613,7 +624,7 @@
             }
 
             function renderCurrentPRCard(pr) {
-                const lastUpdated = pr.lastUpdated 
+                const lastUpdated = pr.lastUpdated
                     ? new Date(pr.lastUpdated).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
                     : 'N/A';
 
@@ -663,7 +674,7 @@
                 // Search through history to find the previous record date
                 const history = prTracker.getPRHistory(100);
                 const normalizedName = exerciseName.toLowerCase().trim();
-                
+
                 for (let i = 1; i < history.length; i++) {
                     const pr = history[i];
                     if (pr.exercise.toLowerCase().trim() === normalizedName) {
@@ -708,5 +719,7 @@
             });
         });
     </script>
+    <script type="module" src="./js/gymbro-chat.js"></script>
 </body>
+
 </html>

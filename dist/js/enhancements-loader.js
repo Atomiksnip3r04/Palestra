@@ -555,12 +555,30 @@ function setupAIGenerationInterception() {
         const aiContent = document.getElementById('aiPredictorContent');
         const customInput = document.getElementById('aiCustomInput');
 
-        // Show loading state
+        // Show loading state with Mascot
         aiContent.innerHTML = `
-            <div style="padding: 2rem; text-align: center;">
-                <div class="spinner" style="margin: 0 auto 1rem;"></div>
-                <p style="color: var(--color-text-muted);">L'AI sta analizzando il tuo profilo e le tue richieste...</p>
+            <div style="padding: 2.5rem 1.5rem; text-align: center; background: rgba(0, 243, 255, 0.03); border-radius: 16px; border: 1px dashed rgba(0, 243, 255, 0.2);">
+                <div style="position: relative; width: 80px; height: 80px; margin: 0 auto 1.5rem;">
+                    <img src="mascott-gymbro.png" alt="GymBro" style="width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--color-primary); box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);">
+                    <div class="spinner" style="position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; width: auto; height: auto; border-width: 3px; border-color: var(--color-primary) transparent transparent transparent;"></div>
+                </div>
+                <h4 style="color: white; margin-bottom: 0.5rem; font-size: 1.1rem;">GymBro sta elaborando...</h4>
+                <p style="color: var(--color-text-muted); font-size: 0.9rem; max-width: 280px; margin: 0 auto; line-height: 1.4;">
+                    Sto analizzando il tuo profilo, i tuoi volumi e le tue richieste speciali per creare la scheda perfetta.
+                </p>
+                <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.4rem;">
+                    <span class="loading-dot" style="width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; opacity: 0.6; animation: pulse 1s infinite 0s;"></span>
+                    <span class="loading-dot" style="width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; opacity: 0.6; animation: pulse 1s infinite 0.2s;"></span>
+                    <span class="loading-dot" style="width: 6px; height: 6px; background: var(--color-primary); border-radius: 50%; opacity: 0.6; animation: pulse 1s infinite 0.4s;"></span>
+                </div>
             </div>
+
+            <style>
+                @keyframes pulse {
+                    0%, 100% { transform: scale(1); opacity: 0.3; }
+                    50% { transform: scale(1.3); opacity: 1; }
+                }
+            </style>
         `;
 
         try {
@@ -910,7 +928,7 @@ function setupShareInterception(sharingHandler) {
             // Use UUID-based lookup (data-id) instead of array index
             const workoutId = btn.dataset.id;
             const workouts = JSON.parse(localStorage.getItem('ironflow_workouts') || '[]');
-            const workout = workoutId 
+            const workout = workoutId
                 ? workouts.find(w => String(w.id) === String(workoutId))
                 : null;
 
