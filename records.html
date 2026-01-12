@@ -1454,12 +1454,12 @@
                             <!-- NEW (Vibrant High Contrast) -->
                             <div class="text-center p-2 rounded-xl bg-[#0d0d15] border-2 ${isSession ? 'border-[#ffd700]' : 'border-[#00f3ff50]'} shadow-inner">
                                 <div class="text-[0.5rem] ${isSession ? 'text-[#ffd700]' : 'text-[#00f3ff80]'} font-black uppercase tracking-tighter mb-1">NUOVO</div>
-                                <div class=\"text-2xl font-black ${isSession ?\'text-[#ffd700]\' : \'text-[#00f3ff]\'}\">${newValue}</div>
-                    < div class="text-[0.5rem] ${isSession ? 'text-[#ffd70080]' : 'text-[#00f3ff50]'} font-bold" > ${ record.unit }</div >
-                            </div >
-                        </div >
-                    </div >
-                    `;
+                                <div class="text-2xl font-black ${isSession ? 'text-[#ffd700]' : 'text-[#00f3ff]'}">${newValue}</div>
+                                <div class="text-[0.5rem] ${isSession ? 'text-[#ffd70080]' : 'text-[#00f3ff50]'} font-bold">${record.unit}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
             }
 
             function renderCurrentPRCard(pr) {
@@ -1470,28 +1470,27 @@
                 if (records.length === 0) return '';
 
                 return `
-                    < div class=\"relative bg-[#1a1a2e] border-2 border-[#2d2d44] rounded-2xl mb-4 overflow-hidden group hover:border-[#00f3ff40] transition-all\">
-                        < div class=\"p-4 pb-2\">
-                            < div class=\"text-white font-black text-sm tracking-tight\">${pr.displayName}</div>
-                        </div >
-                    <div class=\"grid grid-cols-${records.length} gap-2 p-4 pt-0\">
-                            ${
-                    records.map(r => `
-                                <div class=\"text-center p-3 rounded-xl bg-[#0d0d15] border border-[#2d2d44]\">
-                                    <div class=\"text-[0.55rem] font-black uppercase tracking-widest mb-1\" style=\"color: ${r.color}80\">${r.label}</div>
-                                    <div class=\"text-2xl font-black\" style=\"color: ${r.color}\">${r.value}</div>
-                                    <div class=\"text-[0.55rem] font-bold text-[#4a4a60]\">${r.unit}</div>
+                    <div class="relative bg-[#1a1a2e] border-2 border-[#2d2d44] rounded-2xl mb-4 overflow-hidden group hover:border-[#00f3ff40] transition-all">
+                        <div class="p-4 pb-2">
+                            <div class="text-white font-black text-sm tracking-tight">${pr.displayName}</div>
+                        </div>
+                        <div class="grid grid-cols-${records.length} gap-2 p-4 pt-0">
+                            ${records.map(r => `
+                                <div class="text-center p-3 rounded-xl bg-[#0d0d15] border border-[#2d2d44]">
+                                    <div class="text-[0.55rem] font-black uppercase tracking-widest mb-1" style="color: ${r.color}80">${r.label}</div>
+                                    <div class="text-2xl font-black" style="color: ${r.color}">${r.value}</div>
+                                    <div class="text-[0.55rem] font-bold text-[#4a4a60]">${r.unit}</div>
                                 </div>
                             `).join('')
-                }
-                        </div >
-                    </div >
-                    `;
+                    }
+                        </div>
+                    </div>
+                `;
             }
 
             function renderEmptyState() {
                 return `
-                    < div class="flex flex-col items-center justify-center py-16 px-6 text-center" >
+                    <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
                         <div class="relative mb-6">
                             <div class="text-6xl animate-pulse">⚡</div>
                             <div class="absolute inset-0 bg-neon-cyan/20 blur-3xl rounded-full"></div>
@@ -1502,16 +1501,15 @@
                         ? `Nessun risultato per "<span class="text-neon-cyan">${searchQuery}</span>"`
                         : 'Non ci sono ancora dati per questa selezione.'}
                         </p>
-                        ${
-                    searchQuery ? `
+                        ${searchQuery ? `
                             <button onclick="document.getElementById('searchInput').value=''; searchQuery=''; renderPRs();" 
                                     class="mt-6 px-4 py-2 rounded-full text-xs font-semibold bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20 hover:bg-neon-cyan/20 transition-all">
                                 Cancella ricerca
                             </button>
                         ` : ''
-                }
-                    </div >
-                    `;
+                    }
+                    </div>
+                `;
             }
 
             function getOldRecordDate(exerciseName, recordType) {
@@ -1541,7 +1539,7 @@
                         const isDate = chip.classList.contains('pr-date-chip');
                         const group = isDate ? '#dateFilters' : '#categoryFilters';
 
-                        document.querySelectorAll(`${ group } .pr - filter - chip`).forEach(c => c.classList.remove('active'));
+                        document.querySelectorAll(`${group} .pr - filter - chip`).forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
 
                         if (isDate) currentDateFilter = chip.dataset.date;
