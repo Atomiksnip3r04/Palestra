@@ -1030,47 +1030,20 @@
 
                     <!-- Saved Workouts -->
                     <div>
-                        <!-- AI PREDICTOR WIDGET - Redesigned -->
-                        <div class="card ai-generator-card"
-                            style="margin-bottom: 2rem; border-radius: 20px; border: 1px solid rgba(0, 243, 255, 0.2); background: linear-gradient(145deg, rgba(0, 243, 255, 0.08) 0%, rgba(0, 150, 170, 0.03) 50%, rgba(0,0,0,0.1) 100%); box-shadow: 0 8px 32px rgba(0, 243, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05); overflow: hidden; position: relative;">
-                            
-                            <!-- Decorative glow -->
-                            <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(0, 243, 255, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
-                            
-                            <div style="position: relative; z-index: 1;">
-                                <!-- Header -->
-                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem;">
-                                    <div style="width: 50px; height: 50px; border-radius: 14px; background: linear-gradient(135deg, var(--color-primary) 0%, #00c8d4 100%); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0, 243, 255, 0.3);">
-                                        🤖
-                                    </div>
-                                    <div style="flex: 1;">
-                                        <h3 style="font-size: 1.15rem; margin: 0; font-weight: 600;">AI Workout Generator</h3>
-                                        <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.25rem 0 0 0;">
-                                            Powered by Gemini AI
-                                        </p>
-                                    </div>
+                        <!-- AI GENERATOR - Now in Creator Page -->
+                        <a href="creator.html" class="card" style="display: block; margin-bottom: 2rem; border-radius: 16px; border: 1px solid rgba(0, 243, 255, 0.2); background: linear-gradient(145deg, rgba(0, 243, 255, 0.08) 0%, rgba(0, 150, 170, 0.03) 50%, rgba(0,0,0,0.1) 100%); text-decoration: none; padding: 1rem; transition: all 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--color-primary) 0%, #00c8d4 100%); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 12px rgba(0, 243, 255, 0.3);">
+                                    🤖
                                 </div>
-                                
-                                <!-- Content Area -->
-                                <div id="aiPredictorContent" style="background: rgba(0,0,0,0.2); border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
-                                    <p style="color: var(--color-text-muted); font-size: 0.9rem; margin: 0; text-align: center;">
-                                        ✨ Chiedi all'IA cosa allenare oggi in base al tuo storico
+                                <div style="flex: 1;">
+                                    <h3 style="font-size: 1rem; margin: 0; font-weight: 600; color: white;">AI Workout Generator</h3>
+                                    <p style="font-size: 0.75rem; color: var(--color-text-muted); margin: 0.2rem 0 0 0;">
+                                        Genera schede personalizzate con Gemini AI →
                                     </p>
                                 </div>
-                                
-                                <!-- Action Buttons - Bilanciati 50/50 -->
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;">
-                                    <button id="aiPlanHistoryBtn" class="btn btn-outline" 
-                                        style="border-radius: 10px; padding: 0.7rem; font-size: 0.85rem; border-color: rgba(255,255,255,0.15);">
-                                        📚 Storico
-                                    </button>
-                                    <button id="refreshAiPredictor" class="btn btn-primary" 
-                                        style="border-radius: 10px; padding: 0.7rem; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 16px rgba(0, 243, 255, 0.3);">
-                                        ⚡ Genera
-                                    </button>
-                                </div>
                             </div>
-                        </div>
+                        </a>
 
                         <h3 style="margin-bottom: 1rem;">Le tue Schede</h3>
                         <div id="savedWorkoutsList">
@@ -1220,21 +1193,6 @@
             </div>
         </div>
     </section>
-
-    <!-- AI Plan History Modal -->
-    <div id="aiPlanHistoryModal"
-        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: clamp(0.5rem, 2vw, 1rem); overflow-y: auto;">
-        <div class="card"
-            style="max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; margin: auto;">
-            <button id="closeAiPlanHistory"
-                style="position: sticky; top: 0; right: 0; float: right; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; margin-bottom: -36px;">&times;</button>
-            <h3 style="margin-bottom: 1rem; font-size: clamp(1.1rem, 4vw, 1.3rem); padding-right: 40px;">Storico
-                Sessioni <span class="text-primary">AI</span></h3>
-            <div id="aiPlanHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <!-- history items -->
-            </div>
-        </div>
-    </div>
 
     <!-- Edit Rest Times Modal -->
     <div id="editRestModal"
@@ -2019,280 +1977,6 @@
                 setTimeout(() => syncStatus.textContent = '', 2000);
             });
 
-            // --- AI Predictor Logic ---
-            const refreshAiPredictor = document.getElementById('refreshAiPredictor');
-            const aiPlanHistoryBtn = document.getElementById('aiPlanHistoryBtn');
-            const aiPlanHistoryModal = document.getElementById('aiPlanHistoryModal');
-            const closeAiPlanHistory = document.getElementById('closeAiPlanHistory');
-            const aiPlanHistoryList = document.getElementById('aiPlanHistoryList');
-            const aiPredictorContent = document.getElementById('aiPredictorContent');
-
-            const AI_PLAN_HISTORY_KEY = 'ironflow_ai_plan_history';
-            let latestAiPlan = null;
-
-            const loadAiPlanHistory = () => {
-                try {
-                    return JSON.parse(localStorage.getItem(AI_PLAN_HISTORY_KEY) || '[]');
-                } catch (error) {
-                    console.error('Errore lettura storico AI', error);
-                    return [];
-                }
-            };
-
-            const saveAiPlanHistory = async (plan) => {
-                const history = loadAiPlanHistory();
-                history.unshift(plan);
-                const trimmed = history.slice(0, 20);
-                localStorage.setItem(AI_PLAN_HISTORY_KEY, JSON.stringify(trimmed));
-
-                // Sync to Firestore for persistence across devices
-                try {
-                    if (authService.getCurrentUser()) {
-                        await firestoreService.syncToCloud();
-                    }
-                } catch (e) {
-                    console.warn('Could not sync AI history to cloud:', e);
-                }
-            };
-
-            const formatList = (items = []) => {
-                if (!items) return '<li>Nessun suggerimento specificato</li>';
-                const arr = Array.isArray(items) ? items : [items];
-                if (!arr.length) return '<li>Nessun suggerimento specificato</li>';
-                return arr.map(item => `<li>${item}</li>`).join('');
-            };
-
-            const renderAiPlan = (plan) => {
-                latestAiPlan = plan;
-                console.log('📋 renderAiPlan chiamato con:', JSON.stringify(plan, null, 2));
-                const date = new Date(plan.createdAt || Date.now()).toLocaleString('it-IT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                const isPersonalized = plan.isPersonalized || plan.aiPersonalized;
-                const badgeHtml = isPersonalized
-                    ? '<span class="ai-badge" style="background: linear-gradient(135deg, rgba(0,243,255,0.3), rgba(156,39,176,0.3)); border-color: #9c27b0;">AI+</span>'
-                    : '<span class="ai-badge">AI</span>';
-
-                // Supporta sia il formato nuovo (exercises) che legacy (warmup/main_lifts)
-                // PRIORITÀ: exercises > warmup/main_lifts
-                const exercises = plan.exercises;
-                const hasExercises = exercises && Array.isArray(exercises) && exercises.length > 0;
-                const warmupArr = plan.warmup && Array.isArray(plan.warmup) ? plan.warmup : [];
-                const mainLiftsArr = plan.main_lifts && Array.isArray(plan.main_lifts) ? plan.main_lifts : [];
-                const hasLegacyFormat = warmupArr.length > 0 || mainLiftsArr.length > 0;
-
-                console.log('📋 Plan data:', {
-                    exercises: exercises,
-                    hasExercises: hasExercises,
-                    warmup: plan.warmup,
-                    main_lifts: plan.main_lifts,
-                    hasLegacyFormat: hasLegacyFormat
-                });
-
-                let exercisesHtml = '';
-                if (hasExercises) {
-                    // Nuovo formato: exercises è un array di oggetti {name, sets, reps, notes}
-                    exercisesHtml = `
-                        <div class="ai-plan-section">
-                            <h5>Esercizi Suggeriti</h5>
-                            <ul>
-                                ${exercises.map(ex => {
-                        const name = ex.name || ex.exercise || 'Esercizio';
-                        const details = [];
-                        if (ex.sets) details.push(`${ex.sets} serie`);
-                        if (ex.reps) details.push(`${ex.reps} reps`);
-                        const detailStr = details.length ? ` (${details.join(' x ')})` : '';
-                        const notesStr = ex.notes ? `<br><small style="color: var(--color-text-muted);">${ex.notes}</small>` : '';
-                        return `<li><strong>${name}</strong>${detailStr}${notesStr}</li>`;
-                    }).join('')}
-                            </ul>
-                        </div>
-                    `;
-                } else if (hasLegacyFormat) {
-                    // Formato legacy: warmup e main_lifts sono array di stringhe
-                    exercisesHtml = `
-                        ${warmupArr.length > 0 ? `
-                        <div class="ai-plan-section">
-                            <h5>Warmup</h5>
-                            <ul>${formatList(warmupArr)}</ul>
-                        </div>` : ''}
-                        ${mainLiftsArr.length > 0 ? `
-                        <div class="ai-plan-section">
-                            <h5>Main Lifts</h5>
-                            <ul>${formatList(mainLiftsArr)}</ul>
-                        </div>` : ''}
-                    `;
-                } else {
-                    // Nessun formato riconosciuto - mostra messaggio di debug
-                    exercisesHtml = `
-                        <div class="ai-plan-section">
-                            <p style="color: var(--color-text-muted);">⚠️ Formato dati non riconosciuto. Controlla la console per debug.</p>
-                            <small style="color: #666;">Keys disponibili: ${Object.keys(plan).join(', ')}</small>
-                        </div>
-                    `;
-                }
-
-                // Mostra reasoning se disponibile
-                const reasoningHtml = plan.reasoning ? `
-                    <div class="ai-plan-section" style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,243,255,0.05); border-radius: 6px;">
-                        <small style="color: var(--color-text-muted);"><strong>💡 Ragionamento:</strong> ${plan.reasoning}</small>
-                    </div>
-                ` : '';
-
-                aiPredictorContent.innerHTML = `
-                    <div class="ai-plan-card">
-                        <div style="display:flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-                            <div>
-                                <h4 style="margin:0;">${plan.suggestion || 'Allenamento AI'}</h4>
-                                <small style="color: var(--color-text-muted);">${date}</small>
-                            </div>
-                            ${badgeHtml}
-                        </div>
-                        <p style="margin: 0.75rem 0; color: #ddd;">${plan.focus || ''}</p>
-                        ${exercisesHtml}
-                        ${reasoningHtml}
-                        <div style="margin-top: 1rem; display: flex; gap: 0.5rem;">
-                            <button id="saveAiPlanBtn" class="btn btn-primary" style="flex:1;">Salva come scheda</button>
-                        </div>
-                    </div>
-                `;
-
-                const saveBtn = document.getElementById('saveAiPlanBtn');
-                if (saveBtn) {
-                    saveBtn.addEventListener('click', () => handleAiPlanSave(plan, saveBtn));
-                }
-            };
-
-            const handleAiPlanSave = async (plan, buttonEl) => {
-                if (!plan) return;
-                buttonEl.disabled = true;
-                buttonEl.textContent = 'Salvataggio...';
-
-                const workouts = getStoredWorkouts();
-
-                // Supporta sia il formato nuovo (exercises) che legacy (main_lifts/warmup)
-                let exercisesForWorkout = [];
-                if (plan.exercises && Array.isArray(plan.exercises) && plan.exercises.length > 0) {
-                    // Nuovo formato: exercises è già un array di oggetti
-                    exercisesForWorkout = plan.exercises.map(ex => ({
-                        name: ex.name || 'Esercizio',
-                        sets: ex.sets || '4',
-                        reps: ex.reps || '8-10',
-                        notes: ex.notes || ''
-                    }));
-                } else if (plan.main_lifts && Array.isArray(plan.main_lifts)) {
-                    // Formato legacy: main_lifts è un array di stringhe
-                    exercisesForWorkout = plan.main_lifts.map((lift, idx) => ({
-                        name: lift,
-                        sets: '4',
-                        reps: '8-10',
-                        notes: idx < (plan.warmup || []).length ? `Warmup: ${(plan.warmup || [])[idx]}` : ''
-                    }));
-                }
-
-                const newWorkout = {
-                    id: generateWorkoutId(),
-                    name: plan.suggestion || `Sessione AI ${new Date().toLocaleDateString('it-IT')}`,
-                    description: plan.focus || 'Allenamento generato da Gemini AI',
-                    exercises: exercisesForWorkout,
-                    warmup: plan.warmup,
-                    fromAI: true,
-                    aiMeta: {
-                        focus: plan.focus,
-                        reasoning: plan.reasoning,
-                        createdAt: plan.createdAt || new Date().toISOString(),
-                        source: 'predictor'
-                    },
-                    dateCreated: new Date().toISOString()
-                };
-
-                workouts.push(newWorkout);
-                localStorage.setItem('ironflow_workouts', JSON.stringify(workouts));
-                renderWorkouts();
-
-                try {
-                    await firestoreService.syncToCloud();
-                } catch (error) {
-                    console.warn('Sync scheda AI fallita:', error.message || error);
-                }
-
-                buttonEl.textContent = 'Salvata!';
-            };
-
-            const renderAiPlanHistoryList = async (forceRefresh = false) => {
-                // Show loading state
-                aiPlanHistoryList.innerHTML = '<p style="color: var(--color-text-muted); text-align: center;"><span class="loading-spinner"></span> Sincronizzazione...</p>';
-
-                // Refresh from cloud if user is logged in
-                if (forceRefresh && authService.getCurrentUser()) {
-                    try {
-                        const loadResult = await firestoreService.loadFromCloud();
-                        if (loadResult.success && loadResult.data) {
-                            // Merge is handled automatically in loadFromCloud
-                            console.log('📚 Storico AI aggiornato dal cloud');
-                        }
-                    } catch (e) {
-                        console.warn('Could not refresh AI history from cloud:', e);
-                    }
-                }
-
-                const history = loadAiPlanHistory();
-                if (!history.length) {
-                    aiPlanHistoryList.innerHTML = '<p style="color: var(--color-text-muted); text-align: center;">Nessuna sessione AI salvata.</p>';
-                    return;
-                }
-
-                aiPlanHistoryList.innerHTML = '';
-                history.forEach((plan, index) => {
-                    const date = new Date(plan.createdAt || Date.now()).toLocaleString('it-IT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-                    const isPersonalized = plan.isPersonalized || plan.aiPersonalized;
-                    const badgeHtml = isPersonalized
-                        ? '<span class="ai-badge" style="background: linear-gradient(135deg, rgba(0,243,255,0.3), rgba(156,39,176,0.3)); border-color: #9c27b0;">AI+</span>'
-                        : '<span class="ai-badge">AI</span>';
-                    const div = document.createElement('div');
-                    div.style.cssText = 'padding: 0.75rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; cursor: pointer; background: rgba(255,255,255,0.02);';
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content: space-between; align-items:center; gap:0.5rem;">
-                            <div>
-                                <strong>${plan.suggestion || 'Allenamento AI'}</strong>
-                                <div style="font-size:0.75rem; color: var(--color-text-muted);">${date}</div>
-                            </div>
-                            ${badgeHtml}
-                        </div>
-                        <p style="font-size: 0.8rem; color: #ccc; margin: 0.5rem 0 0;">${plan.focus || ''}</p>
-                    `;
-                    div.addEventListener('click', () => {
-                        renderAiPlan(plan);
-                        aiPlanHistoryModal.style.display = 'none';
-                    });
-                    aiPlanHistoryList.appendChild(div);
-                });
-            };
-
-            if (refreshAiPredictor) {
-                refreshAiPredictor.addEventListener('click', async () => {
-                    if (!aiService.hasKey()) {
-                        aiPredictorContent.innerHTML = '<p style="color: #ff4444;">Imposta prima la tua API Key.</p>';
-                        return;
-                    }
-
-                    aiPredictorContent.innerHTML = '<p style="color: var(--color-text-muted);">Generazione allenamento in corso...</p>';
-
-                    const data = await firestoreService.gatherDataForAI();
-                    const result = await aiService.predictNextSession(data);
-
-                    if (result.success) {
-                        const plan = {
-                            ...result.data,
-                            isPersonalized: false, // AI classico senza personalizzazione
-                            createdAt: new Date().toISOString()
-                        };
-                        saveAiPlanHistory(plan);
-                        renderAiPlan(plan);
-                    } else {
-                        aiPredictorContent.innerHTML = `<p style="color: #ff4444;">Errore: ${result.message}</p>`;
-                    }
-                });
-            }
-
             // --- ImgBB Key Logic ---
             const imgbbKeyInput = document.getElementById('imgbbKeyInput');
             const saveImgbbKeyBtn = document.getElementById('saveImgbbKeyBtn');
@@ -2333,25 +2017,6 @@
                     }
                 });
             }
-
-            if (aiPlanHistoryBtn) {
-                aiPlanHistoryBtn.addEventListener('click', async () => {
-                    aiPlanHistoryModal.style.display = 'flex';
-                    await renderAiPlanHistoryList(true); // Force refresh from cloud
-                });
-            }
-
-            if (closeAiPlanHistory) {
-                closeAiPlanHistory.addEventListener('click', () => {
-                    aiPlanHistoryModal.style.display = 'none';
-                });
-            }
-
-            window.addEventListener('click', (e) => {
-                if (e.target === aiPlanHistoryModal) {
-                    aiPlanHistoryModal.style.display = 'none';
-                }
-            });
 
             // --- FOCUS MODE LOGIC ---
             const focusOverlay = document.getElementById('focusModeOverlay');
