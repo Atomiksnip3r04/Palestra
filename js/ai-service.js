@@ -948,9 +948,14 @@ Rispondi all'utente in modo naturale, mantenendo la cronologia della conversazio
 
             // Only send PREVIOUS messages in the history.
             // The current message will be sent separately as the 'prompt'.
+            // Gemini requirement: History must start with 'user' and alternate.
             const historyToInclude = history.slice(0, -1);
 
-            const chatHistory = historyToInclude.map(msg => ({
+            // Filter out any messages at the start that are not from 'user'
+            let firstUserIndex = historyToInclude.findIndex(m => m.role === 'user');
+            const validHistoryChunks = firstUserIndex !== -1 ? historyToInclude.slice(firstUserIndex) : [];
+
+            const chatHistory = validHistoryChunks.map(msg => ({
                 role: msg.role === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.text }]
             }));
