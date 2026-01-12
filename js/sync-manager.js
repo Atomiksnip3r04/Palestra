@@ -77,28 +77,42 @@ class SyncManager {
      */
     async loadFromCloud() {
         try {
-            const user = authService.getCurrentUser();
+            let user = authService.getCurrentUser();
+            console.log('☁️ [SyncManager] loadFromCloud chiamato - user:', user?.email || 'null');
+            
             if (!user) {
-                console.log('⏳ [SyncManager] Skip load - utente non autenticato');
-                return { success: false };
+                console.log('⏳ [SyncManager] Attendo autenticazione per load...');
+                user = await Promise.race([
+                    authService.waitForAuth(),
+                    new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                ]);
+                
+                if (!user) {
+                    console.log('⏳ [SyncManager] Skip load - utente non autenticato dopo attesa');
+                    return { success: false };
+                }
             }
 
-            console.log('☁️ [SyncManager] Caricamento dati dal cloud...');
+            console.log('☁️ [SyncManager] Caricamento dati dal cloud per:', user.email);
             const result = await firestoreService.loadFromCloud();
             
             if (result.success) {
                 console.log('✅ [SyncManager] Dati cloud caricati');
+                this.showSyncStatus('success', 'Dati caricati');
                 this.notifyListeners('load', result);
                 
                 // Dopo il load, fai sempre una sync per assicurarti che i dati locali siano nel cloud
                 // Questo è importante per evitare perdita di dati
                 console.log('🔄 [SyncManager] Sync post-load per sicurezza...');
                 await this.syncToCloud(true);
+            } else {
+                console.warn('⚠️ [SyncManager] Load fallito:', result.message);
             }
             
             return result;
         } catch (error) {
             console.warn('⚠️ [SyncManager] Caricamento cloud fallito:', error.message);
+            this.showSyncStatus('error', 'Errore caricamento');
             return { success: false, error: error.message };
         }
     }
@@ -108,43 +122,94 @@ class SyncManager {
      */
     async syncToCloud(force = false) {
         try {
-            const user = authService.getCurrentUser();
+            let user = authService.getCurrentUser();
+            console.log('🔄 [SyncManager] syncToCloud chiamato - force:', force, 'user:', user?.email || 'null');
+            
             if (!user) {
-                console.warn('⚠️ [SyncManager] Skip sync - utente non autenticato (user:', user, ')');
-                // Prova ad aspettare l'autenticazione
-                const waitedUser = await authService.waitForAuth();
+                console.warn('⚠️ [SyncManager] Utente non autenticato, attendo...');
+                // Prova ad aspettare l'autenticazione con timeout
+                const waitedUser = await Promise.race([
+                    authService.waitForAuth(),
+                    new Promise(resolve => setTimeout(() => resolve(null), 5000)) // 5s timeout
+                ]);
+                
                 if (!waitedUser) {
-                    console.warn('⚠️ [SyncManager] Sync annullata - nessun utente dopo attesa');
+                    console.error('❌ [SyncManager] SYNC FALLITA - nessun utente dopo 5s di attesa');
+                    this.showSyncStatus('error', 'Non autenticato');
                     return { success: false, reason: 'not_authenticated' };
                 }
-                console.log('🔐 [SyncManager] Utente trovato dopo attesa:', waitedUser.email);
+                user = waitedUser;
+                console.log('🔐 [SyncManager] Utente trovato dopo attesa:', user.email);
             }
 
             // Evita sync troppo frequenti (a meno che non sia forzato)
             if (!force && this.lastSyncTime) {
                 const timeSinceLastSync = Date.now() - this.lastSyncTime;
                 if (timeSinceLastSync < this.MIN_SYNC_INTERVAL) {
-                    console.log('⏳ [SyncManager] Skip sync - troppo recente');
+                    console.log('⏳ [SyncManager] Skip sync - troppo recente (' + Math.round(timeSinceLastSync/1000) + 's)');
                     return { success: true, skipped: true };
                 }
             }
 
-            console.log('🔄 [SyncManager] Sincronizzazione in corso...');
+            // Log dati locali prima della sync
+            const localLogs = JSON.parse(localStorage.getItem('ironflow_logs') || '[]');
+            console.log('📤 [SyncManager] Sync in corso - logs locali:', localLogs.length);
+            
             const result = await firestoreService.syncToCloud();
             
             if (result.success) {
                 this.lastSyncTime = Date.now();
                 console.log('✅ [SyncManager] Sync completata:', new Date().toLocaleTimeString());
+                this.showSyncStatus('success', 'Sincronizzato');
                 this.notifyListeners('sync', result);
             } else {
-                console.warn('⚠️ [SyncManager] Sync fallita:', result.message);
+                console.error('❌ [SyncManager] Sync fallita:', result.message);
+                this.showSyncStatus('error', result.message || 'Errore sync');
             }
             
             return result;
         } catch (error) {
             console.error('❌ [SyncManager] Errore sync:', error.message, error);
+            this.showSyncStatus('error', error.message);
             return { success: false, error: error.message };
         }
+    }
+    
+    /**
+     * Mostra un feedback visivo dello stato sync (toast temporaneo)
+     */
+    showSyncStatus(type, message) {
+        // Rimuovi toast esistente
+        const existing = document.getElementById('sync-status-toast');
+        if (existing) existing.remove();
+        
+        const toast = document.createElement('div');
+        toast.id = 'sync-status-toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            z-index: 10000;
+            transition: opacity 0.3s;
+            ${type === 'success' 
+                ? 'background: #4CAF50; color: white;' 
+                : type === 'error' 
+                    ? 'background: #f44336; color: white;'
+                    : 'background: #2196F3; color: white;'}
+        `;
+        toast.textContent = type === 'success' ? '☁️ ' + message : '⚠️ ' + message;
+        document.body.appendChild(toast);
+        
+        // Rimuovi dopo 3 secondi
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 
     /**

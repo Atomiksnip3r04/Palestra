@@ -5,12 +5,18 @@ export class AuthService {
     constructor() {
         this.user = undefined;
         this.onUserChangeCallbacks = [];
+        this._authReady = false;
 
         // Listen for auth state changes
         onAuthStateChanged(auth, (user) => {
+            console.log('🔐 [AuthService] Auth state changed:', user?.email || 'null');
             this.user = user;
+            this._authReady = true;
             this.notifyListeners(user);
         });
+        
+        // Log initial state
+        console.log('🔐 [AuthService] Inizializzato, auth.currentUser:', auth.currentUser?.email || 'null');
     }
 
     async register(email, password, name) {
@@ -54,7 +60,8 @@ export class AuthService {
 
     subscribe(callback) {
         this.onUserChangeCallbacks.push(callback);
-        if (this.user !== undefined) {
+        // Se l'auth è già pronto, chiama subito il callback
+        if (this._authReady) {
             callback(this.user);
         }
     }
@@ -66,30 +73,54 @@ export class AuthService {
     getCurrentUser() {
         // Usa this.user che viene aggiornato da onAuthStateChanged
         // invece di auth.currentUser che potrebbe non essere ancora pronto
-        return this.user || auth.currentUser;
+        const user = this.user !== undefined ? this.user : auth.currentUser;
+        console.log('🔐 [AuthService] getCurrentUser:', user?.email || 'null', '(this.user:', this.user?.email || 'undefined', ', auth.currentUser:', auth.currentUser?.email || 'null', ')');
+        return user;
     }
 
     /**
      * Attende che l'autenticazione sia pronta
+     * @param {number} timeout - Timeout in ms (default 10s)
      * @returns {Promise<User|null>}
      */
-    waitForAuth() {
+    waitForAuth(timeout = 10000) {
         return new Promise((resolve) => {
-            // Se l'utente è già definito (anche se null), risolvi subito
-            if (this.user !== undefined) {
+            // Se l'auth è già pronto, risolvi subito
+            if (this._authReady) {
+                console.log('🔐 [AuthService] waitForAuth: già pronto, user:', this.user?.email || 'null');
                 resolve(this.user);
                 return;
             }
-            // Altrimenti aspetta il primo callback
-            const unsubscribe = this.subscribe((user) => {
-                // Rimuovi questo callback dopo la prima chiamata
+            
+            console.log('🔐 [AuthService] waitForAuth: attendo auth state...');
+            
+            // Timeout per evitare attese infinite
+            const timeoutId = setTimeout(() => {
+                console.warn('🔐 [AuthService] waitForAuth: timeout raggiunto');
+                resolve(this.user || auth.currentUser || null);
+            }, timeout);
+            
+            // Aspetta il primo callback
+            const unsubscribe = (user) => {
+                clearTimeout(timeoutId);
+                // Rimuovi questo callback
                 const index = this.onUserChangeCallbacks.indexOf(unsubscribe);
                 if (index > -1) {
                     this.onUserChangeCallbacks.splice(index, 1);
                 }
+                console.log('🔐 [AuthService] waitForAuth: risolto con user:', user?.email || 'null');
                 resolve(user);
-            });
+            };
+            
+            this.onUserChangeCallbacks.push(unsubscribe);
         });
+    }
+    
+    /**
+     * Verifica se l'auth è pronto
+     */
+    isReady() {
+        return this._authReady;
     }
 }
 

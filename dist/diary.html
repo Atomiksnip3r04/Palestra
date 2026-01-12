@@ -1029,10 +1029,26 @@
 
         <section class="section" style="padding-top: 160px">
             <div class="container">
-                <div class="diary-page-header">
+                <div class="diary-page-header" style="display: flex; justify-content: space-between; align-items: center;">
                     <h1>
                         Diario <span class="text-primary">Allenamento</span>
                     </h1>
+                    <button id="manualSyncBtn" class="sync-btn" title="Sincronizza con cloud" style="
+                        background: transparent;
+                        border: 1px solid var(--primary);
+                        color: var(--primary);
+                        padding: 8px 12px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        transition: all 0.2s;
+                    ">
+                        <span class="sync-icon">☁️</span>
+                        <span class="sync-text">Sync</span>
+                    </button>
                 </div>
 
                 <!-- FAB - Floating Action Button -->
@@ -1376,6 +1392,61 @@
 
             document.addEventListener("DOMContentLoaded", () => {
                 let nextSupersetId = 1;
+
+                // Manual Sync Button Handler
+                const manualSyncBtn = document.getElementById("manualSyncBtn");
+                if (manualSyncBtn) {
+                    manualSyncBtn.addEventListener("click", async () => {
+                        const syncIcon = manualSyncBtn.querySelector(".sync-icon");
+                        const syncText = manualSyncBtn.querySelector(".sync-text");
+                        
+                        // Disable button and show loading
+                        manualSyncBtn.disabled = true;
+                        syncIcon.textContent = "🔄";
+                        syncText.textContent = "...";
+                        manualSyncBtn.style.animation = "spin 1s linear infinite";
+                        
+                        try {
+                            // First load from cloud to get latest data
+                            console.log("🔄 Manual sync: loading from cloud...");
+                            await syncManager.loadFromCloud();
+                            
+                            // Then sync local to cloud
+                            console.log("🔄 Manual sync: syncing to cloud...");
+                            const result = await syncManager.syncToCloud(true);
+                            
+                            if (result.success) {
+                                syncIcon.textContent = "✅";
+                                syncText.textContent = "OK!";
+                                // Refresh the logs display
+                                renderLogs();
+                            } else {
+                                syncIcon.textContent = "❌";
+                                syncText.textContent = result.reason === 'not_authenticated' ? "Login!" : "Errore";
+                            }
+                        } catch (error) {
+                            console.error("Manual sync error:", error);
+                            syncIcon.textContent = "❌";
+                            syncText.textContent = "Errore";
+                        }
+                        
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                            manualSyncBtn.disabled = false;
+                            manualSyncBtn.style.animation = "";
+                            syncIcon.textContent = "☁️";
+                            syncText.textContent = "Sync";
+                        }, 2000);
+                    });
+                }
+                
+                // Add spin animation style
+                if (!document.getElementById("sync-spin-style")) {
+                    const style = document.createElement("style");
+                    style.id = "sync-spin-style";
+                    style.textContent = "@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }";
+                    document.head.appendChild(style);
+                }
 
                 // DOMS Muscle Picker Setup
                 const logSorenessMusclePicker = document.getElementById(
