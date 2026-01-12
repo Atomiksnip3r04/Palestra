@@ -1297,11 +1297,11 @@
                 for (const [dateLabel, prs] of Object.entries(grouped)) {
                     html += `
                         <div class="mb-8">
-                            <div class="sticky top-0 z-10 flex items-center gap-4 py-3 mb-4 backdrop-blur-md bg-black/60">
-                                <span class="text-xs font-bold text-white uppercase tracking-widest flex items-center gap-2">
-                                    <span class="text-neon-cyan">📅</span> ${dateLabel}
+                            <div class=\"sticky top-0 z-10 flex items-center gap-4 py-4 mb-4 bg-[#0d0d15]/95 backdrop-blur-xl border-b border-[#2d2d44]\">
+                                <span class=\"text-[0.65rem] font-extrabold text-[#8b8b9e] uppercase tracking-[0.2em] flex items-center gap-2\">
+                                    <span class=\"text-[#00f3ff] opacity-70\">●</span> ${dateLabel.replace('📅 ', '')}
                                 </span>
-                                <div class="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
+                                <div class=\"flex-1 h-px bg-[#2d2d44]\"></div>
                             </div>
                             ${prs.map(pr => {
                         let records = pr.records;
@@ -1402,91 +1402,96 @@
                 const isNew = oldValue === 0;
 
 
-                // Dynamic Classes
+                // Senior Design: Card Styling
                 const cardClass = isSession
-                    ? 'group relative bg-gradient-to-br from-neon-gold/10 to-transparent border-neon-gold/30'
-                    : 'group relative bg-white/5 hover:bg-white/[0.07] border-white/10 hover:border-neon-cyan/20';
+                    ? 'relative bg-[#1a1a2e] border-2 border-[#ffd70040] shadow-[0_4px_15px_rgba(255,215,0,0.1)]'
+                    : 'relative bg-[#1a1a2e] border-2 border-[#2d2d44] hover:border-[#00f3ff50] transition-all duration-300';
 
                 // Highlight matching text if searching
                 const highlightMatch = (text) => {
                     if (!searchQuery) return text;
                     const regex = new RegExp(`(${searchQuery})`, 'gi');
-                    return text.replace(regex, '<mark class="bg-neon-cyan/30 text-white px-0.5 rounded">$1</mark>');
+                    return text.replace(regex, '<mark class="bg-[#00f3ff40] text-white px-0.5 rounded">$1</mark>');
                 };
 
                 return `
-                    <div class="${cardClass} backdrop-blur-xl rounded-2xl border mb-4 overflow-hidden transition-all duration-300 hover:shadow-[0_0_40px_rgba(0,243,255,0.08)]">
+                    <div class="${cardClass} rounded-2xl mb-4 overflow-hidden group hover:translate-y-[-2px]">
+                        ${isSession ? '<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#ffd700] to-transparent"></div>' : ''}
+                        
                         <!-- Card Header -->
-                        <div class="flex items-start justify-between p-4 pb-3">
+                        <div class="flex items-start justify-between p-4 pb-2">
                             <div class="flex-1">
-                                <div class="text-white font-bold text-sm mb-1.5 leading-tight">${highlightMatch(exercise)}</div>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[0.6rem] font-bold uppercase tracking-wider ${record.type === '1rm' ? 'bg-neon-cyan/20 text-neon-cyan' : 'bg-white/10 text-gray-400'}">
-                                    ${record.label.replace(/[^a-zA-Z ]/g, "").trim().toUpperCase()}
-                                </span>
-                            </div>
-                            <span class="text-[0.65rem] text-gray-500 font-medium">${formattedDate}</span>
-                        </div>
-
-                        <!-- Comparison Grid -->
-                        <div class="grid grid-cols-3 gap-2 px-4 pb-4">
-                            <!-- OLD VALUE (Dimmed) -->
-                            <div class="text-center p-3 rounded-xl bg-black/20 opacity-50">
-                                <div class="text-[0.55rem] text-gray-500 uppercase tracking-wider mb-1">Prec.</div>
-                                <div class="text-xl font-black text-white/60">${oldValue > 0 ? oldValue : '-'}</div>
-                                <div class="text-[0.55rem] text-gray-600">${oldValue > 0 ? record.unit : ''}</div>
-                            </div>
-
-                            <!-- DELTA (The Bridge) -->
-                            <div class="flex items-center justify-center">
-                                <div class="${isNew ? 'bg-neon-green/20 border-neon-green/30' : 'bg-neon-cyan/10 border-neon-cyan/20'} border rounded-full px-3 py-1.5 text-center">
-                                    ${isNew
-                        ? '<span class="text-neon-green text-xs font-black">NEW</span>'
-                        : `<div class="text-neon-cyan text-sm font-black">+${delta.toFixed(1)}</div>
-                                           <div class="text-neon-cyan/60 text-[0.55rem] font-semibold">+${deltaPercent}%</div>`
-                    }
+                                <div class="text-white font-black text-sm tracking-tight mb-1">${highlightMatch(exercise)}</div>
+                                <div class="inline-flex">
+                                    <span class="px-2 py-0.5 rounded text-[0.6rem] font-bold uppercase tracking-widest ${record.type === '1rm' ? 'bg-[#00f3ff20] text-[#00f3ff]' : 'bg-[#2d2d44] text-[#8b8b9e]'}">
+                                        ${record.label.replace(/[^a-zA-Z ]/g, "").trim().toUpperCase()}
+                                    </span>
                                 </div>
                             </div>
-
-                            <!-- NEW VALUE (Neon Highlight) -->
-                            <div class="text-center p-3 rounded-xl bg-neon-cyan/5 border border-neon-cyan/10">
-                                <div class="text-[0.55rem] text-neon-cyan/60 uppercase tracking-wider mb-1">Nuovo</div>
-                                <div class="text-2xl font-black text-neon-cyan">${newValue}</div>
-                                <div class="text-[0.55rem] text-neon-cyan/50">${record.unit}</div>
-                            </div>
+                            <span class="text-[0.6rem] text-[#8b8b9e] font-bold font-mono bg-[#0d0d15] px-2 py-1 rounded">${formattedDate}</span>
                         </div>
-                    </div>
-                `;
+
+                        <!-- Main Content Grid -->
+                        <div class="grid grid-cols-3 gap-2 p-4 pt-1">
+                            <!-- PREVIOUS (High Contrast Muted) -->
+                            <div class="text-center p-2 rounded-xl bg-[#0d0d15] border border-[#2d2d44]">
+                                <div class="text-[0.5rem] text-[#5a5a70] font-black uppercase tracking-tighter mb-1">PREC.</div>
+                                <div class="text-lg font-black text-[#5a5a70]">${oldValue > 0 ? oldValue : '-'}</div>
+                                <div class="text-[0.5rem] text-[#4a4a60]">${oldValue > 0 ? record.unit : ''}</div>
+                            </div>
+
+                            <!-- DELTA (Dynamic Accent) -->
+                            <div class="flex items-center justify-center">
+                                ${isNew
+                        ? '<div class="bg-[#00f3ff] text-black font-black text-[0.7rem] px-3 py-1 rounded-full shadow-[0_0_15px_rgba(0,243,255,0.4)]">RECORD</div>'
+                        : `<div class="text-center">
+                                         <div class="text-[#00f3ff] text-sm font-black">+${delta.toFixed(1)}</div>
+                                         <div class="text-[#00f3ff80] text-[0.55rem] font-bold">+${deltaPercent}%</div>
+                                       </div>`
+                    }
+                            </div>
+
+                            <!-- NEW (Vibrant High Contrast) -->
+                            <div class="text-center p-2 rounded-xl bg-[#0d0d15] border-2 ${isSession ? 'border-[#ffd700]' : 'border-[#00f3ff50]'} shadow-inner">
+                                <div class="text-[0.5rem] ${isSession ? 'text-[#ffd700]' : 'text-[#00f3ff80]'} font-black uppercase tracking-tighter mb-1">NUOVO</div>
+                                <div class=\"text-2xl font-black ${isSession ?\'text-[#ffd700]\' : \'text-[#00f3ff]\'}\">${newValue}</div>
+                    < div class="text-[0.5rem] ${isSession ? 'text-[#ffd70080]' : 'text-[#00f3ff50]'} font-bold" > ${ record.unit }</div >
+                            </div >
+                        </div >
+                    </div >
+                    `;
             }
 
             function renderCurrentPRCard(pr) {
-                // Simplified modern card for "Current Records" tab
                 const records = [];
-                if (pr.maxWeight > 0) records.push({ label: 'MAX', value: pr.maxWeight, unit: 'KG' });
-                if (pr.max1RM > 0) records.push({ label: '1RM', value: pr.max1RM, unit: 'KG' });
+                if (pr.maxWeight > 0) records.push({ label: 'MAX WEIGHT', value: pr.maxWeight, unit: 'KG', color: '#00f3ff' });
+                if (pr.max1RM > 0) records.push({ label: '1RM ESTIMATED', value: pr.max1RM, unit: 'KG', color: '#ffd700' });
 
                 if (records.length === 0) return '';
 
                 return `
-                    <div class="pr-card">
-                        <div class="pr-card-header">
-                            <span class="pr-exercise-name" style="margin:0">${pr.displayName}</span>
-                        </div>
-                        <div class="pr-comparison-grid" style="grid-template-columns: 1fr 1fr; gap:10px;">
-                            ${records.map(r => `
-                                <div class="pr-val-col-new" style="background: rgba(255,255,255,0.03);">
-                                    <span class="pr-label-mini">${r.label}</span>
-                                    <div class="pr-number-big" style="font-size:1.8rem">${r.value}</div>
-                                    <span class="pr-unit-mini">${r.unit}</span>
+                    < div class=\"relative bg-[#1a1a2e] border-2 border-[#2d2d44] rounded-2xl mb-4 overflow-hidden group hover:border-[#00f3ff40] transition-all\">
+                        < div class=\"p-4 pb-2\">
+                            < div class=\"text-white font-black text-sm tracking-tight\">${pr.displayName}</div>
+                        </div >
+                    <div class=\"grid grid-cols-${records.length} gap-2 p-4 pt-0\">
+                            ${
+                    records.map(r => `
+                                <div class=\"text-center p-3 rounded-xl bg-[#0d0d15] border border-[#2d2d44]\">
+                                    <div class=\"text-[0.55rem] font-black uppercase tracking-widest mb-1\" style=\"color: ${r.color}80\">${r.label}</div>
+                                    <div class=\"text-2xl font-black\" style=\"color: ${r.color}\">${r.value}</div>
+                                    <div class=\"text-[0.55rem] font-bold text-[#4a4a60]\">${r.unit}</div>
                                 </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+                            `).join('')
+                }
+                        </div >
+                    </div >
+                    `;
             }
 
             function renderEmptyState() {
                 return `
-                    <div class="flex flex-col items-center justify-center py-16 px-6 text-center">
+                    < div class="flex flex-col items-center justify-center py-16 px-6 text-center" >
                         <div class="relative mb-6">
                             <div class="text-6xl animate-pulse">⚡</div>
                             <div class="absolute inset-0 bg-neon-cyan/20 blur-3xl rounded-full"></div>
@@ -1497,14 +1502,16 @@
                         ? `Nessun risultato per "<span class="text-neon-cyan">${searchQuery}</span>"`
                         : 'Non ci sono ancora dati per questa selezione.'}
                         </p>
-                        ${searchQuery ? `
+                        ${
+                    searchQuery ? `
                             <button onclick="document.getElementById('searchInput').value=''; searchQuery=''; renderPRs();" 
                                     class="mt-6 px-4 py-2 rounded-full text-xs font-semibold bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20 hover:bg-neon-cyan/20 transition-all">
                                 Cancella ricerca
                             </button>
-                        ` : ''}
-                    </div>
-                `;
+                        ` : ''
+                }
+                    </div >
+                    `;
             }
 
             function getOldRecordDate(exerciseName, recordType) {
@@ -1534,7 +1541,7 @@
                         const isDate = chip.classList.contains('pr-date-chip');
                         const group = isDate ? '#dateFilters' : '#categoryFilters';
 
-                        document.querySelectorAll(`${group} .pr-filter-chip`).forEach(c => c.classList.remove('active'));
+                        document.querySelectorAll(`${ group } .pr - filter - chip`).forEach(c => c.classList.remove('active'));
                         chip.classList.add('active');
 
                         if (isDate) currentDateFilter = chip.dataset.date;
