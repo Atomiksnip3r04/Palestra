@@ -13,6 +13,8 @@
 import {
     db,
     auth,
+    functions,
+    httpsCallable,
     doc,
     setDoc,
     getDoc,
@@ -555,69 +557,77 @@ export class FriendshipService {
 
     /**
      * Find a user by their email address
+     * Uses Cloud Function to bypass client-side permission issues
      * 
      * @param {string} email - Email address to search for
      * @returns {Promise<ServiceResult>}
      */
     async findUserByEmail(email) {
         return this._withRetry(async () => {
-            const uid = this._getUid();
+            this._getUid(); // Verify authenticated
 
             if (!email || typeof email !== 'string') {
                 return { success: false, error: 'Email non valida', code: 'invalid-argument' };
             }
 
-            // Normalize email
-            const normalizedEmail = email.toLowerCase().trim();
-
-            // Query users collection for matching email
-            // Try root-level 'email' field first (new format)
-            const usersRef = collection(db, 'users');
-            let q = query(
-                usersRef,
-                where('email', '==', normalizedEmail)
-            );
-
-            let querySnapshot = await getDocs(q);
-
-            // Fallback: try profile.email for legacy users
-            if (querySnapshot.empty) {
-                console.log('[FriendshipService] Root email not found, trying profile.email fallback');
-                q = query(
-                    usersRef,
-                    where('profile.email', '==', normalizedEmail)
-                );
-                querySnapshot = await getDocs(q);
+            // Use Cloud Function for search (bypasses permission issues)
+            try {
+                const searchUserByEmail = httpsCallable(functions, 'searchUserByEmail');
+                const result = await searchUserByEmail({ email: email.toLowerCase().trim() });
+                return result.data;
+            } catch (error) {
+                console.error('[FriendshipService] Cloud function error:', error);
+                
+                // Fallback to direct query if Cloud Function fails
+                return this._findUserByEmailDirect(email);
             }
-
-            if (querySnapshot.empty) {
-                return { success: false, error: 'Nessun utente trovato con questa email', code: 'not-found' };
-            }
-
-            // Get the first (and should be only) match
-            const userDoc = querySnapshot.docs[0];
-            const userData = userDoc.data();
-
-            // Don't return self
-            if (userDoc.id === uid) {
-                return { success: false, error: 'Non puoi cercare te stesso', code: 'invalid-argument' };
-            }
-
-            // Check friendship status
-            const statusResult = await this.checkFriendshipStatus(userDoc.id);
-
-            return {
-                success: true,
-                data: {
-                    uid: userDoc.id,
-                    displayName: userData.profile?.name || 'Utente',
-                    photoURL: userData.profile?.photoUrl || '',
-                    email: normalizedEmail,
-                    friendshipStatus: statusResult.success ? statusResult.data.status : 'none'
-                }
-            };
 
         }, 'findUserByEmail');
+    }
+
+    /**
+     * Direct Firestore query fallback for findUserByEmail
+     * @private
+     */
+    async _findUserByEmailDirect(email) {
+        const uid = this._getUid();
+        const normalizedEmail = email.toLowerCase().trim();
+
+        // Query users collection for matching email
+        const usersRef = collection(db, 'users');
+        let q = query(usersRef, where('email', '==', normalizedEmail));
+        let querySnapshot = await getDocs(q);
+
+        // Fallback: try profile.email for legacy users
+        if (querySnapshot.empty) {
+            console.log('[FriendshipService] Root email not found, trying profile.email fallback');
+            q = query(usersRef, where('profile.email', '==', normalizedEmail));
+            querySnapshot = await getDocs(q);
+        }
+
+        if (querySnapshot.empty) {
+            return { success: false, error: 'Nessun utente trovato con questa email', code: 'not-found' };
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+
+        if (userDoc.id === uid) {
+            return { success: false, error: 'Non puoi cercare te stesso', code: 'invalid-argument' };
+        }
+
+        const statusResult = await this.checkFriendshipStatus(userDoc.id);
+
+        return {
+            success: true,
+            data: {
+                uid: userDoc.id,
+                displayName: userData.profile?.name || 'Utente',
+                photoURL: userData.profile?.photoUrl || '',
+                email: normalizedEmail,
+                friendshipStatus: statusResult.success ? statusResult.data.status : 'none'
+            }
+        };
     }
 
     /**

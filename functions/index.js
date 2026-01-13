@@ -1591,3 +1591,85 @@ exports.ensureUserEmail = functions.firestore
     
     return null;
   });
+
+
+// ============================================
+// FRIEND SEARCH: Search user by email via Cloud Function
+// ============================================
+
+/**
+ * Search for a user by email address
+ * This bypasses client-side permission issues by using Admin SDK
+ */
+exports.searchUserByEmail = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const { email } = data;
+  const myUid = context.auth.uid;
+
+  if (!email || typeof email !== 'string') {
+    throw new functions.https.HttpsError('invalid-argument', 'Email is required');
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const db = admin.firestore();
+
+  try {
+    // Try root-level email first
+    let snapshot = await db.collection('users')
+      .where('email', '==', normalizedEmail)
+      .limit(1)
+      .get();
+
+    // Fallback to profile.email
+    if (snapshot.empty) {
+      snapshot = await db.collection('users')
+        .where('profile.email', '==', normalizedEmail)
+        .limit(1)
+        .get();
+    }
+
+    if (snapshot.empty) {
+      return { success: false, error: 'Nessun utente trovato con questa email', code: 'not-found' };
+    }
+
+    const userDoc = snapshot.docs[0];
+    const userData = userDoc.data();
+
+    // Don't return self
+    if (userDoc.id === myUid) {
+      return { success: false, error: 'Non puoi cercare te stesso', code: 'invalid-argument' };
+    }
+
+    // Check friendship status
+    const friendshipId = [myUid, userDoc.id].sort().join('_');
+    const friendshipDoc = await db.collection('friendships').doc(friendshipId).get();
+    
+    let friendshipStatus = 'none';
+    if (friendshipDoc.exists) {
+      const friendshipData = friendshipDoc.data();
+      if (friendshipData.status === 'accepted') {
+        friendshipStatus = 'accepted';
+      } else if (friendshipData.status === 'pending_from_a' || friendshipData.status === 'pending_from_b') {
+        friendshipStatus = friendshipData.createdBy === myUid ? 'pending_sent' : 'pending_received';
+      }
+    }
+
+    return {
+      success: true,
+      data: {
+        uid: userDoc.id,
+        displayName: userData.profile?.name || 'Utente',
+        photoURL: userData.profile?.photoUrl || '',
+        email: normalizedEmail,
+        friendshipStatus
+      }
+    };
+
+  } catch (error) {
+    console.error('searchUserByEmail error:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});

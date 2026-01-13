@@ -25,6 +25,7 @@ import {
     Timestamp,
     enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-functions.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -40,6 +41,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const functions = getFunctions(app);
 
 // Enable offline persistence for resilience
 try {
@@ -57,6 +59,8 @@ try {
 export {
     auth,
     db,
+    functions,
+    httpsCallable,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     signOut,
