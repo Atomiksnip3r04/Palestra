@@ -82,9 +82,10 @@ service cloud.firestore {
     // friendshipId = sorted(uidA, uidB).join('_') for deterministic ID
     // Status: pending_from_a, pending_from_b, accepted, blocked
     match /friendships/{friendshipId} {
-      // Only the two participants can read their friendship
+      // Read: participants can read, OR anyone can check if document exists
+      // This allows checking friendship status before creating
       allow read: if request.auth != null 
-                  && request.auth.uid in resource.data.participants;
+                  && (resource == null || request.auth.uid in resource.data.participants);
       
       // Create: authenticated user must be in participants and set as createdBy
       allow create: if request.auth != null 
