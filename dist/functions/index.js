@@ -1462,3 +1462,132 @@ exports.findNearbyUsers = functions.https.onCall(async (data, context) => {
   }
 });
 
+
+// ============================================
+// USER DATA MIGRATION: Add root-level email field
+// ============================================
+
+/**
+ * Migrate user documents to add root-level email field
+ * This is needed for efficient email search queries
+ * Can be called by admin to migrate existing users
+ */
+exports.migrateUserEmails = functions.https.onCall(async (data, context) => {
+  // Only allow authenticated users (in production, add admin check)
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+  }
+
+  const db = admin.firestore();
+  const usersRef = db.collection('users');
+  
+  try {
+    const snapshot = await usersRef.get();
+    let migratedCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+
+    const batch = db.batch();
+    let batchCount = 0;
+    const MAX_BATCH_SIZE = 500;
+
+    for (const doc of snapshot.docs) {
+      const userData = doc.data();
+      
+      // Skip if already has root-level email
+      if (userData.email && typeof userData.email === 'string' && userData.email.length > 0) {
+        skippedCount++;
+        continue;
+      }
+
+      // Get email from profile.email or from Auth
+      let email = userData.profile?.email;
+      
+      if (!email) {
+        // Try to get from Firebase Auth
+        try {
+          const authUser = await admin.auth().getUser(doc.id);
+          email = authUser.email;
+        } catch (authError) {
+          console.warn(`Could not get auth user for ${doc.id}:`, authError.message);
+        }
+      }
+
+      if (email) {
+        batch.update(doc.ref, { 
+          email: email.toLowerCase().trim() 
+        });
+        migratedCount++;
+        batchCount++;
+
+        // Commit batch if it reaches max size
+        if (batchCount >= MAX_BATCH_SIZE) {
+          await batch.commit();
+          batchCount = 0;
+        }
+      } else {
+        errorCount++;
+        console.warn(`No email found for user ${doc.id}`);
+      }
+    }
+
+    // Commit remaining batch
+    if (batchCount > 0) {
+      await batch.commit();
+    }
+
+    console.log(`Migration complete: ${migratedCount} migrated, ${skippedCount} skipped, ${errorCount} errors`);
+    
+    return {
+      success: true,
+      migrated: migratedCount,
+      skipped: skippedCount,
+      errors: errorCount,
+      total: snapshot.size
+    };
+
+  } catch (error) {
+    console.error('Migration error:', error);
+    throw new functions.https.HttpsError('internal', error.message);
+  }
+});
+
+/**
+ * Ensure user document has root-level email on login/signup
+ * Triggered when a user document is created or updated
+ */
+exports.ensureUserEmail = functions.firestore
+  .document('users/{userId}')
+  .onWrite(async (change, context) => {
+    const userId = context.params.userId;
+    const after = change.after.exists ? change.after.data() : null;
+    
+    if (!after) return null; // Document deleted
+    
+    // Check if email already exists at root level
+    if (after.email && typeof after.email === 'string' && after.email.length > 0) {
+      return null; // Already has email
+    }
+    
+    // Try to get email from profile or Auth
+    let email = after.profile?.email;
+    
+    if (!email) {
+      try {
+        const authUser = await admin.auth().getUser(userId);
+        email = authUser.email;
+      } catch (error) {
+        console.warn(`ensureUserEmail: Could not get auth for ${userId}`);
+        return null;
+      }
+    }
+    
+    if (email) {
+      await change.after.ref.update({
+        email: email.toLowerCase().trim()
+      });
+      console.log(`ensureUserEmail: Added email for ${userId}`);
+    }
+    
+    return null;
+  });
