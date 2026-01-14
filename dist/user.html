@@ -1964,25 +1964,28 @@
                     }
 
                     // --- CHECK FOR SHARED WORKOUT IMPORT ---
-                    // Prevent multiple executions
-                    if (window._importCheckDone) {
-                        console.log('⚠️ Import check already done, skipping');
-                    } else {
-                        window._importCheckDone = true;
-                        
                     const urlParams = new URLSearchParams(window.location.search);
                     const shareData = urlParams.get('shareData'); // Legacy base64 encoded
                     const shareId = urlParams.get('shareId'); // Legacy long ID
                     const shortId = urlParams.get('s'); // New short link format
-
-                    // Prevent duplicate imports - check if we already processed this link
-                    const lastImportedLink = sessionStorage.getItem('gymbro_last_imported_link');
                     const currentLink = shortId || shareId || shareData;
-                    
-                    if (currentLink && lastImportedLink === currentLink) {
-                        console.log('⚠️ Link già processato in questa sessione, skip');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    } else if (shareData) {
+
+                    // Skip if no share link in URL
+                    if (!currentLink) {
+                        // No import needed
+                    } else {
+                        // Check if we're already processing this link (prevent double execution)
+                        const importLockKey = `gymbro_importing_${currentLink}`;
+                        const isCurrentlyImporting = sessionStorage.getItem(importLockKey);
+                        const lastImportedLink = sessionStorage.getItem('gymbro_last_imported_link');
+                        
+                        if (isCurrentlyImporting || lastImportedLink === currentLink) {
+                            console.log('⚠️ Link già processato o in corso, skip');
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        } else if (shareData) {
+                        // Set lock immediately
+                        sessionStorage.setItem(importLockKey, 'true');
+                        
                         if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
                             try {
                                 const json = decodeURIComponent(atob(shareData));
@@ -2033,12 +2036,18 @@
                                 window.history.replaceState({}, document.title, window.location.pathname);
                             }
                         } else {
+                            // User declined
+                            sessionStorage.setItem('gymbro_last_imported_link', shareData);
                             window.history.replaceState({}, document.title, window.location.pathname);
                         }
                     } else if (shortId || shareId) {
                         // Handle both new short format (?s=) and legacy format (?shareId=)
                         const linkId = shortId || shareId;
                         const isShortLink = !!shortId;
+                        
+                        // Set lock immediately
+                        const importLockKey2 = `gymbro_importing_${linkId}`;
+                        sessionStorage.setItem(importLockKey2, 'true');
 
                         if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
                             try {
@@ -2103,11 +2112,12 @@
                                 window.history.replaceState({}, document.title, window.location.pathname);
                             }
                         } else {
-                            // User declined - clean URL anyway
+                            // User declined - clean URL and mark as processed
+                            sessionStorage.setItem('gymbro_last_imported_link', linkId);
                             window.history.replaceState({}, document.title, window.location.pathname);
                         }
                     }
-                    } // End of import check block
+                    } // End of share link check
 
                 } else {
                     // Not Logged In
