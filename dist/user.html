@@ -1857,7 +1857,14 @@
                     const shareId = urlParams.get('shareId'); // Legacy long ID
                     const shortId = urlParams.get('s'); // New short link format
 
-                    if (shareData) {
+                    // Prevent duplicate imports - check if we already processed this link
+                    const lastImportedLink = sessionStorage.getItem('gymbro_last_imported_link');
+                    const currentLink = shortId || shareId || shareData;
+                    
+                    if (currentLink && lastImportedLink === currentLink) {
+                        console.log('⚠️ Link già processato in questa sessione, skip');
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    } else if (shareData) {
                         if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
                             try {
                                 const json = decodeURIComponent(atob(shareData));
@@ -1868,15 +1875,33 @@
                                     throw new Error("Dati scheda non validi");
                                 }
 
+                                // Check for duplicate import by name or importedFrom
+                                const currentWorkouts = getStoredWorkouts();
+                                const alreadyImported = currentWorkouts.some(w => 
+                                    w.importedFrom === shareData || 
+                                    (w.fromShared && w.name === `${newWorkout.name} (Importata)`)
+                                );
+                                
+                                if (alreadyImported) {
+                                    alert('Questa scheda è già stata importata!');
+                                    window.history.replaceState({}, document.title, window.location.pathname);
+                                    sessionStorage.setItem('gymbro_last_imported_link', shareData);
+                                    return;
+                                }
+
                                 // Assign new ID
                                 newWorkout.id = generateWorkoutId();
                                 newWorkout.name = `${newWorkout.name} (Importata)`;
                                 newWorkout.fromShared = true;
+                                newWorkout.importedFrom = shareData;
+                                newWorkout.importedAt = new Date().toISOString();
 
-                                const currentWorkouts = getStoredWorkouts();
                                 currentWorkouts.unshift(newWorkout);
                                 localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
                                 renderWorkouts();
+
+                                // Mark as imported to prevent duplicates
+                                sessionStorage.setItem('gymbro_last_imported_link', shareData);
 
                                 await firestoreService.syncToCloud();
 
@@ -1885,7 +1910,10 @@
                             } catch (e) {
                                 console.error(e);
                                 alert('Errore durante l\'importazione della scheda: link non valido.');
+                                window.history.replaceState({}, document.title, window.location.pathname);
                             }
+                        } else {
+                            window.history.replaceState({}, document.title, window.location.pathname);
                         }
                     } else if (shortId || shareId) {
                         // Handle both new short format (?s=) and legacy format (?shareId=)
@@ -1895,6 +1923,18 @@
                         if (confirm('È stato rilevato un link di condivisione. Vuoi importare la scheda?')) {
                             try {
                                 console.log(`Importing shared workout: ${linkId} (short: ${isShortLink})`);
+                                
+                                // Check for duplicate import BEFORE fetching
+                                const currentWorkouts = getStoredWorkouts();
+                                const alreadyImported = currentWorkouts.some(w => w.importedFrom === linkId);
+                                
+                                if (alreadyImported) {
+                                    alert('Questa scheda è già stata importata!');
+                                    window.history.replaceState({}, document.title, window.location.pathname);
+                                    sessionStorage.setItem('gymbro_last_imported_link', linkId);
+                                    return;
+                                }
+                                
                                 const workoutData = await firestoreService.getSharedWorkout(linkId);
 
                                 if (!workoutData || !workoutData.name) {
@@ -1910,10 +1950,22 @@
                                     importedAt: new Date().toISOString()
                                 };
 
-                                const currentWorkouts = getStoredWorkouts();
-                                currentWorkouts.unshift(newWorkout);
-                                localStorage.setItem('ironflow_workouts', JSON.stringify(currentWorkouts));
+                                // Re-fetch to ensure no race condition
+                                const freshWorkouts = getStoredWorkouts();
+                                const stillNotImported = !freshWorkouts.some(w => w.importedFrom === linkId);
+                                
+                                if (!stillNotImported) {
+                                    alert('Questa scheda è già stata importata!');
+                                    window.history.replaceState({}, document.title, window.location.pathname);
+                                    return;
+                                }
+                                
+                                freshWorkouts.unshift(newWorkout);
+                                localStorage.setItem('ironflow_workouts', JSON.stringify(freshWorkouts));
                                 renderWorkouts();
+
+                                // Mark as imported to prevent duplicates
+                                sessionStorage.setItem('gymbro_last_imported_link', linkId);
 
                                 await firestoreService.syncToCloud();
 
@@ -2646,7 +2698,16 @@
                 }
             };
 
+            // Debounce for skipRest to prevent rapid skipping
+            let _skipRestDebounce = false;
             window.skipRest = () => {
+                if (_skipRestDebounce) {
+                    console.log('⚠️ [Focus] Skip rest debounced');
+                    return;
+                }
+                _skipRestDebounce = true;
+                setTimeout(() => { _skipRestDebounce = false; }, 250);
+                
                 stopTimer();
                 isResting = false;
                 nextSet();
@@ -3244,7 +3305,19 @@
                 `;
             }
 
+            // Debounce protection for rapid clicks
+            let _focusActionDebounce = false;
+            const FOCUS_ACTION_DEBOUNCE_MS = 300; // Minimum time between actions
+
             focusActionBtn.addEventListener('click', () => {
+                // Prevent rapid clicks that can cause crashes
+                if (_focusActionDebounce) {
+                    console.log('⚠️ [Focus] Action debounced - too fast');
+                    return;
+                }
+                _focusActionDebounce = true;
+                setTimeout(() => { _focusActionDebounce = false; }, FOCUS_ACTION_DEBOUNCE_MS);
+
                 if (sessionCompleted) {
                     // Session completed normally - clear recovery data
                     window.focusModeSessionCompleted = true;
@@ -3802,7 +3875,20 @@
                 timerInterval = null;
             }
 
+            // Protection against rapid nextSet calls
+            let _nextSetInProgress = false;
+            
             function nextSet() {
+                // Prevent concurrent/rapid calls
+                if (_nextSetInProgress) {
+                    console.log('⚠️ [Focus] nextSet already in progress, skipping');
+                    return;
+                }
+                _nextSetInProgress = true;
+                
+                // Release lock after a short delay
+                setTimeout(() => { _nextSetInProgress = false; }, 100);
+                
                 const ex = currentWorkout.exercises[currentExerciseIndex];
                 const isSuperset = !!ex.supersetId;
 
@@ -4089,7 +4175,23 @@
                 }
 
                 try {
-                    await firestoreService.syncToCloud();
+                    // Throttle cloud sync to prevent overload
+                    const lastSyncTime = window._lastFocusSyncTime || 0;
+                    const now = Date.now();
+                    if (now - lastSyncTime < 2000) {
+                        console.log('⚠️ [Focus] Cloud sync throttled, scheduling delayed sync');
+                        setTimeout(async () => {
+                            try {
+                                await firestoreService.syncToCloud();
+                                window._lastFocusSyncTime = Date.now();
+                            } catch (e) {
+                                console.warn('Delayed sync failed:', e);
+                            }
+                        }, 2000);
+                    } else {
+                        await firestoreService.syncToCloud();
+                        window._lastFocusSyncTime = now;
+                    }
                 } catch (error) {
                     console.warn('Sync diario da Focus fallita:', error.message || error);
                 }
