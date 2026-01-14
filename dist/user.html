@@ -1918,9 +1918,8 @@
 
                     // --- IMPORT SUCCESS BANNER FUNCTION ---
                     function showImportBanner(workoutName, isError = false) {
-                        // Remove existing banner if any
-                        const existing = document.querySelector('.import-banner');
-                        if (existing) existing.remove();
+                        // Remove ALL existing banners
+                        document.querySelectorAll('.import-banner').forEach(b => b.remove());
                         
                         const banner = document.createElement('div');
                         banner.className = 'import-banner';
@@ -1957,12 +1956,20 @@
                         
                         // Auto-hide after 4 seconds
                         setTimeout(() => {
-                            banner.classList.remove('show');
-                            setTimeout(() => banner.remove(), 400);
+                            if (banner.parentElement) {
+                                banner.classList.remove('show');
+                                setTimeout(() => banner.remove(), 400);
+                            }
                         }, 4000);
                     }
 
                     // --- CHECK FOR SHARED WORKOUT IMPORT ---
+                    // Prevent multiple executions
+                    if (window._importCheckDone) {
+                        console.log('⚠️ Import check already done, skipping');
+                    } else {
+                        window._importCheckDone = true;
+                        
                     const urlParams = new URLSearchParams(window.location.search);
                     const shareData = urlParams.get('shareData'); // Legacy base64 encoded
                     const shareId = urlParams.get('shareId'); // Legacy long ID
@@ -2065,11 +2072,15 @@
 
                                 // Re-fetch to ensure no race condition
                                 const freshWorkouts = getStoredWorkouts();
-                                const stillNotImported = !freshWorkouts.some(w => w.importedFrom === linkId);
+                                const alreadyExists = freshWorkouts.some(w => 
+                                    w.importedFrom === linkId || 
+                                    (w.fromShared && w.name === newWorkout.name)
+                                );
                                 
-                                if (!stillNotImported) {
+                                if (alreadyExists) {
                                     showImportBanner('Questa scheda è già stata importata!', true);
                                     window.history.replaceState({}, document.title, window.location.pathname);
+                                    sessionStorage.setItem('gymbro_last_imported_link', linkId);
                                     return;
                                 }
                                 
@@ -2096,6 +2107,7 @@
                             window.history.replaceState({}, document.title, window.location.pathname);
                         }
                     }
+                    } // End of import check block
 
                 } else {
                     // Not Logged In
