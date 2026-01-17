@@ -1632,7 +1632,11 @@
     </style>
 
     <script src="js/main.js"></script>
-    <script src="js/pr-tracker.js"></script>
+    <script type="module">
+        // Import PR Tracker as ES6 module
+        import { prTracker } from './js/pr-tracker.js';
+        window.prTracker = prTracker;
+    </script>
 
     <!-- Share Modal -->
     <div id="shareModal"
@@ -1968,7 +1972,52 @@
                     const shareData = urlParams.get('shareData'); // Legacy base64 encoded
                     const shareId = urlParams.get('shareId'); // Legacy long ID
                     const shortId = urlParams.get('s'); // New short link format
+                    const startWorkoutId = urlParams.get('startWorkout'); // Direct focus mode from creator
                     const currentLink = shortId || shareId || shareData;
+
+                    // --- HANDLE DIRECT FOCUS MODE START (from creator.html AI workout) ---
+                    if (startWorkoutId) {
+                        console.log('🎯 [FocusMode] startWorkout parameter detected:', startWorkoutId);
+                        
+                        // Clean URL immediately to prevent re-triggering
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        // Wait for DOM and focus mode to be ready, then auto-start
+                        const tryStartFocusMode = (attempts = 0) => {
+                            const stored = getStoredWorkouts();
+                            const targetWorkout = stored.find(w => String(w.id) === String(startWorkoutId));
+                            
+                            if (targetWorkout) {
+                                console.log('✅ [FocusMode] Workout found:', targetWorkout.name);
+                                
+                                // Wait for initFocusMode to be available
+                                if (typeof window.initFocusMode === 'function') {
+                                    console.log('🚀 [FocusMode] Auto-starting focus mode...');
+                                    setTimeout(() => {
+                                        window.initFocusMode(targetWorkout);
+                                    }, 300); // Small delay to ensure UI is ready
+                                } else if (attempts < 20) {
+                                    // Retry - focus mode might not be loaded yet
+                                    console.log('⏳ [FocusMode] Waiting for initFocusMode...', attempts);
+                                    setTimeout(() => tryStartFocusMode(attempts + 1), 250);
+                                } else {
+                                    console.error('❌ [FocusMode] initFocusMode not available after retries');
+                                    alert('Focus Mode non disponibile. Riprova dalla lista schede.');
+                                }
+                            } else if (attempts < 10) {
+                                // Workout not found yet - might be syncing from cloud
+                                console.log('⏳ [FocusMode] Workout not found, retrying...', attempts);
+                                setTimeout(() => tryStartFocusMode(attempts + 1), 500);
+                            } else {
+                                console.error('❌ [FocusMode] Workout not found after retries:', startWorkoutId);
+                                alert('Scheda non trovata. Potrebbe essere stata eliminata o non sincronizzata.');
+                                renderWorkouts();
+                            }
+                        };
+                        
+                        // Start trying after a short delay to allow localStorage to be populated
+                        setTimeout(() => tryStartFocusMode(), 200);
+                    }
 
                     // Skip if no share link in URL
                     if (!currentLink) {

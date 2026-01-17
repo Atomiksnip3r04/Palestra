@@ -1768,10 +1768,23 @@
                 document.getElementById('playAiPlanBtn').addEventListener('click', async (e) => {
                     const btn = e.target;
                     btn.disabled = true;
-                    btn.textContent = 'Avvio...';
-                    const workoutId = await handleAiPlanSave(plan, true);
-                    if (workoutId) {
-                        window.location.href = `user.html?startWorkout=${workoutId}`;
+                    btn.textContent = 'Salvataggio...';
+                    
+                    try {
+                        const workoutId = await handleAiPlanSave(plan, true);
+                        if (workoutId) {
+                            btn.textContent = 'Avvio...';
+                            // Small delay to ensure localStorage is fully written
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                            window.location.href = `user.html?startWorkout=${workoutId}`;
+                        } else {
+                            throw new Error('Salvataggio fallito');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error saving AI workout:', error);
+                        btn.disabled = false;
+                        btn.textContent = '▶️ Avvia Focus Mode';
+                        alert('Errore nel salvataggio della scheda. Riprova.');
                     }
                 });
 

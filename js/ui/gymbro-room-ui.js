@@ -15,6 +15,24 @@ import { gymbRoomService } from '../services/gymbro-room-service.js';
 import { gymbRoomRealtimeService } from '../services/gymbro-realtime-service.js';
 
 /**
+ * Generate a placeholder avatar SVG data URI
+ * @param {string} initial - Single character to display
+ * @returns {string} Data URI for SVG
+ */
+function getPlaceholderAvatar(initial) {
+    const char = (initial || '?')[0].toUpperCase();
+    return `data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23333%22/%3E%3Ctext x=%2250%22 y=%2255%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%23999%22%3E${char}%3C/text%3E%3C/svg%3E`;
+}
+
+/**
+ * Generate a simple placeholder avatar SVG (no text)
+ * @returns {string} Data URI for SVG
+ */
+function getEmptyPlaceholderAvatar() {
+    return `data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23333%22/%3E%3C/svg%3E`;
+}
+
+/**
  * @typedef {Object} RoomUIOptions
  * @property {HTMLElement} container - Container element
  * @property {string} roomId - Room ID
@@ -274,14 +292,16 @@ export class GymbRoomUI {
         const isReady = member.readyStatus;
         const isHost = member.role === 'host';
         const isMe = member.uid === this.userId;
+        const avatarPlaceholder = getPlaceholderAvatar(member.displayName);
+        const fallbackAvatar = getEmptyPlaceholderAvatar();
 
         return `
       <div class="gymbro-member-card ${isReady ? 'ready' : ''} ${isHost ? 'host' : ''}" 
            data-uid="${member.uid}">
         <img class="gymbro-member-avatar" 
-             src="${member.photoUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23333%22/%3E%3Ctext x=%2250%22 y=%2255%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%23999%22%3E${(member.displayName || ' ? ')[0].toUpperCase()}%3C/text%3E%3C/svg%3E'}" 
+             src="${member.photoUrl || avatarPlaceholder}" 
              alt="${member.displayName}"
-             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23333%22/%3E%3C/svg%3E'" />
+             onerror="this.src='${fallbackAvatar}'" />
         <span class="gymbro-member-name">${member.displayName}${isMe ? ' (tu)' : ''}</span>
         <span class="gymbro-member-status">${isReady ? 'Pronto' : 'In attesa'}</span>
       </div>
@@ -331,6 +351,7 @@ export class GymbRoomUI {
     _renderLeaderboardItem(entry) {
         const isMe = entry.uid === this.userId;
         const badges = this._getBadges(entry);
+        const avatarPlaceholder = getPlaceholderAvatar(entry.displayName);
 
         // Format volume (convert to kg display)
         const volumeDisplay = entry.totalVolume >= 1000
@@ -342,7 +363,7 @@ export class GymbRoomUI {
         <div class="gymbro-leaderboard-rank">#${entry.rank}</div>
         
         <img class="gymbro-leaderboard-avatar" 
-             src="${entry.photoUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23333%22/%3E%3Ctext x=%2250%22 y=%2255%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%23999%22%3E${(entry.displayName || ' ? ')[0].toUpperCase()}%3C/text%3E%3C/svg%3E'}" 
+             src="${entry.photoUrl || avatarPlaceholder}" 
              alt="${entry.displayName}" />
         
         <div class="gymbro-leaderboard-info">
@@ -437,11 +458,12 @@ export class GymbRoomUI {
         const volumeDisplay = entry.totalVolume >= 1000
             ? `${(entry.totalVolume / 1000).toFixed(1)}k kg`
             : `${entry.totalVolume} kg`;
+        const avatarPlaceholder = getPlaceholderAvatar(entry.displayName);
 
         return `
       <div class="gymbro-podium-place">
         <img class="gymbro-podium-avatar" 
-             src="${entry.photoUrl || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ccircle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23333%22/%3E%3Ctext x=%2250%22 y=%2255%22 font-size=%2240%22 text-anchor=%22middle%22 fill=%22%23999%22%3E${(entry.displayName || ' ? ')[0].toUpperCase()}%3C/text%3E%3C/svg%3E'}" 
+             src="${entry.photoUrl || avatarPlaceholder}" 
              alt="${entry.displayName}" />
         <div class="gymbro-podium-name">${entry.displayName}</div>
         <div class="gymbro-podium-volume">${volumeDisplay}</div>

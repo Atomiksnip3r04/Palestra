@@ -13,8 +13,41 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="stylesheet" href="css/style.css">
-    <!-- QR Code Library - using unpkg as fallback for better MIME type handling -->
-    <script src="https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <!-- QR Code Library - with fallback CDNs for reliability -->
+    <script>
+        // QR Library loader with fallback
+        (function() {
+            const cdnUrls = [
+                'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js',
+                'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js',
+                'https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js'
+            ];
+            
+            let currentIndex = 0;
+            
+            function loadQRLibrary() {
+                if (currentIndex >= cdnUrls.length) {
+                    console.error('❌ [QR] All CDN sources failed');
+                    return;
+                }
+                
+                const script = document.createElement('script');
+                script.src = cdnUrls[currentIndex];
+                script.onload = function() {
+                    console.log('✅ [QR] Library loaded from:', cdnUrls[currentIndex]);
+                    window._qrLibraryLoaded = true;
+                };
+                script.onerror = function() {
+                    console.warn('⚠️ [QR] Failed to load from:', cdnUrls[currentIndex]);
+                    currentIndex++;
+                    loadQRLibrary(); // Try next CDN
+                };
+                document.head.appendChild(script);
+            }
+            
+            loadQRLibrary();
+        })();
+    </script>
     <style>
         :root {
             --gradient-primary: linear-gradient(135deg, #00f3ff 0%, #00c8d4 50%, #0099aa 100%);
@@ -1071,9 +1104,37 @@
             modal.style.display = 'flex';
 
             try {
+                // Wait for QR library to load if not ready
                 if (!window.QRCode) {
-                    showToast('Libreria QR non caricata', 'error');
-                    return;
+                    console.log('[QR] Library not ready, waiting...');
+                    
+                    // Show loading state on canvas
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#0a0d12';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#00f3ff';
+                    ctx.font = '14px Inter, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Caricamento...', canvas.width/2, canvas.height/2);
+                    
+                    // Wait up to 5 seconds for library to load
+                    let attempts = 0;
+                    while (!window.QRCode && attempts < 50) {
+                        await new Promise(r => setTimeout(r, 100));
+                        attempts++;
+                    }
+                    
+                    if (!window.QRCode) {
+                        ctx.fillStyle = '#0a0d12';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = '#ff4444';
+                        ctx.fillText('Errore caricamento', canvas.width/2, canvas.height/2 - 10);
+                        ctx.fillStyle = '#888';
+                        ctx.font = '12px Inter, sans-serif';
+                        ctx.fillText('Verifica connessione', canvas.width/2, canvas.height/2 + 15);
+                        showToast('Libreria QR non disponibile. Verifica la connessione.', 'error');
+                        return;
+                    }
                 }
 
                 const uid = currentUser.uid;
