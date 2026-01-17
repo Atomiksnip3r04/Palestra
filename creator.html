@@ -22,7 +22,7 @@
     <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/gymbro-chat.css">
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="js/lib/sortable.min.js"></script>
     <style>
         /* ===== GLOBAL SYMMETRY SYSTEM ===== */
         :root {
@@ -2403,17 +2403,36 @@
                 // Global exposure for onclick handlers
                 window.updateExerciseIndices = updateExerciseIndices;
 
-                // Initialize Sortable
-                if (window.Sortable) {
-                    Sortable.create(exercisesList, {
-                        animation: 150,
-                        handle: '.drag-handle',
-                        ghostClass: 'sortable-ghost',
-                        onEnd: function () {
-                            updateExerciseIndices();
-                        }
-                    });
+                // Store Sortable instance globally for proper cleanup
+                let sortableInstance = null;
+                
+                // Function to initialize/reinitialize Sortable
+                function initSortable() {
+                    // Destroy existing instance if any
+                    if (sortableInstance) {
+                        sortableInstance.destroy();
+                        sortableInstance = null;
+                    }
+                    
+                    if (window.Sortable && exercisesList) {
+                        sortableInstance = Sortable.create(exercisesList, {
+                            animation: 150,
+                            handle: '.drag-handle',
+                            ghostClass: 'sortable-ghost',
+                            forceFallback: false,
+                            onEnd: function () {
+                                updateExerciseIndices();
+                            }
+                        });
+                        console.log('✅ [Sortable] Initialized/Reinitialized');
+                    }
                 }
+                
+                // Expose for external use
+                window.reinitSortable = initSortable;
+
+                // Initialize Sortable
+                initSortable();
 
                 if (addBtn) {
                     addBtn.addEventListener('click', () => addExerciseUI());
@@ -2494,16 +2513,9 @@
                         addExerciseUI();
                     }
 
-                    // Re-initialize Sortable
-                    if (window.Sortable) {
-                        Sortable.create(exercisesList, {
-                            animation: 150,
-                            handle: '.drag-handle',
-                            ghostClass: 'sortable-ghost',
-                            onEnd: function () {
-                                updateExerciseIndices();
-                            }
-                        });
+                    // Re-initialize Sortable properly
+                    if (typeof window.reinitSortable === 'function') {
+                        window.reinitSortable();
                     }
                 });
 
